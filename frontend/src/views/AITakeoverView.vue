@@ -173,7 +173,7 @@
       </el-card>
 
 
-      <el-dialog v-model="addRuleDialogVisible" title="添加回复规则" width="600px">
+      <el-dialog v-model="addRuleDialogVisible" title="添加回复规则" width="600px" custom-class="add-rule-dialog">
         <el-form ref="ruleForm" :model="newRule" :rules="ruleFormRules" class="custom-input">
           <el-form-item label="匹配类型" prop="matchType">
             <el-select v-model="newRule.matchType" placeholder="选择匹配类型" class="custom-select">
@@ -1273,9 +1273,26 @@ onMounted(async () => {
 
 /* 消息详情对话框样式 */
 .message-detail-dialog .el-message-box {
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.message-detail-dialog .el-message-box__header {
+  padding: 20px 24px 16px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.message-detail-dialog .el-message-box__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.message-detail-dialog .el-message-box__content {
+  padding: 0 24px 20px;
 }
 
 .message-detail-container {
@@ -1286,48 +1303,55 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .time-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
   background: var(--light-color);
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
+  letter-spacing: -0.01em;
+}
+
+.time-badge .el-icon {
+  font-size: 14px;
 }
 
 .status-badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .status-replied {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.12);
   color: var(--success-color);
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .status-pending {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(245, 158, 11, 0.12);
   color: var(--warning-color);
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .message-content {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .message-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .message-section:last-child {
@@ -1337,55 +1361,175 @@ onMounted(async () => {
 .message-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  font-weight: 500;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.message-label .el-icon {
+  font-size: 16px;
+  color: var(--primary-color);
 }
 
 .message-bubble {
-  padding: 12px 16px;
-  border-radius: 12px;
-  line-height: 1.5;
+  padding: 16px 20px;
+  border-radius: 14px;
+  line-height: 1.6;
   word-break: break-word;
   box-shadow: var(--shadow-sm);
   border: 1px solid transparent;
+  font-size: 15px;
+  letter-spacing: -0.01em;
 }
 
 .user-message {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border-color: rgba(59, 130, 246, 0.3);
+  font-weight: 500;
 }
 
 .ai-message {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   color: var(--text-primary);
   border-color: var(--border-color);
+  font-weight: 400;
 }
 
 .no-reply {
   color: var(--text-secondary);
   font-style: italic;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .detail-footer {
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+  border-top: 2px solid var(--border-color);
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 13px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .info-item:last-child {
   margin-bottom: 0;
+}
+
+.info-item .el-icon {
+  font-size: 14px;
+  color: var(--primary-color);
+}
+
+/* 对话框按钮样式 */
+.message-detail-dialog .el-message-box__btns {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.message-detail-dialog .el-button {
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.message-detail-dialog .el-button--primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* 添加回复规则对话框样式 */
+.add-rule-dialog .el-dialog {
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--border-color);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.add-rule-dialog .el-dialog__header {
+  padding: 20px 24px 16px;
+  border-bottom: 2px solid var(--border-color);
+  margin: 0;
+}
+
+.add-rule-dialog .el-dialog__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.add-rule-dialog .el-dialog__headerbtn {
+  top: 20px;
+  right: 24px;
+}
+
+.add-rule-dialog .el-dialog__body {
+  padding: 24px;
+}
+
+.add-rule-dialog .el-form-item {
+  margin-bottom: 20px;
+}
+
+.add-rule-dialog .el-form-item__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.add-rule-dialog .el-select,
+.add-rule-dialog .el-input,
+.add-rule-dialog .el-textarea {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.add-rule-dialog .el-input__wrapper,
+.add-rule-dialog .el-textarea__inner {
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.add-rule-dialog .el-input__wrapper:focus-within,
+.add-rule-dialog .el-textarea__inner:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.add-rule-dialog .el-dialog__footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.add-rule-dialog .el-button {
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-size: 14px;
+}
+
+.add-rule-dialog .el-button--primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  font-weight: 600;
 }
 
 /* 响应式调整 */
@@ -1404,6 +1548,20 @@ onMounted(async () => {
   .message-bubble {
     padding: 10px 14px;
     font-size: 14px;
+  }
+  
+  .add-rule-dialog .el-dialog {
+    width: 90vw !important;
+    max-width: 400px;
+    margin: 20px auto;
+  }
+  
+  .add-rule-dialog .el-dialog__body {
+    padding: 16px;
+  }
+  
+  .add-rule-dialog .el-form-item {
+    margin-bottom: 16px;
   }
 }
 </style>
