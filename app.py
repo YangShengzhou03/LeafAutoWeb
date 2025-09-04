@@ -400,7 +400,10 @@ def stop_ai_takeover():
         save_ai_settings(ai_data)
         return jsonify({'success': True, 'message': f'已停止监听 {contact_person}', 'aiStatus': False}), 200
     else:
-        return jsonify({'success': False, 'error': '监听器不存在'}), 400
+        ai_data = load_ai_data()
+        ai_data['aiStatus'] = False
+        save_ai_settings(ai_data)
+        return jsonify({'success': True, 'message': f'已停止监听 {contact_person}', 'aiStatus': False}), 200
 
 
 @app.route('/api/ai-takeover/status', methods=['GET'])
