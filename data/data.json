@@ -1,1 +1,13 @@
-{}
+{
+  "b88d19b8-9842-4a50-b4d7-32328210902b": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-04T22:37",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测测测测",
+    "status": "completed",
+    "createdAt": "2025-09-04T22:37:52.484259",
+    "id": "b88d19b8-9842-4a50-b4d7-32328210902b",
+    "updatedAt": "2025-09-04T22:37:58.026256"
+  }
+}

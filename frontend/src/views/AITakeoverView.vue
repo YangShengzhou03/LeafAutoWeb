@@ -67,16 +67,15 @@
             <div class="card-body">
               <div class="stats-grid">
                 <div class="stat-item">
-                  <div class="stat-value counter" data-target="{{ stats.replyRate }}">{{ stats.replyRate }}%</div>
+                  <div class="stat-value counter">{{ stats.replyRate }}%</div>
                   <div class="stat-label">回复率</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value counter" data-target="{{ stats.averageTime }}">{{ stats.averageTime }}s</div>
+                  <div class="stat-value counter">{{ stats.averageTime }}s</div>
                   <div class="stat-label">平均响应时间</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value counter" data-target="{{ stats.satisfactionRate }}">{{ stats.satisfactionRate
-                  }}%</div>
+                  <div class="stat-value counter">{{ stats.satisfactionRate }}%</div>
                   <div class="stat-label">满意度</div>
                 </div>
               </div>

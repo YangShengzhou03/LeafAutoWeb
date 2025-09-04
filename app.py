@@ -488,45 +488,78 @@ def health_check():
     }), 200
 
 
-@app.route('/api/stats/<range>', methods=['GET'])
+@app.route('/api/stats/<time_range>', methods=['GET'])
 @handle_api_errors
-def get_chart_data(range):
-    if range == '7d':
-        return jsonify({
-            "stats": {
-                "replyRate": 10,
-                "averageTime": 80,
-                "satisfactionRate": 70
-            },
-            "chartData": {
-                "dates": ["2023-09-01", "2023-09-02", "2023-09-03", "2023-09-04"],
-                "counts": [30, 90, 30, 15]
-            }
-        })
-    elif range == '30d':
-        return jsonify({
-            "stats": {
-                "replyRate": 100,
-                "averageTime": 50,
-                "satisfactionRate": 50
-            },
-            "chartData": {
-                "dates": ["2023-09-01", "2023-09-02", "2023-09-03", "2023-09-04"],
-                "counts": [10, 90, 30, 15]
-            }
-        })
-    else:
-        return jsonify({
-            "stats": {
-                "replyRate": 100,
-                "averageTime": 10,
-                "satisfactionRate": 20
-            },
-            "chartData": {
-                "dates": ["2023-09-01", "2023-09-02", "2023-09-03", "2023-09-04"],
-                "counts": [10, 60, 23, 15]
-            }
-        })
+def get_chart_data(time_range):
+    # 获取真实的AI统计数据
+    stats = get_ai_stats()
+    
+    # 生成基于真实数据的图表数据
+    from datetime import datetime, timedelta
+    from data_manager import load_reply_history
+    
+    # 加载回复历史数据
+    reply_history = load_reply_history()
+    
+    # 根据时间范围生成日期和计数
+    dates = []
+    counts = []
+    
+    # 获取当前日期
+    today = datetime.now()
+    
+    # 根据范围统计每天的回复数量
+    if time_range == '7d':
+        # 统计最近7天的回复数量
+        for i in range(6, -1, -1):
+            target_date = (today - timedelta(days=i)).date()
+            date_str = target_date.strftime('%Y-%m-%d')
+            
+            # 统计当天的回复数量
+            daily_count = sum(1 for item in reply_history 
+                            if datetime.fromisoformat(item.get('timestamp', item.get('time', ''))).date() == target_date
+                            and item.get('status') == 'replied')
+            
+            dates.append(date_str)
+            counts.append(daily_count)
+    elif time_range == '30d':
+        # 统计最近30天的回复数量（按周分组）
+        for i in range(29, -1, -7):  # 每7天显示一个点
+            target_date = (today - timedelta(days=i)).date()
+            date_str = target_date.strftime('%Y-%m-%d')
+            
+            # 统计从target_date开始7天内的回复数量
+            week_count = sum(1 for item in reply_history 
+                           if (target_date <= datetime.fromisoformat(item.get('timestamp', item.get('time', ''))).date() <= target_date + timedelta(days=6))
+                           and item.get('status') == 'replied')
+            
+            dates.append(date_str)
+            counts.append(week_count)
+    else:  # 90d
+        # 统计最近90天的回复数量（按月分组）
+        for i in range(89, -1, -30):  # 每30天显示一个点
+            target_date = (today - timedelta(days=i)).date()
+            date_str = target_date.strftime('%Y-%m-%d')
+            
+            # 统计从target_date开始30天内的回复数量
+            month_count = sum(1 for item in reply_history 
+                            if (target_date <= datetime.fromisoformat(item.get('timestamp', item.get('time', ''))).date() <= target_date + timedelta(days=29))
+                            and item.get('status') == 'replied')
+            
+            dates.append(date_str)
+            counts.append(month_count)
+    
+    return jsonify({
+        "stats": {
+            "replyRate": stats.get('replyRate', 0),
+            "averageTime": stats.get('averageTime', 0),
+            "satisfactionRate": stats.get('satisfactionRate', 100)
+        },
+        "chartData": {
+            "dates": dates,
+            "counts": counts
+        }
+    })
 
 
 # 导出功能API
