@@ -25,6 +25,9 @@
       </div>
       <div class="sidebar-footer">
         <div class="dev-info">信息余量 458 / 1000</div>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: (458 / 1000) * 100 + '%' }"></div>
+        </div>
         <button class="upgrade-btn">升级专业版</button>
       </div>
     </aside>
@@ -262,7 +265,7 @@ onBeforeRouteUpdate((to) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 9px;
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid #f0f0f0;
@@ -272,7 +275,7 @@ onBeforeRouteUpdate((to) => {
 .dev-info {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  margin-bottom: 1rem;
+  margin-bottom: 0rem;
   line-height: 1.4;
 }
 
@@ -295,6 +298,23 @@ onBeforeRouteUpdate((to) => {
   background-color: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4361ee, #3a56d4);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  box-shadow: 0 1px 3px rgba(67, 97, 238, 0.3);
 }
 
 .main-content {
