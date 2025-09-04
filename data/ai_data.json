@@ -1,0 +1,25 @@
+{
+  "settings": {
+    "aiStatus": false,
+    "replyDelay": 0,
+    "minReplyInterval": 10,
+    "contactPerson": "杨圣洲",
+    "aiPersona": "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。",
+    "customRules": [
+      {
+        "id": 1756994069446,
+        "keyword": "你好",
+        "matchType": "contains",
+        "reply": "这是包含关键词的你好"
+      },
+      {
+        "id": 1756994086490,
+        "keyword": "我饿了",
+        "matchType": "equals",
+        "reply": "这是完整匹配的我饿了"
+      }
+    ],
+    "onlyAt": false,
+    "updatedAt": "2025-09-04T21:56:01.460975"
+  }
+}

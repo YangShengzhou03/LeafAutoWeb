@@ -1,0 +1,27 @@
+{
+  "2025-09-02": {
+    "automation_completion_rate": 100.0,
+    "message_delivery_rate": 100.0,
+    "ai_usage_rate": 0
+  },
+  "2025-09-01": {
+    "automation_completion_rate": 0.0,
+    "message_delivery_rate": 0,
+    "ai_usage_rate": 0
+  },
+  "2025-08-31": {
+    "automation_completion_rate": 50.0,
+    "message_delivery_rate": 80.0,
+    "ai_usage_rate": 5.0
+  },
+  "2025-09-03": {
+    "automation_completion_rate": 100.0,
+    "message_delivery_rate": 100.0,
+    "ai_usage_rate": 100.0
+  },
+  "2025-09-04": {
+    "automation_completion_rate": 100.0,
+    "message_delivery_rate": 100.0,
+    "ai_usage_rate": 100.0
+  }
+}

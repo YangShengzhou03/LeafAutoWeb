@@ -1,0 +1,48 @@
+{
+  "total_replies": 4,
+  "successful_replies": 4,
+  "failed_replies": 0,
+  "average_response_time": 5.0,
+  "history": [
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "这是包含关键词的你好",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-04T21:55:27.946221",
+      "id": "a364a113-8c06-446e-9f65-90d4064c7ef9",
+      "time": "2025-09-04 21:55:27"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "我饿了",
+      "reply": "这是完整匹配的我饿了",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-04T21:55:35.322902",
+      "id": "3b2fdf16-be1c-480c-aa34-320b6c7a6c72",
+      "time": "2025-09-04 21:55:35"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "这是包含关键词的你好",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-04T21:55:55.515962",
+      "id": "c6cbca8e-55fd-46a0-b3a2-ade358cf7fc8",
+      "time": "2025-09-04 21:55:55"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好你好",
+      "reply": "这是包含关键词的你好",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-04T21:56:02.851609",
+      "id": "f232e6aa-f4bf-4f23-b4c3-25cc74c332c8",
+      "time": "2025-09-04 21:56:02"
+    }
+  ]
+}

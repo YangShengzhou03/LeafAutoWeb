@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  leafauto-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+      - WECHAT_AUTO_PATH=/app/wechat/WeChat.exe
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - wechat-data:/app/wechat
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - leafauto-network
+
+  # 开发环境服务（包含热重载）
+  leafauto-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+      - "5678:5678"  # 调试端口
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+    volumes:
+      - .:/app
+      - /app/venv
+      - /app/node_modules
+    command: >
+      sh -c "pip install -r requirements-dev.txt &&
+             npm install &&
+             python -m debugpy --listen 0.0.0.0:5678 --wait-for-client app.py"
+    restart: unless-stopped
+    networks:
+      - leafauto-network
+
+  # 仅后端API服务
+  leafauto-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - API_ONLY=true
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - leafauto-network
+
+networks:
+  leafauto-network:
+    driver: bridge
+
+volumes:
+  wechat-data:
+    driver: local
+  data:
+    driver: local
+  logs:
+    driver: local
