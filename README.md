@@ -329,6 +329,170 @@ LeafAuto_Web/
 
 ## 🔌 API 文档
 
+## 🤖 AI 工作原理详解
+
+### AI 数据看板生成原理
+
+AI 数据看板通过 <mcsymbol name="DataManager" filename="data_manager.py" path="d:\Code\Python\LeafAuto_Web\data_manager.py" startline="1" type="class"></mcsymbol> 类实现，主要包含以下数据收集和处理逻辑：
+
+1. **数据收集机制**：
+   - 实时记录所有 AI 回复操作到 <mcfile name="reply_history.json" path="d:\Code\Python\LeafAuto_Web\data\reply_history.json"></mcfile>
+   - 统计回复成功率、响应时间、消息类型分布等关键指标
+   - 通过定时任务定期聚合数据生成统计报表
+
+2. **看板数据生成流程**：
+   ```python
+   # 在 data_manager.py 中的实现逻辑
+   def calculate_ai_statistics(self):
+       """计算AI回复统计数据"""
+       history = self.load_reply_history()
+       
+       # 计算回复率
+       total_messages = len(history)
+       replied_messages = len([h for h in history if h['status'] == 'replied'])
+       reply_rate = (replied_messages / total_messages * 100) if total_messages > 0 else 0
+       
+       # 计算平均响应时间
+       response_times = [h.get('response_time', 0) for h in history if 'response_time' in h]
+       avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+       
+       return {
+           'total_messages': total_messages,
+           'replied_messages': replied_messages,
+           'reply_rate': round(reply_rate, 2),
+           'avg_response_time': round(avg_response_time, 2)
+       }
+   ```
+
+3. **实时更新机制**：
+   - 前端通过定时轮询调用 `/api/ai-stats` API 获取最新数据
+   - 数据变化时自动触发看板刷新
+   - 支持历史数据趋势分析
+
+### 消息发送原理
+
+消息发送功能由 <mcsymbol name="TaskScheduler" filename="task_scheduler.py" path="d:\Code\Python\LeafAuto_Web\task_scheduler.py" startline="1" type="class"></mcsymbol> 类实现：
+
+1. **发送引擎架构**：
+   - 基于 wxautox 库实现微信消息发送
+   - 使用独立的发送线程避免阻塞主线程
+   - 支持同步和异步两种发送模式
+
+2. **发送流程**：
+   ```python
+   # 在 task_scheduler.py 中的核心发送逻辑
+   def send_wechat_message(self, recipient, message):
+       """发送微信消息"""
+       try:
+           # 检查微信实例状态
+           if not self.wechat_instance or not self.wechat_instance.is_logged_in():
+               self.logger.warning("微信实例未就绪，尝试重新初始化")
+               self.initialize_wechat()
+           
+           # 执行消息发送
+           success = self.wechat_instance.send_message(recipient, message)
+           
+           if success:
+               self.logger.info(f"消息发送成功: {recipient} - {message[:50]}...")
+               return True
+           else:
+               self.logger.error(f"消息发送失败: {recipient}")
+               return False
+               
+       except Exception as e:
+           self.logger.error(f"发送消息时发生异常: {str(e)}")
+           return False
+   ```
+
+3. **错误处理机制**：
+   - 自动重试机制（最多3次重试）
+   - 连接状态监控和自动恢复
+   - 详细的错误日志记录
+
+### 等待发送原理
+
+等待发送机制确保消息在正确的时间发送：
+
+1. **时间调度算法**：
+   - 使用 Python 的 `threading.Timer` 实现精确定时
+   - 支持单次、每日、每周、每月等重复模式
+   - 自动处理时区转换和夏令时
+
+2. **任务队列管理**：
+   ```python
+   # 在 task_scheduler.py 中的等待逻辑
+   def schedule_task(self, task):
+       """调度任务到指定时间执行"""
+       now = datetime.now()
+       send_time = datetime.fromisoformat(task['sendTime'])
+       
+       # 计算等待时间（秒）
+       wait_seconds = (send_time - now).total_seconds()
+       
+       if wait_seconds <= 0:
+           # 立即执行过期任务
+           self.execute_task(task)
+       else:
+           # 创建定时器
+           timer = threading.Timer(wait_seconds, self.execute_task, args=[task])
+           timer.start()
+           
+           # 存储定时器引用用于后续管理
+           self.active_timers[task['id']] = timer
+   ```
+
+3. **内存和持久化优化**：
+   - 使用轻量级数据结构存储定时任务
+   - 支持应用重启后任务恢复
+   - 避免内存泄漏的定时器清理机制
+
+### AI 接管原理
+
+AI 接管功能通过 <mcsymbol name="AIWorker" filename="ai_worker.py" path="d:\Code\Python\LeafAuto_Web\ai_worker.py" startline="1" type="class"></mcsymbol> 类实现：
+
+1. **消息监听和处理流水线**：
+   - 实时监控微信消息流入
+   - 基于规则的消息过滤和分类
+   - 智能回复策略选择
+
+2. **AI 回复生成流程**：
+   ```python
+   # 在 ai_worker.py 中的核心处理逻辑
+   def process_incoming_message(self, sender, message):
+       """处理 incoming 消息并生成回复"""
+       
+       # 1. 消息预处理和过滤
+       if not self.should_reply(sender, message):
+           return None
+       
+       # 2. 回复延迟控制
+       time.sleep(self.reply_delay)
+       
+       # 3. AI 回复生成
+       reply_content = self.generate_ai_reply(message)
+       
+       # 4. 回复发送和执行
+       success = self.send_reply(sender, reply_content)
+       
+       # 5. 记录历史
+       self.record_reply_history(sender, message, reply_content, success)
+       
+       return success
+   ```
+
+3. **智能过滤规则**：
+   - 关键词黑名单/白名单过滤
+   - 发送频率限制（防骚扰）
+   - 特定联系人专属处理
+   - @消息优先处理机制
+
+4. **性能优化特性**：
+   - 异步消息处理避免阻塞
+   - 内存缓存频繁使用的回复模板
+   - 连接池管理优化网络请求
+
+## 🔌 API 文档
+
 ### 任务管理 API
 
 #### 获取所有任务

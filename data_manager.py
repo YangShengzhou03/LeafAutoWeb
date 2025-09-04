@@ -404,7 +404,7 @@ def load_home_data():
                     item["footer"] = "请登录微信"
                 break
     except Exception as e:
-        print(f'更新微信状态失败: {e}')
+
         # 如果获取微信状态失败，设置系统状态为异常
         for item in home_data.get("dashboardData", []):
             if item.get("id") == 4:
@@ -493,7 +493,8 @@ def save_ai_data():
         with open(AI_DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f'保存AI数据失败: {e}')
+        logger.error(f"保存AI数据失败: {e}")
+
 
 
 def save_reply_history():
@@ -539,7 +540,7 @@ def load_daily_stats():
         else:
             return {}
     except Exception as e:
-        print(f'加载每日统计数据失败: {e}')
+
         return {}
 
 
@@ -557,7 +558,8 @@ def save_daily_stats(date, stats):
         with open(daily_stats_file, 'w', encoding='utf-8') as f:
             json.dump(existing_data, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f'保存每日统计数据失败: {e}')
+        logger.error("保存每日统计数据失败")
+
 
 
 def calculate_automation_completion_rate():
@@ -684,7 +686,7 @@ def save_ai_settings(settings_data):
     required_fields = ['aiStatus', 'replyDelay', 'minReplyInterval', 'contactPerson', 'aiPersona', 'customRules', 'onlyAt']
     for field in required_fields:
         if field not in settings_data:
-            print(f'警告: 设置数据中缺少字段 {field}')
+    
             if field == 'aiStatus':
                 settings_data[field] = False
             elif field == 'replyDelay':

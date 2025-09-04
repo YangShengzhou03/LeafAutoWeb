@@ -622,6 +622,6 @@ def export_group_links():
 
 
 if __name__ == '__main__':
-    print('开始仅启动Flask后端服务器...')
+
     start_task_scheduler()
     app.run(debug=True)

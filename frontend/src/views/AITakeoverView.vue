@@ -575,7 +575,7 @@ const submitForm = async () => {
       customRules: Array.isArray(formData.customRules) ? formData.customRules : []
     }
 
-    console.log('提交的AI设置:', submitData)
+    
 
     const response = await fetch('api/ai-settings', {
       method: 'POST',
@@ -631,25 +631,55 @@ const viewDetails = (row) => {
   ElMessageBox({
     title: '消息详情',
     message: `
-      <div class="detail-item">
-        <div class="detail-label">时间:</div>
-        <div class="detail-value">${row.time}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">原始消息:</div>
-        <div class="detail-value">${row.originalMessage}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">AI回复:</div>
-        <div class="detail-value">${row.aiReply || '暂无回复'}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">状态:</div>
-        <div class="detail-value">${row.status === 'replied' ? '已回复' : '待回复'}</div>
+      <div class="message-detail-container">
+        <div class="detail-header">
+          <div class="time-badge">
+            <el-icon><Clock /></el-icon>
+            ${row.time}
+          </div>
+          <div class="status-badge ${row.status === 'replied' ? 'status-replied' : 'status-pending'}">
+            ${row.status === 'replied' ? '✅ 已回复' : '⏳ 待回复'}
+          </div>
+        </div>
+        
+        <div class="message-content">
+          <div class="message-section">
+            <div class="message-label">
+              <el-icon><ChatDotRound /></el-icon>
+              原始消息
+            </div>
+            <div class="message-bubble user-message">
+              ${row.originalMessage}
+            </div>
+          </div>
+          
+          <div class="message-section">
+            <div class="message-label">
+              <el-icon><Robot /></el-icon>
+              AI回复
+            </div>
+            <div class="message-bubble ai-message">
+              ${row.aiReply || '<span class="no-reply">暂无回复</span>'}
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-footer">
+          <div class="info-item">
+            <el-icon><Calendar /></el-icon>
+            <span>消息时间: ${formatDate(row.time)} ${formatTime(row.time)}</span>
+          </div>
+          ${row.matchType ? `<div class="info-item">
+            <el-icon><Connection /></el-icon>
+            <span>匹配类型: ${row.matchType}</span>
+          </div>` : ''}
+        </div>
       </div>
     `,
     dangerouslyUseHTMLString: true,
-    confirmButtonText: '关闭'
+    customClass: 'message-detail-dialog',
+    confirmButtonText: '关闭',
+    width: '500px'
   })
 }
 
@@ -1238,6 +1268,142 @@ onMounted(async () => {
 
   .logo span {
     display: none;
+  }
+}
+
+/* 消息详情对话框样式 */
+.message-detail-dialog .el-message-box {
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+}
+
+.message-detail-container {
+  padding: 8px 0;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.time-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--light-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-replied {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.message-content {
+  margin-bottom: 20px;
+}
+
+.message-section {
+  margin-bottom: 16px;
+}
+
+.message-section:last-child {
+  margin-bottom: 0;
+}
+
+.message-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid transparent;
+}
+
+.user-message {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.ai-message {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.no-reply {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.detail-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 600px) {
+  .message-detail-dialog .el-message-box {
+    width: 90vw !important;
+    max-width: 400px;
+  }
+  
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .message-bubble {
+    padding: 10px 14px;
+    font-size: 14px;
   }
 }
 </style>

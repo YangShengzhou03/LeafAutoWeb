@@ -3,6 +3,10 @@ import time
 import socket
 import webbrowser
 import os
+from logging_config import get_logger
+
+# 初始化日志器
+logger = get_logger(__name__)
 
 
 def is_vue_server_running():
@@ -18,10 +22,10 @@ def is_vue_server_running():
 def start_vue_server():
     try:
         if is_vue_server_running():
-            print('Vue开发服务器已经在运行')
+        
             return
 
-        print('正在启动Vue开发服务器...')
+    
 
         cmd = ['npm', 'run', 'serve']
         process = subprocess.Popen(
@@ -32,16 +36,16 @@ def start_vue_server():
             shell=False
         )
 
-        print('Vue开发服务器已启动')
+    
         time.sleep(3)
         return process
     except Exception as e:
-        print(f'启动Vue开发服务器失败: {e}')
+        logger.error(f'启动Vue服务器失败: {e}')
+    
 
 
 def open_browser():
     try:
-        print('正在打开浏览器...')
         webbrowser.open('http://localhost:8080')
     except Exception as e:
-        print(f'打开浏览器失败: {e}')
+        logger.error(f'打开浏览器失败: {e}')

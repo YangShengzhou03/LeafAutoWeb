@@ -11,15 +11,9 @@
         "keyword": "你好",
         "matchType": "contains",
         "reply": "这是包含关键词的你好"
-      },
-      {
-        "id": 1756994086490,
-        "keyword": "我饿了",
-        "matchType": "equals",
-        "reply": "这是完整匹配的我饿了"
       }
     ],
     "onlyAt": false,
-    "updatedAt": "2025-09-04T22:37:42.827208"
+    "updatedAt": "2025-09-04T23:29:09.001845"
   }
 }

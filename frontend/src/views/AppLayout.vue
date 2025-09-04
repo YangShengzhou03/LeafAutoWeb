@@ -53,7 +53,7 @@ const checkWeChatStatus = async () => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch('/api/wechat-status');
-      console.log("检查微信状态")
+      
       
       if (!response.ok) {
         throw new Error(`HTTP错误: ${response.status}`);
@@ -61,7 +61,7 @@ const checkWeChatStatus = async () => {
       
       const result = await response.json();
 
-      console.log(result)
+
       
       if (result.success && result.online) {
         // 显示真实的微信用户名，如果获取不到则显示"微信在线"
