@@ -23,7 +23,7 @@
                 <span>{{ feature }}</span>
               </div>
             </div>
-            <button :class="['select-plan', { 'popular-btn': plan.isPopular }]">
+            <button :class="['select-plan', { 'popular-btn': plan.isPopular }]" @click="handleSelectPlan(plan)">
               {{ plan.isPopular ? '选择方案' : (plan.id === 3 ? '联系我们' : '选择方案') }}
             </button>
           </div>
@@ -86,12 +86,21 @@
       </div>
     </section>
   </div>
+  
+  <UpgradeModal 
+    :show="showUpgradeModal" 
+    @close="showUpgradeModal = false"
+    @activation="handleActivation"
+  />
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
+import UpgradeModal from '@/components/UpgradeModal.vue';
+import { ElMessage } from 'element-plus'
 
 const animationActive = ref(false);
+const showUpgradeModal = ref(false);
 const homeData = ref({
   pricingPlans: [
     { id: 1, name: '基础版', price: '--', period: '/月', features: ['--', '--', '--'], isPopular: false },
@@ -204,6 +213,25 @@ const triggerAnimations = () => {
       }, index * 100 + Math.random() * 100);
     });
   }, 100);
+};
+
+// 处理选择方案按钮点击
+const handleSelectPlan = (plan) => {
+  if (plan.id === 3) {
+    // 定制版方案，显示联系我们提示
+    ElMessage.info('联系客服获取定制版报价')
+  } else {
+    // 基础版和企业版，显示升级对话框
+    showUpgradeModal.value = true;
+  }
+};
+
+// 处理激活码提交
+const handleActivation = (activationCode) => {
+  console.log('提交激活码:', activationCode);
+  // 这里可以添加激活码验证逻辑
+  ElMessage.success('提交激活码成功，等待验证结果')
+  showUpgradeModal.value = false;
 };
 
 onMounted(() => {

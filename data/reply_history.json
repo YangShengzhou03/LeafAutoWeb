@@ -1,6 +1,6 @@
 {
-  "total_replies": 5,
-  "successful_replies": 5,
+  "total_replies": 6,
+  "successful_replies": 6,
   "failed_replies": 0,
   "average_response_time": 5.0,
   "history": [
@@ -53,6 +53,16 @@
       "timestamp": "2025-09-05T19:38:15.200757",
       "id": "8bdcb2cd-4b3e-4a36-8623-27cb81919df0",
       "time": "2025-09-05 19:38:15"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "测试成功啦",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-05T21:19:45.488233",
+      "id": "572db07d-0b7d-428b-a11b-04503d5f6eea",
+      "time": "2025-09-05 21:19:45"
     }
   ]
 }
