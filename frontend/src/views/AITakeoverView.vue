@@ -316,7 +316,9 @@ const handleSwitchChange = async (newStatus) => {
         body: JSON.stringify({
           contactPerson: formData.contactPerson,
           aiPersona: formData.aiPersona,
-          onlyAt: false
+          onlyAt: false,
+          replyDelay: formData.replyDelay,
+          minReplyInterval: formData.minReplyInterval
         })
       })
       

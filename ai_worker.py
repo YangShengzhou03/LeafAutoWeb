@@ -44,8 +44,8 @@ class AiWorkerThread:
         model="MoonDarkSide",
         role="You are warm and friendly, reply simply and clearly.",
         only_at=False,
-        reply_delay=5,
-        min_reply_interval=60,
+        reply_delay=0,
+        min_reply_interval=0,
     ):
         """
         初始化AI工作线程
@@ -56,8 +56,8 @@ class AiWorkerThread:
             model: AI模型名称，默认为MoonDarkSide
             role: 系统提示内容，默认为友好简洁的回复风格
             only_at: 是否仅回复@消息，默认为False
-            reply_delay: 回复延迟时间（秒），默认为5秒
-            min_reply_interval: 最小回复间隔时间（秒），默认为60秒
+            reply_delay: 回复延迟时间（秒），默认为0秒
+            min_reply_interval: 最小回复间隔时间（秒），默认为0秒
         
         Raises:
             ValueError: 当wx_instance参数为空时抛出
@@ -459,8 +459,8 @@ class AiWorkerManager:
         model="MoonDarkSide",
         role="You are warm and friendly, reply simply and clearly.",
         only_at=False,
-        reply_delay=5,
-        min_reply_interval=60,
+        reply_delay=0,
+        min_reply_interval=0,
     ):
         """
         启动AI工作线程

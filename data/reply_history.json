@@ -1,8 +1,8 @@
 {
-  "total_replies": 6,
-  "successful_replies": 6,
+  "total_replies": 10,
+  "successful_replies": 10,
   "failed_replies": 0,
-  "average_response_time": 5.0,
+  "average_response_time": 4.0,
   "history": [
     {
       "sender": "杨圣洲",
@@ -63,6 +63,46 @@
       "timestamp": "2025-09-05T21:19:45.488233",
       "id": "572db07d-0b7d-428b-a11b-04503d5f6eea",
       "time": "2025-09-05 21:19:45"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "测试成功啦",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-05T21:32:12.753204",
+      "id": "83f6d2a2-6ef0-4f03-87f2-367a48a48155",
+      "time": "2025-09-05 21:32:12"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "测试成功啦",
+      "status": "replied",
+      "responseTime": 5,
+      "timestamp": "2025-09-05T21:39:17.241544",
+      "id": "8c8d8cbe-c1b6-4289-8cbc-9c5bbc93f898",
+      "time": "2025-09-05 21:39:17"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "测试成功啦",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T21:42:21.227479",
+      "id": "35929335-c7c7-46d3-99f0-14b8e19e1166",
+      "time": "2025-09-05 21:42:21"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "测试成功啦",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T21:49:18.596515",
+      "id": "665e0275-054c-4dfb-8f5b-3abba7307d6c",
+      "time": "2025-09-05 21:49:18"
     }
   ]
 }

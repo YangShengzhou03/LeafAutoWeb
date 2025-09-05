@@ -240,6 +240,7 @@ def save_ai_settings_route():
 
     # 根据AI接管状态启动或停止监听
     if settings_data.get("aiStatus"):
+        logger.warning(settings_data)
         # 启动AI接管
         contact_person = settings_data.get("contactPerson", "")
         if contact_person:
@@ -250,8 +251,8 @@ def save_ai_settings_route():
                 contact_person,
                 role=settings_data.get("aiPersona", "你很温馨,回复简单明了。"),
                 only_at=settings_data.get("onlyAt", False),
-                reply_delay=settings_data.get("replyDelay", 5),
-                min_reply_interval=settings_data.get("minReplyInterval", 60),
+                reply_delay=settings_data.get("replyDelay", 0),
+                min_reply_interval=settings_data.get("minReplyInterval", 0),
             )
             if success:
                 logger.info(f"[AI接管] 已启动监听: {contact_person}")
@@ -370,8 +371,8 @@ def start_ai_takeover():
         contact_person,
         role=ai_persona,
         only_at=only_at,
-        reply_delay=data.get("replyDelay", 5),
-        min_reply_interval=data.get("minReplyInterval", 60),
+        reply_delay=data.get("replyDelay", 0),
+        min_reply_interval=data.get("minReplyInterval", 0),
     )
 
     if success:
