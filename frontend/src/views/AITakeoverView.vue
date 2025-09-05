@@ -217,22 +217,21 @@
           <el-table-column prop="time" label="时间" width="180" sortable>
             <template #default="{ row }">
               <div class="time-cell">
-                <div class="date">{{ formatDate(row.time) }}</div>
-                <div class="time">{{ formatTime(row.time) }}</div>
+                {{ formatDate(row.time) }} {{ formatTime(row.time) }}
               </div>
             </template>
           </el-table-column>
           <el-table-column prop="originalMessage" label="原始消息" width="180">
             <template #default="{ row }">
               <el-tooltip :content="row.originalMessage" placement="top">
-                <div class="message-content">{{ truncateText(row.originalMessage, 20) }}</div>
+                <span class="message-content">{{ truncateText(row.originalMessage, 20) }}</span>
               </el-tooltip>
             </template>
           </el-table-column>
           <el-table-column prop="aiReply" label="AI 回复">
             <template #default="{ row }">
               <el-tooltip :content="row.aiReply" placement="top">
-                <div class="reply-cell">{{ truncateText(row.aiReply, 30) }}</div>
+                <span class="reply-cell">{{ truncateText(row.aiReply, 30) }}</span>
               </el-tooltip>
             </template>
           </el-table-column>
