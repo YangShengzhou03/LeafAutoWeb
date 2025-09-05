@@ -97,10 +97,6 @@
                 />
                 <button class="activation-btn" @click="handleActivation" :disabled="!activationCode || activationCode.length !== 16">
                   <span>立即兑换</span>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 7L8 0L1 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 0V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
                 </button>
               </div>
               <div class="activation-features">
@@ -110,7 +106,7 @@
                     <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     <path d="M8 5H8.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                   </svg>
-                  <span>7天无理由退款</span>
+                  <span>稳定·安全·放心</span>
                 </div>
                 <div class="feature-item">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -504,13 +500,12 @@ const getRandomStyle = (index) => {
   color: white;
   border: none;
   border-radius: 6px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 14px;
   min-width: 80px;
 }
 

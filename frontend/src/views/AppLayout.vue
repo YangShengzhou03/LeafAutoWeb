@@ -24,7 +24,7 @@
         </nav>
       </div>
       <div class="sidebar-footer">
-        <div class="dev-info">信息余量 {{ quotaInfo.is_unlimited ? '∞' : quotaInfo.remaining }} / {{ quotaInfo.is_unlimited ? '∞' : quotaInfo.daily_limit }}</div>
+        <div class="dev-info">已发信息 {{ quotaInfo.used_today }} / {{ quotaInfo.is_unlimited ? '∞' : quotaInfo.daily_limit }}</div>
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: quotaInfo.is_unlimited ? '100%' : (quotaInfo.used_today / quotaInfo.daily_limit) * 100 + '%' }"></div>
         </div>

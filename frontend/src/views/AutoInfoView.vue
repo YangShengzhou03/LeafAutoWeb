@@ -97,6 +97,9 @@
                 <el-button :disabled="tasks.length === 0" @click="exportTasks">
                   导出
                 </el-button>
+                <el-button :disabled="tasks.length === 0" @click="clearAllTasks" type="danger">
+                  清空
+                </el-button>
                 <el-button :disabled="tasks.length === 0" @click="toggleTaskScheduler" :type="isSchedulerRunning ? 'danger' : 'primary'">
                   {{ isSchedulerRunning ? '停止执行' : '开始执行' }}
                 </el-button>
@@ -319,6 +322,32 @@ const deleteTask = async (taskId) => {
     } catch (error) {
       console.error('删除任务失败:', error)
       ElMessage.error('任务删除失败，请稍后重试')
+    }
+  }).catch(() => { })
+}
+
+const clearAllTasks = async () => {
+  ElMessageBox.confirm('确定要清空所有任务吗？此操作将删除所有任务（包括已完成和未完成的任务），且不可恢复！', '警告', {
+    confirmButtonText: '确定清空',
+    cancelButtonText: '取消',
+    type: 'warning',
+    confirmButtonClass: 'el-button--danger'
+  }).then(async () => {
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        tasks.value = []
+        ElMessage.success('所有任务已清空')
+      } else {
+        const errorText = await response.text()
+        ElMessage.error(`清空任务失败: ${errorText || '未知错误'}`)
+      }
+    } catch (error) {
+      console.error('清空任务失败:', error)
+      ElMessage.error('清空任务失败，请检查网络连接')
     }
   }).catch(() => { })
 }
