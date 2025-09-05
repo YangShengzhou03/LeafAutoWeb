@@ -1,11 +1,12 @@
 <template>
-  <div v-if="show" class="modal-overlay" @click.self="$emit('close')">
-    <div class="activation-modal">
-      <!-- 头部 -->
-      <div class="modal-header">
-        <div class="header-content">
-          <div class="icon-wrapper">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <transition name="modal" @after-leave="$emit('after-close')">
+    <div v-if="show" class="modal-overlay" @click.self="$emit('close')">
+      <div class="activation-modal">
+        <!-- 头部 -->
+        <div class="modal-header">
+          <div class="header-content">
+            <div class="icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -139,13 +140,15 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 
-const props = defineProps({
+import { defineProps } from 'vue';
+defineProps({
   show: {
     type: Boolean,
     default: false
@@ -156,7 +159,8 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'confirm', 'activation']);
+import { defineEmits } from 'vue';
+const emit = defineEmits(['close', 'confirm', 'activation', 'after-close']);
 
 // 状态管理
 const activationCode = ref('');
@@ -571,6 +575,28 @@ const getRandomStyle = (index) => {
   flex-shrink: 0;
 }
 
+/* 过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.4s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .activation-modal,
+.modal-leave-active .activation-modal {
+  transition: all 0.4s ease;
+}
+
+.modal-enter-from .activation-modal,
+.modal-leave-to .activation-modal {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+}
+
 /* 动画 */
 @keyframes fadeIn {
   from {
@@ -578,6 +604,15 @@ const getRandomStyle = (index) => {
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -589,6 +624,17 @@ const getRandomStyle = (index) => {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
   }
 }
 
