@@ -11,8 +11,11 @@ Flask应用主模块
 """
 
 from datetime import datetime
-from flask import Flask, jsonify, redirect, request
+from flask import Flask, jsonify, redirect, request, send_from_directory
 from flask_cors import CORS
+import os
+import sys
+from pathlib import Path
 
 from ai_worker import AiWorkerManager
 from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
@@ -44,6 +47,45 @@ logger.info("微信状态监控已启动")
 # 全局变量
 reply_history = []
 
+# 添加静态文件服务配置
+def is_frozen():
+    """检查是否在打包环境中运行"""
+    return getattr(sys, 'frozen', False)
+
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if is_frozen():
+        # 在打包环境中，资源文件在_MEIPASS文件夹中
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 在开发环境中，使用项目根目录
+        base_path = Path(__file__).parent
+    return base_path / relative_path
+
+# 配置静态文件服务
+if is_frozen():
+    # 在打包环境中，检查前端构建文件是否存在
+    frontend_dist_path = get_resource_path('frontend/dist')
+    if frontend_dist_path.exists():
+        logger.info(f"检测到前端构建文件已存在于: {frontend_dist_path}")
+        # 配置静态文件路由
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve_static(path):
+            if path == "":
+                return send_from_directory(str(frontend_dist_path), 'index.html')
+            
+            file_path = frontend_dist_path / path
+            if file_path.exists() and file_path.is_file():
+                return send_from_directory(str(frontend_dist_path), path)
+            else:
+                # 如果文件不存在，返回index.html以支持前端路由
+                return send_from_directory(str(frontend_dist_path), 'index.html')
+        
+        logger.info("已配置静态文件服务")
+    else:
+        logger.warning(f"未找到前端构建文件: {frontend_dist_path}")
+
 
 # 统一错误处理装饰器
 def handle_api_errors(func):
@@ -61,45 +103,85 @@ def handle_api_errors(func):
 @app.route("/")
 def home():
     """
-    首页路由重定向到前端页面
+    首页路由
+    在开发环境中重定向到前端页面，在生产环境中提供静态文件服务
 
     Returns:
-        Response: 重定向到前端首页
+        Response: 重定向到前端首页或提供静态文件
     """
-    return redirect("http://localhost:8080")
+    if is_frozen():
+        # 在打包环境中，提供静态文件服务
+        frontend_dist_path = get_resource_path('frontend/dist')
+        if frontend_dist_path.exists():
+            return send_from_directory(str(frontend_dist_path), 'index.html')
+        else:
+            return "前端文件未找到，请确保前端文件已正确打包", 500
+    else:
+        # 在开发环境中，重定向到前端开发服务器
+        return redirect("http://localhost:8080")
 
 
 @app.route("/auto-info")
 def auto_info():
     """
-    自动信息页面路由重定向
+    自动信息页面路由
+    在开发环境中重定向到前端页面，在生产环境中提供静态文件服务
 
     Returns:
-        Response: 重定向到前端自动信息页面
+        Response: 重定向到前端自动信息页面或提供静态文件
     """
-    return redirect("http://localhost:8080/auto_info")
+    if is_frozen():
+        # 在打包环境中，提供静态文件服务
+        frontend_dist_path = get_resource_path('frontend/dist')
+        if frontend_dist_path.exists():
+            return send_from_directory(str(frontend_dist_path), 'index.html')
+        else:
+            return "前端文件未找到，请确保前端文件已正确打包", 500
+    else:
+        # 在开发环境中，重定向到前端开发服务器
+        return redirect("http://localhost:8080/auto_info")
 
 
 @app.route("/ai-takeover")
 def ai_takeover():
     """
-    AI接管页面路由重定向
+    AI接管页面路由
+    在开发环境中重定向到前端页面，在生产环境中提供静态文件服务
 
     Returns:
-        Response: 重定向到前端AI接管页面
+        Response: 重定向到前端AI接管页面或提供静态文件
     """
-    return redirect("http://localhost:8080/ai_takeover")
+    if is_frozen():
+        # 在打包环境中，提供静态文件服务
+        frontend_dist_path = get_resource_path('frontend/dist')
+        if frontend_dist_path.exists():
+            return send_from_directory(str(frontend_dist_path), 'index.html')
+        else:
+            return "前端文件未找到，请确保前端文件已正确打包", 500
+    else:
+        # 在开发环境中，重定向到前端开发服务器
+        return redirect("http://localhost:8080/ai_takeover")
 
 
 @app.route("/other_box")
 def other_box():
     """
-    其他功能页面路由重定向
+    其他功能页面路由
+    在开发环境中重定向到前端页面，在生产环境中提供静态文件服务
 
     Returns:
-        Response: 重定向到前端其他功能页面
+        Response: 重定向到前端其他功能页面或提供静态文件
     """
-    return redirect("http://localhost:8080/other_box")
+    if is_frozen():
+        # 在打包环境中，提供静态文件服务
+        frontend_dist_path = get_resource_path('frontend/dist')
+        if frontend_dist_path.exists():
+            return send_from_directory(str(frontend_dist_path), 'index.html')
+        else:
+            return "前端文件未找到，请确保前端文件已正确打包", 500
+    else:
+        # 在开发环境中，重定向到前端开发服务器
+        return redirect("http://localhost:8080/other_box")
 
 
 @app.route("/api/tasks", methods=["GET"])

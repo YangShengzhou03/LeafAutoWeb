@@ -46,30 +46,53 @@ def start_flask_backend():
     """启动Flask后端服务"""
     logger.info("正在启动Flask后端服务...")
     try:
-        # 使用Python解释器运行app.py
-        process = subprocess.Popen(
-            [sys.executable, str(ROOT_DIR / 'app.py')],
-            cwd=str(ROOT_DIR),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,  # 行缓冲
-            universal_newlines=True,
-            encoding='utf-8',  # 指定编码为utf-8
-            errors='replace'  # 替换无法解码的字符
-        )
-        
-        processes['flask'] = process
-        logger.info(f"Flask后端服务已启动，PID: {process.pid}")
-        
-        # 实时输出日志，过滤掉一些不需要的日志
-        for line in process.stdout:
-            # 过滤掉 comtypes 相关的日志
-            if "comtypes.client._code_cache" in line:
-                continue
-            logger.info(f"[Flask] {line.strip()}")
+        # 检查是否在打包环境中运行
+        if getattr(sys, 'frozen', False):
+            # 在打包环境中，直接导入并运行app.py
+            import app
+            # 在新线程中运行Flask应用，使用不阻塞的方式
+            def run_flask():
+                from werkzeug.serving import make_server
+                # 创建WSGI服务器
+                server = make_server('0.0.0.0', 5000, app.app)
+                logger.info("Flask WSGI服务器已启动")
+                # 输出访问网址信息
+                logger.info("服务已启动，请通过浏览器访问: http://localhost:5000")
+                logger.info("或使用网络IP地址访问: http://<您的IP地址>:5000")
+                # 启动服务器（这会阻塞当前线程）
+                server.serve_forever()
             
-        return process
+            flask_thread = threading.Thread(target=run_flask)
+            flask_thread.daemon = True
+            flask_thread.start()
+            processes['flask'] = flask_thread
+            logger.info("Flask后端服务已启动")
+            return flask_thread
+        else:
+            # 在开发环境中，使用Python解释器运行app.py
+            process = subprocess.Popen(
+                [sys.executable, str(ROOT_DIR / 'app.py')],
+                cwd=str(ROOT_DIR),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,  # 行缓冲
+                universal_newlines=True,
+                encoding='utf-8',  # 指定编码为utf-8
+                errors='replace'  # 替换无法解码的字符
+            )
+            
+            processes['flask'] = process
+            logger.info(f"Flask后端服务已启动，PID: {process.pid}")
+            
+            # 实时输出日志，过滤掉一些不需要的日志
+            for line in process.stdout:
+                # 过滤掉 comtypes 相关的日志
+                if "comtypes.client._code_cache" in line:
+                    continue
+                logger.info(f"[Flask] {line.strip()}")
+                
+            return process
     except Exception as e:
         logger.error(f"启动Flask后端服务失败: {e}")
         return None
@@ -78,9 +101,39 @@ def start_flask_backend():
 def start_frontend():
     """启动前端Vue应用"""
     logger.info("正在启动前端Vue应用...")
+    
+    # 检查是否在打包环境中运行
+    if getattr(sys, 'frozen', False):
+        logger.info("检测到在打包环境中运行")
+        
+        # 检查前端构建文件是否存在
+        frontend_dist_path = Path(sys._MEIPASS) / 'frontend' / 'dist' if hasattr(sys, '_MEIPASS') else ROOT_DIR / 'frontend' / 'dist'
+        
+        if frontend_dist_path.exists():
+            logger.info(f"检测到前端构建文件已存在于: {frontend_dist_path}")
+            logger.info("前端文件已包含在打包中，Flask将自动提供静态文件服务")
+            return None
+        else:
+            logger.warning(f"未找到前端构建文件: {frontend_dist_path}")
+            logger.info("请确保前端文件已正确打包")
+            return None
+    
     try:
         # 切换到前端目录
         os.chdir(str(FRONTEND_DIR))
+        
+        # 检查 Node.js 是否安装
+        try:
+            node_version = subprocess.run(['node', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            logger.info(f"Node.js 版本: {node_version.stdout.strip()}")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            logger.error("Node.js 未安装或不在系统路径中，无法启动前端服务")
+            logger.info("请手动启动前端服务或使用已构建的前端文件")
+            return None
+        
+        # 检查前端构建文件是否存在
+        if (FRONTEND_DIR / 'dist').exists():
+            logger.info("检测到前端构建文件已存在，可以直接使用")
         
         # 直接使用 shell 启动 npm 服务
         process = subprocess.Popen(
@@ -106,8 +159,7 @@ def start_frontend():
                 "setup (before compile)",
                 "setup (compile)",
                 "setup (compilation)",
-                "[",
-                "]",
+                "[","]",
                 "%",
                 "building",
                 "WARN  \"vue\" field in package.json ignored",
@@ -129,13 +181,6 @@ def start_frontend():
         logger.error(f"前端目录: {FRONTEND_DIR}")
         logger.error(f"package.json 存在: {(FRONTEND_DIR / 'package.json').exists()}")
         
-        # 检查 Node.js 是否安装
-        try:
-            node_version = subprocess.run(['node', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            logger.info(f"Node.js 版本: {node_version.stdout.strip()}")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.error("Node.js 未安装或不在系统路径中")
-        
         return None
     finally:
         # 切换回原目录
@@ -145,8 +190,15 @@ def start_frontend():
 def signal_handler(sig, frame):
     """处理终止信号，关闭所有子进程"""
     logger.info("接收到终止信号，正在关闭所有服务...")
-    for name, process in processes.items():
-        if process and process.poll() is None:
+    for name, process in list(processes.items()):
+        if process is None:
+            continue
+            
+        if name == 'flask' and isinstance(process, threading.Thread):
+            # 对于Flask线程，我们无法直接停止，只能记录日志
+            logger.info(f"Flask服务线程正在运行，程序退出后将自动终止")
+        elif process.poll() is None:
+            # 对于子进程，尝试正常终止
             logger.info(f"正在关闭 {name} 服务 (PID: {process.pid})...")
             process.terminate()
             try:
@@ -197,21 +249,32 @@ def main():
         while True:
             # 检查进程状态
             for name, process in list(processes.items()):
-                if process and process.poll() is not None:
-                    logger.warning(f"{name} 服务已意外退出，退出码: {process.returncode}")
-                    del processes[name]
+                if process is None:
+                    continue
                     
-                    # 尝试重启服务
-                    if name == 'flask':
+                if name == 'flask' and isinstance(process, threading.Thread):
+                    # 对于Flask线程，检查是否仍在运行
+                    if not process.is_alive():
+                        logger.warning(f"Flask服务线程已意外退出")
+                        del processes[name]
+                        
+                        # 尝试重启服务
                         logger.info("尝试重新启动Flask后端服务...")
                         flask_thread = threading.Thread(target=start_flask_backend)
                         flask_thread.daemon = True
                         flask_thread.start()
-                    elif name == 'frontend':
+                        processes['flask'] = flask_thread
+                elif isinstance(process, subprocess.Popen) and process.poll() is not None:
+                    logger.warning(f"{name} 服务已意外退出，退出码: {process.returncode}")
+                    del processes[name]
+                    
+                    # 尝试重启服务
+                    if name == 'frontend':
                         logger.info("尝试重新启动前端服务...")
                         frontend_thread = threading.Thread(target=start_frontend)
                         frontend_thread.daemon = True
                         frontend_thread.start()
+                        processes['frontend'] = frontend_thread
             
             time.sleep(5)
     except KeyboardInterrupt:
