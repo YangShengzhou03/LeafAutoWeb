@@ -52,7 +52,7 @@
           <div class="card-title">
             <h3>{{ item.title }}</h3>
             <span v-if="item.trend" :class="item.trend === 'up' ? 'trend-up' : 'trend-down'">
-              <i :class="item.trend === 'up' ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i> {{ item.trendValue }}%
+              {{ item.trend === 'up' ? '↑' : '↓' }} {{ item.trendValue }}%
             </span>
           </div>
           <div :class="['card-value', { 'status-normal': item.status === 'normal', 'status-abnormal': item.status === 'abnormal' }]">
