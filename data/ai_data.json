@@ -3,27 +3,9 @@
     "aiStatus": false,
     "replyDelay": 0,
     "minReplyInterval": 0,
-    "contactPerson": "杨圣洲",
+    "contactPerson": "文件传输助手",
     "aiPersona": "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。",
     "customRules": [
-      {
-        "id": 1757080608025,
-        "keyword": "你好",
-        "matchType": "contains",
-        "reply": "你好啊，嘻嘻"
-      },
-      {
-        "id": 1757080624301,
-        "keyword": "你饿了？",
-        "matchType": "contains",
-        "reply": "饿了就吃饿了么！"
-      },
-      {
-        "id": 1757080673156,
-        "matchType": "contains",
-        "keyword": "阿里巴巴",
-        "reply": "张勇哈哈哈哈"
-      }
     ],
     "onlyAt": false,
     "updatedAt": "2025-09-05T22:20:05.902877"
