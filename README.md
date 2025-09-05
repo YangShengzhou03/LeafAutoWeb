@@ -197,6 +197,28 @@ echo 'FLASK_ENV=development' >> .env
 echo 'SECRET_KEY=your-secret-key-here' >> .env
 ```
 
+### 生产环境部署
+
+#### 端口配置
+- **后端API服务**: 5000端口
+- **前端Web服务**: 8080端口
+- **API代理**: 前端通过代理访问后端API
+
+#### 启动生产环境
+```bash
+# 使用生产环境启动脚本
+python start_production.py
+
+# 或手动启动
+# 启动后端
+python app.py --port 5000 --host 0.0.0.0
+
+# 启动前端（在frontend目录）
+npm run serve --port 8080
+```
+
+详细部署说明请参考 <mcfile name="PRODUCTION_DEPLOYMENT.md" path="d:\Code\Python\LeafAuto_Web\PRODUCTION_DEPLOYMENT.md"></mcfile>
+
 ### 方法二：Docker 容器安装
 
 #### 使用 Docker Compose（推荐）

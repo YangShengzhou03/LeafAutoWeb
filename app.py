@@ -725,5 +725,14 @@ def export_group_links():
 
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Flask应用启动参数')
+    parser.add_argument('--port', type=int, default=5000, help='服务器端口号')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='服务器主机地址')
+    parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    
+    args = parser.parse_args()
+    
     start_task_scheduler()
-    app.run(debug=True)
+    app.run(debug=args.debug, host=args.host, port=args.port)

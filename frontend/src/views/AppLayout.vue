@@ -69,7 +69,7 @@ const showUpgradeModal = ref(false);
 // 计算升级按钮文本
 const upgradeButtonText = computed(() => {
   const level = quotaInfo.value.account_level;
-  if (level === 'free') return '升级标准版';
+  if (level === 'free') return '升级基础版';
   if (level === 'basic') return '升级企业版';
   return '获取帮助';
 });
