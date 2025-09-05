@@ -16,7 +16,10 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 # 全局微信实例
-_wx_instance = WeChat()
+try:
+    _wx_instance = WeChat()
+except Exception as e:
+    _wx_instance = None
 # 状态检查线程
 _status_check_thread = None
 _status_check_interval = 30  # 30秒检查一次
