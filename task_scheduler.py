@@ -2,8 +2,8 @@ import threading
 import time
 from datetime import datetime, timedelta
 
-from data_manager import increment_message_count
-from data_manager import load_tasks, update_task_status
+from data_manager import (increment_message_count, load_tasks,
+                          update_task_status)
 from logging_config import get_logger, handle_errors
 from wechat_instance import get_wechat_instance, is_wechat_online
 
@@ -14,7 +14,7 @@ def send_msg(who, msg):
         wx = get_wechat_instance()
         if wx is None:
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
-        
+
         # 检查微信是否在线
         if not is_wechat_online():
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
@@ -32,6 +32,7 @@ def send_msg(who, msg):
         logger.error(f"发送消息时发生错误: {e}")
         return {"status": "failed", "message": f"发送失败: {str(e)}"}
 
+
 # 获取日志器
 logger = get_logger(__name__)
 
@@ -39,14 +40,14 @@ logger = get_logger(__name__)
 class TaskScheduler:
     """
     定时任务调度器类
-    
+
     负责管理定时任务的执行，包括任务检查、状态更新和重复任务处理
-    
+
     Attributes:
         running (bool): 调度器运行状态
         thread (threading.Thread): 调度器线程
         stop_event (threading.Event): 停止事件信号
-        
+
     Example:
         >>> scheduler = TaskScheduler()
         >>> scheduler.start()
@@ -66,12 +67,12 @@ class TaskScheduler:
     def check_and_execute_tasks(self):
         """
         检查并执行到期任务
-        
+
         遍历所有待执行任务，执行已到期的任务并更新状态
-        
+
         Returns:
             int: 本次执行的任务数量
-            
+
         Example:
             >>> scheduler = TaskScheduler()
             >>> executed = scheduler.check_and_execute_tasks()
@@ -94,7 +95,9 @@ class TaskScheduler:
         executed_count = 0
 
         # 检查是否还有待执行的任务
-        pending_tasks = [task for task in tasks.values() if task.get('status') == 'pending']
+        pending_tasks = [
+            task for task in tasks.values() if task.get("status") == "pending"
+        ]
 
         # 如果没有待执行的任务，自动停止调度器
         if not pending_tasks:
@@ -103,14 +106,16 @@ class TaskScheduler:
             return executed_count
 
         for task_id, task in tasks.items():
-            if task.get('status') == 'pending':
-                send_time_str = task.get('sendTime')
+            if task.get("status") == "pending":
+                send_time_str = task.get("sendTime")
                 if send_time_str:
                     try:
                         # 处理时间格式，支持带时区和不带时区的时间
-                        if 'Z' in send_time_str:
-                            send_time = datetime.fromisoformat(send_time_str.replace('Z', '+00:00'))
-                        elif '+' in send_time_str or '-' in send_time_str:
+                        if "Z" in send_time_str:
+                            send_time = datetime.fromisoformat(
+                                send_time_str.replace("Z", "+00:00")
+                            )
+                        elif "+" in send_time_str or "-" in send_time_str:
                             send_time = datetime.fromisoformat(send_time_str)
                         else:
                             # 如果没有时区信息，假设为本地时间
@@ -135,16 +140,23 @@ class TaskScheduler:
 
                             # 如果任务执行时间过长（超过5秒），记录警告
                             if execution_time > 5.0:
-                                logger.warning(f"任务 {task_id} 执行时间过长: {execution_time:.2f}秒")
+                                logger.warning(
+                                    f"任务 {task_id} 执行时间过长: {execution_time:.2f}秒"
+                                )
 
                     except (ValueError, TypeError) as e:
                         logger.error(f"任务 {task_id} 时间格式错误: {e}")
-                        update_task_status(task_id, 'failed', str(e))
+                        update_task_status(task_id, "failed", str(e))
 
         if executed_count > 0:
-            avg_execution_time = sum(self.task_execution_times.values()) / len(
-                self.task_execution_times) if self.task_execution_times else 0
-            logger.info(f"本次检查执行了 {executed_count} 个任务，平均执行时间: {avg_execution_time:.3f}秒")
+            avg_execution_time = (
+                sum(self.task_execution_times.values()) / len(self.task_execution_times)
+                if self.task_execution_times
+                else 0
+            )
+            logger.info(
+                f"本次检查执行了 {executed_count} 个任务，平均执行时间: {avg_execution_time:.3f}秒"
+            )
         else:
             logger.info("没有到期的任务")
             return executed_count
@@ -155,49 +167,51 @@ class TaskScheduler:
             # 检查微信是否在线
             if not is_wechat_online():
                 logger.warning(f"微信未登录，跳过任务 {task_id}")
-                update_task_status(task_id, 'failed', '微信未登录')
+                update_task_status(task_id, "failed", "微信未登录")
                 return
 
-            recipient = task.get('recipient', '')
-            message_content = task.get('messageContent', '')
+            recipient = task.get("recipient", "")
+            message_content = task.get("messageContent", "")
 
             if recipient and message_content:
                 # 发送消息
                 result = send_msg(recipient, message_content)
 
-                if result.get('status') == 'success':
+                if result.get("status") == "success":
                     # 更新任务状态为已完成
-                    update_task_status(task_id, 'completed')
+                    update_task_status(task_id, "completed")
                     logger.info(f"任务执行成功: {task_id} -> {recipient}")
 
                     # 处理重复任务
                     self.handle_repeat_task(task_id, task)
                 else:
                     # 发送失败，更新任务状态为失败
-                    error_msg = result.get('message', '未知错误')
+                    error_msg = result.get("message", "未知错误")
                     logger.error(f"任务发送失败 {task_id}: {error_msg}")
-                    update_task_status(task_id, 'failed', error_msg)
+                    update_task_status(task_id, "failed", error_msg)
             else:
                 logger.warning(f"任务数据不完整: {task_id}")
-                update_task_status(task_id, 'failed', '任务数据不完整')
+                update_task_status(task_id, "failed", "任务数据不完整")
 
         except Exception as e:
             error_msg = f"执行任务时发生异常: {str(e)}"
             logger.error(f"任务执行失败 {task_id}: {error_msg}")
-            update_task_status(task_id, 'failed', error_msg)
+            update_task_status(task_id, "failed", error_msg)
 
         # 检查是否所有任务都已完成或失败，自动停止调度器
         tasks = load_tasks()
-        pending_tasks = [task for task in tasks.values() if task.get('status') == 'pending']
+        pending_tasks = [
+            task for task in tasks.values() if task.get("status") == "pending"
+        ]
         if not pending_tasks:
             logger.info("所有任务已完成或失败，调度器将自动停止")
             self.stop()
 
     def handle_repeat_task(self, task_id, task):
         """处理重复任务逻辑"""
-        repeat_type = task.get('repeatType', 'none')
+        repeat_type = task.get("repeatType", "none")
 
-        if repeat_type != 'none':
+        if repeat_type != "none":
             # 创建新的重复任务
             new_task = task.copy()
 
@@ -205,24 +219,24 @@ class TaskScheduler:
             current_time = datetime.now()
 
             # 处理时间格式，支持带时区和不带时区的时间
-            send_time_str = task['sendTime']
-            if 'Z' in send_time_str:
-                send_time = datetime.fromisoformat(send_time_str.replace('Z', '+00:00'))
-            elif '+' in send_time_str or '-' in send_time_str:
+            send_time_str = task["sendTime"]
+            if "Z" in send_time_str:
+                send_time = datetime.fromisoformat(send_time_str.replace("Z", "+00:00"))
+            elif "+" in send_time_str or "-" in send_time_str:
                 send_time = datetime.fromisoformat(send_time_str)
             else:
                 # 如果没有时区信息，假设为本地时间
                 send_time = datetime.fromisoformat(send_time_str)
 
-            if repeat_type == 'daily':
+            if repeat_type == "daily":
                 # 每天重复（保持原有的秒精度）
                 new_send_time = send_time.replace(
                     hour=send_time.hour,
                     minute=send_time.minute,
                     second=send_time.second,
-                    microsecond=0
+                    microsecond=0,
                 ) + timedelta(days=1)
-            elif repeat_type == 'workday':
+            elif repeat_type == "workday":
                 # 工作日重复（周一到周五）
                 next_day = send_time
                 while True:
@@ -233,9 +247,9 @@ class TaskScheduler:
                     hour=send_time.hour,
                     minute=send_time.minute,
                     second=send_time.second,
-                    microsecond=0
+                    microsecond=0,
                 )
-            elif repeat_type == 'holiday':
+            elif repeat_type == "holiday":
                 # 节假日重复（周六和周日）
                 next_day = send_time
                 while True:
@@ -246,43 +260,44 @@ class TaskScheduler:
                     hour=send_time.hour,
                     minute=send_time.minute,
                     second=send_time.second,
-                    microsecond=0
+                    microsecond=0,
                 )
-            elif repeat_type == 'custom' and task.get('repeatDays'):
+            elif repeat_type == "custom" and task.get("repeatDays"):
                 # 自定义重复天数
-                repeat_days = int(task.get('repeatDays', 1))
+                repeat_days = int(task.get("repeatDays", 1))
                 new_send_time = send_time.replace(
                     hour=send_time.hour,
                     minute=send_time.minute,
                     second=send_time.second,
-                    microsecond=0
+                    microsecond=0,
                 ) + timedelta(days=repeat_days)
             else:
                 return
 
             # 更新任务时间为下一次执行时间
-            new_task['sendTime'] = new_send_time.isoformat()
-            new_task['status'] = 'pending'
-            new_task['createdAt'] = datetime.now().isoformat()
+            new_task["sendTime"] = new_send_time.isoformat()
+            new_task["status"] = "pending"
+            new_task["createdAt"] = datetime.now().isoformat()
 
             # 确保删除原任务的错误信息（如果有）
-            if 'errorMessage' in new_task:
-                del new_task['errorMessage']
+            if "errorMessage" in new_task:
+                del new_task["errorMessage"]
 
             # 保存新任务
             from data_manager import add_task
+
             add_task(new_task)
 
     @handle_errors()
     def start(self):
         """
         启动任务调度器
-        
+
         启动后台线程定期检查并执行任务
-        
+
         Returns:
             bool: 启动成功返回True，如果已经在运行返回False
-            
+
         Example:
             >>> scheduler = TaskScheduler()
             >>> scheduler.start()
@@ -322,11 +337,16 @@ class TaskScheduler:
                         # 自适应间隔调整：根据系统负载动态调整检查频率
                         if adaptive_interval > 0.1:  # 最小间隔100ms
                             # 如果没有任务执行，逐渐增加间隔以减少CPU占用
-                            adaptive_interval = min(adaptive_interval * 1.1, 5.0)  # 最大5秒
+                            adaptive_interval = min(
+                                adaptive_interval * 1.1, 5.0
+                            )  # 最大5秒
 
                         # 计算到下一秒开始需要等待的毫秒数，结合自适应间隔
                         now = datetime.now()
-                        wait_ms = min(1000 - now.microsecond // 1000, int(adaptive_interval * 1000))
+                        wait_ms = min(
+                            1000 - now.microsecond // 1000,
+                            int(adaptive_interval * 1000),
+                        )
 
                         # 确保等待时间在合理范围内（50ms - 5000ms）
                         wait_ms = max(50, min(wait_ms, 5000))
@@ -344,7 +364,7 @@ class TaskScheduler:
                     # 根据连续错误次数动态调整等待时间
                     if consecutive_errors <= 3:
                         # 前3次错误使用指数退避
-                        wait_time = min(2 ** consecutive_errors, 30)  # 最大30秒
+                        wait_time = min(2**consecutive_errors, 30)  # 最大30秒
                     else:
                         # 超过3次错误，使用固定长间隔
                         wait_time = 30
@@ -360,10 +380,10 @@ class TaskScheduler:
     def get_status_info(self):
         """
         获取调度器状态信息
-        
+
         Returns:
             dict: 包含调度器运行状态、性能指标和统计信息的字典
-            
+
         Example:
             >>> scheduler = TaskScheduler()
             >>> status = scheduler.get_status_info()
@@ -371,36 +391,48 @@ class TaskScheduler:
             True
         """
         tasks = load_tasks()
-        pending_tasks = [task for task in tasks.values() if task.get('status') == 'pending']
-        completed_tasks = [task for task in tasks.values() if task.get('status') == 'completed']
-        failed_tasks = [task for task in tasks.values() if task.get('status') == 'failed']
+        pending_tasks = [
+            task for task in tasks.values() if task.get("status") == "pending"
+        ]
+        completed_tasks = [
+            task for task in tasks.values() if task.get("status") == "completed"
+        ]
+        failed_tasks = [
+            task for task in tasks.values() if task.get("status") == "failed"
+        ]
 
         # 计算平均执行时间
         avg_execution_time = 0.0
         if self.task_execution_times:
-            avg_execution_time = sum(self.task_execution_times.values()) / len(self.task_execution_times)
+            avg_execution_time = sum(self.task_execution_times.values()) / len(
+                self.task_execution_times
+            )
 
         return {
-            'running': self.running,
-            'pending_tasks_count': len(pending_tasks),
-            'completed_tasks_count': len(completed_tasks),
-            'failed_tasks_count': len(failed_tasks),
-            'total_tasks_executed': len(self.task_execution_times),
-            'avg_execution_time_seconds': round(avg_execution_time, 3),
-            'max_execution_time_seconds': round(max(self.task_execution_times.values(), default=0.0), 3),
-            'min_execution_time_seconds': round(min(self.task_execution_times.values(), default=0.0), 3)
+            "running": self.running,
+            "pending_tasks_count": len(pending_tasks),
+            "completed_tasks_count": len(completed_tasks),
+            "failed_tasks_count": len(failed_tasks),
+            "total_tasks_executed": len(self.task_execution_times),
+            "avg_execution_time_seconds": round(avg_execution_time, 3),
+            "max_execution_time_seconds": round(
+                max(self.task_execution_times.values(), default=0.0), 3
+            ),
+            "min_execution_time_seconds": round(
+                min(self.task_execution_times.values(), default=0.0), 3
+            ),
         }
 
     @handle_errors()
     def stop(self):
         """
         停止任务调度器
-        
+
         发送停止信号并等待调度器线程结束
-        
+
         Returns:
             bool: 停止成功返回True，如果已经停止返回False
-            
+
         Example:
             >>> scheduler = TaskScheduler()
             >>> scheduler.start()
@@ -416,7 +448,11 @@ class TaskScheduler:
         logger.info("正在停止定时任务调度器...")
 
         # 等待线程结束（避免在当前线程中join自己）
-        if self.thread and self.thread.is_alive() and self.thread != threading.current_thread():
+        if (
+            self.thread
+            and self.thread.is_alive()
+            and self.thread != threading.current_thread()
+        ):
             self.thread.join(timeout=5)
 
         logger.info("定时任务调度器已停止")

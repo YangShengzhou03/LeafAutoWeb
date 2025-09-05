@@ -61,7 +61,19 @@ if %errorlevel% neq 0 (
 
 echo ✅ 所有依赖安装完成！
 echo.
-echo 启动应用...
-python start_app.py
+echo 运行测试...
+echo ===============================
+echo 运行基础功能测试...
+python test_basic_functionality.py
+echo.
+echo ===============================
+echo 运行完整功能测试...
+python test_basic_functionality_complete.py
+echo.
+echo ===============================
+echo 运行应用测试...
+python -m pytest test_app.py -v
+echo.
+echo ✅ 所有测试完成！
 
 pause

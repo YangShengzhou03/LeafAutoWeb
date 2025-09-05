@@ -122,5 +122,16 @@
     "createdAt": "2025-09-05T16:09:25.311701",
     "id": "17ce90ef-631e-4318-b516-a12d9718067a",
     "updatedAt": "2025-09-05T16:09:31.821634"
+  },
+  "83b5c74c-2fcb-40dd-a120-3a44cafb3278": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T19:37",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测测测",
+    "status": "completed",
+    "createdAt": "2025-09-05T19:37:20.034680",
+    "id": "83b5c74c-2fcb-40dd-a120-3a44cafb3278",
+    "updatedAt": "2025-09-05T19:37:30.097920"
   }
 }
