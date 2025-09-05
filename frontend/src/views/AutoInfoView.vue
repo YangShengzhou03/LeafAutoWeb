@@ -64,7 +64,7 @@
                   show-word-limit maxlength="500" />
                 <div class="el-form-item__tip">
                   <p>如需发送文件，请直接输入完整文件路径，如：D:\杨圣洲\工作文件.pdf</p>
-                  <p>如需发送表情包，请输入 <strong>SendEmotion:1</strong> 其中1为表情包次序 </p>
+                  <p>如需发送表情包，请输入 <strong>SendEmotion:1</strong> ，其中1为表情包次序 </p>
                 </div>
               </el-form-item>
 
