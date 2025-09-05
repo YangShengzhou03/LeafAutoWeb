@@ -187,7 +187,7 @@ class AiWorkerThread:
                 # 仅在内容完全一致时检查时间间隔
                 if content == last_content:
                     if current_time - last_timestamp < self.min_reply_interval:
-                        logger.debug(f"Skip reply to {chat_name} due to minimum reply interval for repeated content")
+    
                         return
 
             matched_replies = self._match_rule(content)
@@ -197,12 +197,18 @@ class AiWorkerThread:
             reply_content = matched_replies[0]
 
             if self.reply_delay > 0:
-                logger.debug(f"Waiting {self.reply_delay} seconds before replying to {who}")
+
                 time.sleep(self.reply_delay)
 
             response = self.wx_instance.SendMsg(msg=reply_content, who=who)
 
             if isinstance(response, dict) and response.get("status") == "成功":
+                # 增加消息配额计数
+                from data_manager import increment_message_count
+                if not increment_message_count():
+                    logger.error(f"信息余量耗尽，无法发送消息给 {chat_name}")
+                    return
+                
                 # 存储最后发送的消息内容和时间戳
                 self.last_sent_messages[chat_name] = {
                     'content': content,

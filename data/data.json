@@ -1,13 +1,126 @@
 {
-  "b88d19b8-9842-4a50-b4d7-32328210902b": {
+  "4f8d7f22-8c91-47ef-a141-61ef31c4ec24": {
     "recipient": "文件传输助手",
-    "sendTime": "2025-09-04T22:37",
+    "sendTime": "2025-09-05T11:18",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试一下",
+    "status": "completed",
+    "createdAt": "2025-09-05T11:18:36.735022",
+    "id": "4f8d7f22-8c91-47ef-a141-61ef31c4ec24",
+    "updatedAt": "2025-09-05T11:18:42.922454"
+  },
+  "221b936b-c5ae-4685-b344-3ac68ed78916": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T11:23",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "赖建一条消息",
+    "status": "completed",
+    "createdAt": "2025-09-05T11:23:17.241150",
+    "id": "221b936b-c5ae-4685-b344-3ac68ed78916",
+    "updatedAt": "2025-09-05T11:23:24.003189"
+  },
+  "790de262-5089-418f-9578-7c6c7d1dc72b": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T11:27",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试测试测试",
+    "status": "completed",
+    "createdAt": "2025-09-05T11:27:54.806794",
+    "id": "790de262-5089-418f-9578-7c6c7d1dc72b",
+    "updatedAt": "2025-09-05T11:28:01.801684"
+  },
+  "3b361ccd-8f0c-48a0-84b3-a0b313b1eaa0": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T11:29",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试一条",
+    "status": "completed",
+    "createdAt": "2025-09-05T11:29:32.988320",
+    "id": "3b361ccd-8f0c-48a0-84b3-a0b313b1eaa0",
+    "updatedAt": "2025-09-05T11:29:38.495434"
+  },
+  "7794565a-fb2b-4082-ba49-520c9c7f8468": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T11:29",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试是",
+    "status": "completed",
+    "createdAt": "2025-09-05T11:29:54.693250",
+    "id": "7794565a-fb2b-4082-ba49-520c9c7f8468",
+    "updatedAt": "2025-09-05T11:30:01.812984"
+  },
+  "87713661-930e-46e1-aa9f-4a8d83289a14": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T11:30",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "车沙家浜最后一条",
+    "status": "completed",
+    "createdAt": "2025-09-05T11:30:23.273198",
+    "id": "87713661-930e-46e1-aa9f-4a8d83289a14",
+    "updatedAt": "2025-09-05T11:30:34.074614"
+  },
+  "d035c4b6-cb57-44a0-990f-45a8332274d8": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T14:52",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试一下文家场",
+    "status": "failed",
+    "createdAt": "2025-09-05T14:52:25.996680",
+    "id": "d035c4b6-cb57-44a0-990f-45a8332274d8",
+    "updatedAt": "2025-09-05T14:52:34.214211",
+    "errorMessage": "信息余量耗尽，无法发送消息"
+  },
+  "97d2e27f-0b10-4739-bd30-9caafbac1dd7": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T14:52",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "文件传输助手",
+    "status": "failed",
+    "createdAt": "2025-09-05T14:52:59.359563",
+    "id": "97d2e27f-0b10-4739-bd30-9caafbac1dd7",
+    "updatedAt": "2025-09-05T14:53:07.615858",
+    "errorMessage": "信息余量耗尽，无法发送消息"
+  },
+  "316a9e88-6124-45ca-88d5-21f0c841e9c1": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T14:55",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试一下发不发",
+    "status": "failed",
+    "createdAt": "2025-09-05T14:55:06.742946",
+    "id": "316a9e88-6124-45ca-88d5-21f0c841e9c1",
+    "updatedAt": "2025-09-05T14:55:08.325532",
+    "errorMessage": "信息余量耗尽，无法发送消息"
+  },
+  "8958d4bb-e1a9-496f-86b5-1cafcafbb4d0": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T15:07",
     "repeatType": "none",
     "repeatDays": [],
     "messageContent": "测测测测",
     "status": "completed",
-    "createdAt": "2025-09-04T22:37:52.484259",
-    "id": "b88d19b8-9842-4a50-b4d7-32328210902b",
-    "updatedAt": "2025-09-04T22:37:58.026256"
+    "createdAt": "2025-09-05T15:07:16.211211",
+    "id": "8958d4bb-e1a9-496f-86b5-1cafcafbb4d0",
+    "updatedAt": "2025-09-05T15:07:22.565197"
+  },
+  "17ce90ef-631e-4318-b516-a12d9718067a": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-05T16:09",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试新版本",
+    "status": "completed",
+    "createdAt": "2025-09-05T16:09:25.311701",
+    "id": "17ce90ef-631e-4318-b516-a12d9718067a",
+    "updatedAt": "2025-09-05T16:09:31.821634"
   }
 }

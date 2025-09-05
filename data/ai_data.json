@@ -5,8 +5,15 @@
     "minReplyInterval": 10,
     "contactPerson": "杨圣洲",
     "aiPersona": "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。",
-    "customRules": [],
+    "customRules": [
+      {
+        "id": 1757060812968,
+        "matchType": "contains",
+        "keyword": "12312",
+        "reply": "12312312313"
+      }
+    ],
     "onlyAt": false,
-    "updatedAt": "2025-09-04T23:38:10.064712"
+    "updatedAt": "2025-09-05T16:26:52.982243"
   }
 }

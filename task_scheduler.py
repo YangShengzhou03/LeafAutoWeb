@@ -2,6 +2,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 
+from data_manager import increment_message_count
 from data_manager import load_tasks, update_task_status
 from logging_config import get_logger, handle_errors
 from wechat_instance import get_wechat_instance, is_wechat_online
@@ -18,8 +19,12 @@ def send_msg(who, msg):
         if not is_wechat_online():
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
 
+        if not increment_message_count():
+            return {"status": "failed", "message": "信息余量耗尽，无法发送消息"}
+
         result = wx.SendMsg(msg, who)
         if result["status"] == "成功":
+            # 增加消息配额计数
             return {"status": "success", "message": "消息发送成功"}
         else:
             return {"status": "failed", "message": result.get("message", "发送失败")}
@@ -141,9 +146,8 @@ class TaskScheduler:
                 self.task_execution_times) if self.task_execution_times else 0
             logger.info(f"本次检查执行了 {executed_count} 个任务，平均执行时间: {avg_execution_time:.3f}秒")
         else:
-            logger.debug("本次检查没有需要执行的任务")
-
-        return executed_count
+            logger.info("没有到期的任务")
+            return executed_count
 
     def execute_task(self, task_id, task):
         """执行单个任务"""

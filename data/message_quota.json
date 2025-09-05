@@ -1,6 +1,7 @@
 {
-  "daily_limit": 1000,
-  "used_today": 0,
+  "daily_limit": 100,
+  "used_today": 2,
   "last_reset_date": "2025-09-05",
-  "blocked": false
+  "blocked": true,
+  "account_level": "free"
 }

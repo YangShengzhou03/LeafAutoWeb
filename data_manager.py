@@ -8,7 +8,7 @@ from logging_config import get_logger
 # 初始化日志器
 logger = get_logger(__name__)
 
-# 全局数据存储（线程安全）
+# 全局数据存储
 tasks = {}
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'data.json')
 
@@ -21,7 +21,7 @@ AI_DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 
 reply_history = []
 REPLY_HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'reply_history.json')
 
-# 线程锁确保并发安全
+# 线程锁
 data_lock = threading.Lock()
 
 
@@ -31,299 +31,163 @@ def load_tasks():
         if os.path.exists(DATA_FILE):
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 tasks = json.load(f)
-            logger.info(f"成功加载 {len(tasks)} 个任务")
         else:
             tasks = {}
-            logger.info("任务文件不存在，创建空任务列表")
-    except json.JSONDecodeError as e:
-        logger.error(f"任务文件JSON解析错误: {e}")
-        tasks = {}
-    except Exception as e:
-        logger.error(f"加载任务失败: {e}")
+    except (json.JSONDecodeError, FileNotFoundError):
         tasks = {}
     return tasks
 
 
+def create_default_home_data():
+    """创建默认的首页数据"""
+    return {
+        "pricingPlans": [
+            {
+                "id": 1,
+                "name": "基础版",
+                "price": 299,
+                "period": "/年",
+                "features": [
+                    "基础消息发送功能",
+                    "每日1000条发送限额",
+                    "无数据分析功能",
+                    "邮件支持"
+                ],
+                "isPopular": False
+            },
+            {
+                "id": 2,
+                "name": "企业版",
+                "price": 899,
+                "period": "/年",
+                "features": [
+                    "无限制消息发送",
+                    "高级数据分析与报表",
+                    "客户画像分析",
+                    "优先技术支持",
+                    "API访问权限"
+                ],
+                "isPopular": True
+            },
+            {
+                "id": 3,
+                "name": "定制版",
+                "price": "联系我们",
+                "period": "获取报价",
+                "features": [
+                    "完全定制化功能",
+                    "专属客户经理",
+                    "私有部署选项",
+                    "24/7技术支持"
+                ],
+                "isPopular": False
+            }
+        ],
+        "keyMetrics": [
+            {
+                "id": 1,
+                "value": "500+",
+                "label": "活跃企业客户"
+            },
+            {
+                "id": 2,
+                "value": "9999+",
+                "label": "自动化任务"
+            },
+            {
+                "id": 3,
+                "value": "98%",
+                "label": "系统稳定性"
+            },
+            {
+                "id": 4,
+                "value": "10000+",
+                "label": "消息发送量"
+            }
+        ],
+        "dashboardData": [
+            {
+                "id": 1,
+                "title": "自动化任务完成率",
+                "trend": "up",
+                "trendValue": 0,
+                "value": 0,
+                "footer": "较昨日"
+            },
+            {
+                "id": 2,
+                "title": "消息送达率",
+                "trend": "up",
+                "trendValue": 0,
+                "value": 0,
+                "footer": "较昨日"
+            },
+            {
+                "id": 3,
+                "title": "AI辅助功能使用率",
+                "trend": "down",
+                "trendValue": 0,
+                "value": 0,
+                "footer": "较昨日"
+            },
+            {
+                "id": 4,
+                "title": "系统状态",
+                "value": "正常运行",
+                "status": "abnormal",
+                "footer": "版本: v1.0.0"
+            }
+        ],
+        "testimonials": [
+            {
+                "id": 1,
+                "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了60%以上。",
+                "customerName": "张三",
+                "customerCompany": "某科技公司市场总监",
+                "customerAvatar": "@/assets/images/user-avatar.svg"
+            },
+            {
+                "id": 2,
+                "quote": "数据分析功能非常强大，让我们能够精准了解客户需求，提升转化率。",
+                "customerName": "李四",
+                "customerCompany": "某电商平台运营主管",
+                "customerAvatar": "@/assets/images/user-avatar.svg"
+            },
+            {
+                "id": 3,
+                "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
+                "customerName": "王五",
+                "customerCompany": "某金融机构IT负责人",
+                "customerAvatar": "@/assets/images/user-avatar.svg"
+            }
+        ]
+    }
+
+
 def save_home_data():
-    """保存首页数据到文件"""
+    """保存首页数据"""
+    global home_data
     try:
         os.makedirs(os.path.dirname(HOME_DATA_FILE), exist_ok=True)
         with open(HOME_DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(home_data, f, ensure_ascii=False, indent=2)
-        logger.info("首页数据保存成功")
-        return True
-    except Exception as e:
-        logger.error(f"保存首页数据失败: {e}")
-        return False
+    except Exception:
+        pass
 
 
 def load_home_data():
+    """加载首页数据"""
     global home_data
     try:
         if os.path.exists(HOME_DATA_FILE):
             with open(HOME_DATA_FILE, 'r', encoding='utf-8') as f:
                 home_data = json.load(f)
         else:
-            # 文件不存在时创建默认数据并保存
-            home_data = {
-                "pricingPlans": [
-                    {
-                        "id": 1,
-                        "name": "基础版",
-                        "price": 299,
-                        "period": "/年",
-                        "features": [
-                            "基础消息发送功能",
-                            "每日1000条发送限额",
-                            "无数据分析功能",
-                            "邮件支持"
-                        ],
-                        "isPopular": False
-                    },
-                    {
-                        "id": 2,
-                        "name": "企业版",
-                        "price": 899,
-                        "period": "/年",
-                        "features": [
-                            "无限制消息发送",
-                            "高级数据分析与报表",
-                            "客户画像分析",
-                            "优先技术支持",
-                            "API访问权限"
-                        ],
-                        "isPopular": True
-                    },
-                    {
-                        "id": 3,
-                        "name": "定制版",
-                        "price": "联系我们",
-                        "period": "获取报价",
-                        "features": [
-                            "完全定制化功能",
-                            "专属客户经理",
-                            "私有部署选项",
-                            "24/7技术支持"
-                        ],
-                        "isPopular": False
-                    }
-                ],
-                "keyMetrics": [
-                    {
-                        "id": 1,
-                        "value": "500+",
-                        "label": "活跃企业客户"
-                    },
-                    {
-                        "id": 2,
-                        "value": "9999+",
-                        "label": "自动化任务"
-                    },
-                    {
-                        "id": 3,
-                        "value": "98%",
-                        "label": "系统稳定性"
-                    },
-                    {
-                        "id": 4,
-                        "value": "10000+",
-                        "label": "消息发送量"
-                    }
-                ],
-                "dashboardData": [
-                    {
-                        "id": 1,
-                        "title": "自动化任务完成率",
-                        "trend": "up",
-                        "trendValue": 0,
-                        "value": 0,
-                        "footer": "较昨日"
-                    },
-                    {
-                        "id": 2,
-                        "title": "消息送达率",
-                        "trend": "up",
-                        "trendValue": 0,
-                        "value": 0,
-                        "footer": "较昨日"
-                    },
-                    {
-                        "id": 3,
-                        "title": "AI辅助功能使用率",
-                        "trend": "down",
-                        "trendValue": 0,
-                        "value": 0,
-                        "footer": "较昨日"
-                    },
-                    {
-                        "id": 4,
-                        "title": "系统状态",
-                        "value": "正常运行",
-                        "status": "abnormal",
-                        "footer": "版本: v1.0.0"
-                    }
-                ],
-                "testimonials": [
-                    {
-                        "id": 1,
-                        "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了60%以上。",
-                        "customerName": "张三",
-                        "customerCompany": "某科技公司市场总监",
-                        "customerAvatar": "@/assets/images/user-avatar.svg"
-                    },
-                    {
-                        "id": 2,
-                        "quote": "数据分析功能非常强大，让我们能够精准了解客户需求，提升转化率。",
-                        "customerName": "李四",
-                        "customerCompany": "某电商平台运营主管",
-                        "customerAvatar": "@/assets/images/user-avatar.svg"
-                    },
-                    {
-                        "id": 3,
-                        "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
-                        "customerName": "王五",
-                        "customerCompany": "某金融机构IT负责人",
-                        "customerAvatar": "@/assets/images/user-avatar.svg"
-                    }
-                ]
-            }
-            # 保存默认数据到文件
+            home_data = create_default_home_data()
             save_home_data()
-    except json.JSONDecodeError as e:
-        logger.error(f'首页数据JSON解析错误: {e}')
-        # JSON解析错误时也创建默认数据
-        home_data = {
-            "pricingPlans": [
-                {
-                    "id": 1,
-                    "name": "基础版",
-                    "price": 299,
-                    "period": "/年",
-                    "features": [
-                        "基础消息发送功能",
-                        "每日1000条发送限额",
-                        "无数据分析功能",
-                        "邮件支持"
-                    ],
-                    "isPopular": False
-                },
-                {
-                    "id": 2,
-                    "name": "企业版",
-                    "price": 899,
-                    "period": "/年",
-                    "features": [
-                        "无限制消息发送",
-                        "高级数据分析与报表",
-                        "客户画像分析",
-                        "优先技术支持",
-                        "API访问权限"
-                    ],
-                    "isPopular": True
-                },
-                {
-                    "id": 3,
-                    "name": "定制版",
-                    "price": "联系我们",
-                    "period": "获取报价",
-                    "features": [
-                        "完全定制化功能",
-                        "专属客户经理",
-                        "私有部署选项",
-                        "24/7技术支持"
-                    ],
-                    "isPopular": False
-                }
-            ],
-            "keyMetrics": [
-                {
-                    "id": 1,
-                    "value": "500+",
-                    "label": "活跃企业客户"
-                },
-                {
-                    "id": 2,
-                    "value": "9999+",
-                    "label": "自动化任务"
-                },
-                {
-                    "id": 3,
-                    "value": "98%",
-                    "label": "系统稳定性"
-                },
-                {
-                    "id": 4,
-                    "value": "10000+",
-                    "label": "消息发送量"
-                }
-            ],
-            "dashboardData": [
-                {
-                    "id": 1,
-                    "title": "自动化任务完成率",
-                    "trend": "up",
-                    "trendValue": 3.2,
-                    "value": 12,
-                    "footer": "较昨日"
-                },
-                {
-                    "id": 2,
-                    "title": "消息送达率",
-                    "trend": "up",
-                    "trendValue": 1.8,
-                    "value": 97.5,
-                    "footer": "较昨日"
-                },
-                {
-                    "id": 3,
-                    "title": "AI辅助功能使用率",
-                    "trend": "down",
-                    "trendValue": 0.5,
-                    "value": 6,
-                    "footer": "较昨日"
-                },
-                {
-                    "id": 4,
-                    "title": "系统状态",
-                    "value": "正常运行",
-                    "status": "abnormal",
-                    "footer": "版本: v1.0.0"
-                }
-            ],
-            "testimonials": [
-                {
-                    "id": 1,
-                    "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了60%以上。",
-                    "customerName": "张三",
-                    "customerCompany": "某科技公司市场总监",
-                    "customerAvatar": "@/assets/images/user-avatar.svg"
-                },
-                {
-                    "id": 2,
-                    "quote": "数据分析功能非常强大，让我们能够精准了解客户需求，提升转化率。",
-                    "customerName": "李四",
-                    "customerCompany": "某电商平台运营主管",
-                    "customerAvatar": "@/assets/images/user-avatar.svg"
-                },
-                {
-                    "id": 3,
-                    "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
-                    "customerName": "王五",
-                    "customerCompany": "某金融机构IT负责人",
-                    "customerAvatar": "@/assets/images/user-avatar.svg"
-                }
-            ]
-        }
+    except (json.JSONDecodeError, FileNotFoundError):
+        home_data = create_default_home_data()
         save_home_data()
-    except Exception as e:
-        logger.error(f'加载首页数据异常: {e}')
-        home_data = {
-            "pricingPlans": [],
-            "keyMetrics": [],
-            "dashboardData": [],
-            "testimonials": []
-        }
-
     # 动态更新dashboard数据（与昨日对比）
     try:
         # 获取当前日期和昨日日期
@@ -391,7 +255,6 @@ def load_home_data():
         wx = get_wechat_instance()
         is_logged_in = wx.IsOnline()
 
-        # 查找系统状态卡片（id为4的dashboardData项）
         for item in home_data.get("dashboardData", []):
             if item.get("id") == 4:
                 if is_logged_in:
@@ -404,8 +267,6 @@ def load_home_data():
                     item["footer"] = "请登录微信"
                 break
     except Exception as e:
-
-        # 如果获取微信状态失败，设置系统状态为异常
         for item in home_data.get("dashboardData", []):
             if item.get("id") == 4:
                 item["value"] = "微信异常"
@@ -446,9 +307,8 @@ def save_tasks():
         os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(tasks, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+    except Exception:
+        pass
 
 
 def load_ai_data():
@@ -460,7 +320,7 @@ def load_ai_data():
                 ai_settings = data.get('settings', {})
         else:
             ai_settings = {}
-    except Exception as e:
+    except Exception:
         ai_settings = {}
     return ai_settings
 
@@ -476,11 +336,10 @@ def load_reply_history():
         else:
             reply_history = []
         
-        # 确保reply_history是列表类型
         if not isinstance(reply_history, list):
             reply_history = []
             
-    except Exception as e:
+    except Exception:
         reply_history = []
     return reply_history
 
@@ -716,6 +575,111 @@ def add_ai_history(history_data):
     save_reply_history()
     return history_data
 
+
+def load_message_quota():
+    """加载消息配额数据"""
+    quota_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'message_quota.json')
+    try:
+        if os.path.exists(quota_file):
+            with open(quota_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # 默认配额数据
+            default_quota = {
+                "daily_limit": 100,
+                "used_today": 0,
+                "last_reset_date": datetime.datetime.now().date().isoformat(),
+                "blocked": False,
+                "account_level": "free"  # free: 免费版, basic: 标准版, enterprise: 企业版
+            }
+            save_message_quota(default_quota)
+            return default_quota
+    except Exception as e:
+        logger.error(f"加载消息配额数据失败: {e}")
+        return {
+            "daily_limit": 100,
+            "used_today": 0,
+            "last_reset_date": datetime.datetime.now().date().isoformat(),
+            "blocked": False,
+            "account_level": "free"
+        }
+
+def save_message_quota(quota_data):
+    """保存消息配额数据"""
+    quota_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'message_quota.json')
+    try:
+        os.makedirs(os.path.dirname(quota_file), exist_ok=True)
+        with open(quota_file, 'w', encoding='utf-8') as f:
+            json.dump(quota_data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"保存消息配额数据失败: {e}")
+        return False
+
+def get_quota_info():
+    """获取配额信息，包括账户等级和对应的限额"""
+    quota_data = load_message_quota()
+    account_level = quota_data.get("account_level", "free")
+    
+    # 根据账户等级设置不同的每日限额
+    if account_level == "enterprise":
+        daily_limit = float('inf')  # 企业版无限制
+    elif account_level == "basic":
+        daily_limit = 1000  # 基础版1000条
+    else:
+        daily_limit = 100  # 免费版100条
+    
+    # 检查是否需要重置每日使用量
+    current_date = datetime.datetime.now().date().isoformat()
+    last_reset_date = quota_data.get("last_reset_date")
+    if last_reset_date != current_date:
+        quota_data["used_today"] = 0
+        quota_data["last_reset_date"] = current_date
+        save_message_quota(quota_data)
+    
+    # 计算剩余配额，确保不会出现负数
+    used_today = quota_data.get("used_today", 0)
+    if daily_limit != float('inf'):
+        # 如果已使用量超过限额，剩余为0
+        if used_today >= daily_limit:
+            remaining = 0
+        else:
+            remaining = daily_limit - used_today
+    else:
+        remaining = float('inf')
+    
+    return {
+        "account_level": account_level,
+        "daily_limit": daily_limit,
+        "used_today": used_today,
+        "remaining": remaining,
+        "blocked": quota_data.get("blocked", False),
+        "is_unlimited": account_level == "enterprise"
+    }
+
+def increment_message_count():
+    """增加今日已使用消息计数，如果配额不足则返回False"""
+    quota_data = load_message_quota()
+    
+    # 检查配额是否已耗尽（企业版除外）
+    account_level = quota_data.get("account_level", "free")
+    if account_level != "enterprise":
+        daily_limit = 1000 if account_level == "basic" else 100
+        if quota_data.get("used_today", 0) >= daily_limit:
+            # 配额已耗尽，不增加计数
+            return False
+    
+    # 增加计数
+    quota_data["used_today"] = quota_data.get("used_today", 0) + 1
+    
+    # 检查是否超过限额（企业版除外）
+    if account_level != "enterprise":
+        daily_limit = 1000 if account_level == "basic" else 100
+        if quota_data["used_today"] >= daily_limit:
+            quota_data["blocked"] = True
+    
+    save_message_quota(quota_data)
+    return True
 
 # 在函数定义完成后加载数据
 load_tasks()

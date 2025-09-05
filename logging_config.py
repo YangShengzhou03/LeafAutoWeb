@@ -195,6 +195,6 @@ logger = get_logger(__name__)
 if __name__ == '__main__':
     # 测试日志配置
     logger.info("日志配置模块加载成功")
-    logger.debug("这是一条调试信息")
+
     logger.warning("这是一条警告信息")
     logger.error("这是一条错误信息")

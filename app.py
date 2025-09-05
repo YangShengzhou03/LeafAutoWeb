@@ -16,12 +16,12 @@ from flask_cors import CORS
 
 from ai_worker import AiWorkerManager
 from data_manager import (
-    load_tasks, load_ai_data, load_reply_history, load_home_data, add_task, delete_task,
+    load_tasks, load_ai_data, load_home_data, add_task, delete_task,
     update_task_status, clear_tasks, import_tasks, save_ai_settings, add_ai_history,
-    get_ai_stats
+    get_ai_stats, load_reply_history
 )
 from logging_config import get_logger
-from task_scheduler import start_task_scheduler, task_scheduler
+from task_scheduler import start_task_scheduler, task_scheduler, stop_task_scheduler
 from wechat_instance import start_status_monitor, get_wechat_instance, get_status_info, is_wechat_online
 
 # 创建Flask应用实例
@@ -275,7 +275,6 @@ def get_ai_history():
         Response: JSON格式的AI回复历史记录
     """
     try:
-        from data_manager import load_reply_history
         history = load_reply_history()
         return jsonify(history), 200
     except Exception as e:
@@ -452,7 +451,6 @@ def start_task_scheduler_route():
 @app.route('/api/task-scheduler/stop', methods=['POST'])
 @handle_api_errors
 def stop_task_scheduler_route():
-    from task_scheduler import stop_task_scheduler
     stop_task_scheduler()
     return jsonify({'success': True, 'message': '任务调度器已停止'}), 200
 
@@ -460,7 +458,6 @@ def stop_task_scheduler_route():
 @app.route('/api/task-scheduler/status', methods=['GET'])
 @handle_api_errors
 def get_task_scheduler_status():
-    from task_scheduler import task_scheduler
     status_info = task_scheduler.get_status_info()
     return jsonify({
         'isRunning': status_info['running'],
@@ -614,6 +611,30 @@ def export_group_voices():
 @app.route('/api/export/group-videos', methods=['GET'])
 def export_group_videos():
     return jsonify({'error': '视频数据导出功能正在建设中'}), 501
+
+
+@app.route('/api/message-quota', methods=['GET'])
+@handle_api_errors
+def get_message_quota():
+    """
+    获取消息配额信息
+    
+    Returns:
+        Response: JSON格式的消息配额信息
+    """
+    try:
+        from data_manager import get_quota_info
+        quota_info = get_quota_info()
+        return jsonify({
+            'success': True,
+            'quota': quota_info
+        }), 200
+    except Exception as e:
+        logger.error(f"获取消息配额失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 @app.route('/api/export/group-links', methods=['GET'])

@@ -24,29 +24,75 @@
         </nav>
       </div>
       <div class="sidebar-footer">
-        <div class="dev-info">信息余量 458 / 1000</div>
+        <div class="dev-info">信息余量 {{ quotaInfo.is_unlimited ? '∞' : quotaInfo.remaining }} / {{ quotaInfo.is_unlimited ? '∞' : quotaInfo.daily_limit }}</div>
         <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: (458 / 1000) * 100 + '%' }"></div>
+          <div class="progress-fill" :style="{ width: quotaInfo.is_unlimited ? '100%' : (quotaInfo.used_today / quotaInfo.daily_limit) * 100 + '%' }"></div>
         </div>
-        <button class="upgrade-btn">升级专业版</button>
+        <button class="upgrade-btn" @click="handleUpgrade">{{ upgradeButtonText }}</button>
       </div>
     </aside>
 
     <main class="main-content">
       <router-view />
     </main>
+
+    <!-- 升级模态框 -->
+    <UpgradeModal 
+      :show="showUpgradeModal" 
+      :account-level="quotaInfo.account_level"
+      @close="showUpgradeModal = false"
+      @confirm="handlePayment"
+    />
   </div>
 </template>
 
 <script setup>
 import { useRoute, onBeforeRouteUpdate } from 'vue-router';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import UpgradeModal from '@/components/UpgradeModal.vue';
 
 const nickname = ref("未登录");
 const avatarChar = ref("未");
 const route = useRoute();
 const currentRoute = ref(route.path);
 const wxStatusInterval = ref(null);
+const quotaInfo = ref({
+  used_today: 0,
+  daily_limit: 1000,
+  remaining: 1000,
+  account_level: 'basic',
+  is_unlimited: false
+});
+const quotaInterval = ref(null);
+const showUpgradeModal = ref(false);
+
+// 计算升级按钮文本
+const upgradeButtonText = computed(() => {
+  const level = quotaInfo.value.account_level;
+  if (level === 'free') return '升级标准版';
+  if (level === 'basic') return '升级企业版';
+  return '获取帮助';
+});
+
+// 处理升级按钮点击
+const handleUpgrade = () => {
+  const level = quotaInfo.value.account_level;
+  if (level === 'free' || level === 'basic') {
+    showUpgradeModal.value = true;
+  } else {
+    // 企业版用户点击时打开帮助链接
+    window.open('https://help.example.com', '_blank');
+  }
+};
+
+
+
+// 处理支付
+const handlePayment = () => {
+  // 这里可以添加实际的支付逻辑
+  alert('支付功能即将上线，请稍后再试');
+  showUpgradeModal.value = false;
+};
 
 // 检查微信登录状态
 const checkWeChatStatus = async () => {
@@ -91,17 +137,40 @@ const checkWeChatStatus = async () => {
   }
 };
 
+// 检查消息配额状态
+const checkMessageQuota = async () => {
+  try {
+    const response = await fetch('/api/message-quota');
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    if (result.success) {
+      quotaInfo.value = result.quota;
+    }
+  } catch (error) {
+    console.error('获取消息配额失败:', error);
+  }
+};
+
 onMounted(() => {
   // 立即检查一次状态
   checkWeChatStatus();
+  checkMessageQuota();
   
   // 每5分钟检查一次微信状态
   wxStatusInterval.value = setInterval(checkWeChatStatus, 300000);
+  // 每10秒检查一次消息配额，实现实时响应式更新
+  quotaInterval.value = setInterval(checkMessageQuota, 10000);
 });
 
 onUnmounted(() => {
   if (wxStatusInterval.value) {
     clearInterval(wxStatusInterval.value);
+  }
+  if (quotaInterval.value) {
+    clearInterval(quotaInterval.value);
   }
 });
 
@@ -295,10 +364,12 @@ onBeforeRouteUpdate((to) => {
 }
 
 .upgrade-btn:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+  }
+
+
 
 .progress-bar {
   width: 100%;
