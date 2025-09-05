@@ -15,15 +15,24 @@ import logging
 from pathlib import Path
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('production.log')
-    ]
-)
+# 配置日志格式
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# 配置文件处理器，指定utf-8编码
+file_handler = logging.FileHandler('production.log', encoding='utf-8')
+file_handler.setFormatter(formatter)
+file_handler.setLevel(logging.INFO)
+
+# 配置控制台处理器，使用errors='replace'处理编码问题
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)
+console_handler.setLevel(logging.INFO)
+
+# 设置日志记录器
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 # 获取项目根目录
 ROOT_DIR = Path(__file__).parent
@@ -45,14 +54,19 @@ def start_flask_backend():
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,  # 行缓冲
-            universal_newlines=True
+            universal_newlines=True,
+            encoding='utf-8',  # 指定编码为utf-8
+            errors='replace'  # 替换无法解码的字符
         )
         
         processes['flask'] = process
         logger.info(f"Flask后端服务已启动，PID: {process.pid}")
         
-        # 实时输出日志
+        # 实时输出日志，过滤掉一些不需要的日志
         for line in process.stdout:
+            # 过滤掉 comtypes 相关的日志
+            if "comtypes.client._code_cache" in line:
+                continue
             logger.info(f"[Flask] {line.strip()}")
             
         return process
@@ -68,57 +82,39 @@ def start_frontend():
         # 切换到前端目录
         os.chdir(str(FRONTEND_DIR))
         
-        # 检查 npm 是否可用
-        try:
-            subprocess.run(['npm', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            npm_available = True
-            logger.info("npm 命令可用")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            npm_available = False
-            logger.warning("npm 命令不可用，尝试使用 npx")
-        
-        # 尝试使用 npm 或 npx 启动服务
-        if npm_available:
-            cmd = ['npm', 'run', 'serve']
-        else:
-            # 尝试使用 npx
-            try:
-                subprocess.run(['npx', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-                cmd = ['npx', 'npm', 'run', 'serve']
-                logger.info("使用 npx 启动前端服务")
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                # 如果 npx 也不可用，尝试使用 shell
-                logger.warning("npm 和 npx 都不可用，尝试使用 shell 启动")
-                cmd = 'npm run serve'
-        
-        # 启动前端服务
-        if isinstance(cmd, str):
-            # 使用 shell=True
-            process = subprocess.Popen(
-                cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,  # 行缓冲
-                universal_newlines=True
-            )
-        else:
-            # 不使用 shell
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,  # 行缓冲
-                universal_newlines=True
-            )
+        # 直接使用 shell 启动 npm 服务
+        process = subprocess.Popen(
+            'npm run serve',
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,  # 行缓冲
+            universal_newlines=True
+        )
         
         processes['frontend'] = process
         logger.info(f"前端Vue应用已启动，PID: {process.pid}")
         
-        # 实时输出日志
+        # 实时输出日志，过滤掉一些不需要的日志
         for line in process.stdout:
+            # 过滤掉构建过程中的详细日志
+            if any(skip_text in line for skip_text in [
+                "setup (watch run)",
+                "setup (normal module factory)",
+                "setup (context module factory)",
+                "setup (before compile)",
+                "setup (compile)",
+                "setup (compilation)",
+                "[",
+                "]",
+                "%",
+                "building",
+                "WARN  \"vue\" field in package.json ignored",
+                "You should migrate it into vue.config.js"
+            ]):
+                continue
+                
             logger.info(f"[Frontend] {line.strip()}")
             # 检测前端服务是否已启动
             if "App running at:" in line:
