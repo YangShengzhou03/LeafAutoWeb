@@ -331,18 +331,28 @@ class AiWorkerThread:
 
             reply_content = matched_replies[0]
 
+            # 先检查消息配额
+            from data_manager import increment_message_count, add_ai_history
+            if not increment_message_count():
+                logger.error(f"信息余量耗尽，无法发送消息给 {chat_name}")
+                # 添加历史记录但状态为pending（未回复）
+                history_data = {
+                    "sender": chat_name,
+                    "message": content,
+                    "reply": reply_content,
+                    "status": "pending",
+                    "responseTime": self.reply_delay,
+                    "timestamp": datetime.now().isoformat(),
+                }
+                add_ai_history(history_data)
+                return
+
             if self.reply_delay > 0:
                 time.sleep(self.reply_delay)
 
             response = self.wx_instance.SendMsg(msg=reply_content, who=who)
 
             if isinstance(response, dict) and response.get("status") == "成功":
-                # 增加消息配额计数
-                from data_manager import increment_message_count
-
-                if not increment_message_count():
-                    logger.error(f"信息余量耗尽，无法发送消息给 {chat_name}")
-                    return
 
                 # 存储最后发送的消息内容和时间戳
                 self.last_sent_messages[chat_name] = {

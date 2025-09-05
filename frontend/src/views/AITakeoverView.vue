@@ -238,7 +238,7 @@
           <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
               <el-tag :type="row.status === 'replied' ? 'success' : 'warning'" size="small" class="status-tag">
-                {{ row.status === 'replied' ? '已回复' : '待回复' }}
+                {{ row.status === 'replied' ? '已回复' : '未回复' }}
               </el-tag>
             </template>
           </el-table-column>
@@ -593,7 +593,6 @@ const submitForm = async () => {
       formData.customRules = responseData.customRules || []
       // 确保UI状态与后端保存的状态同步（修复状态同步问题）
       formData.aiStatus = Boolean(responseData.aiStatus ?? false)
-      ElMessage.success('设置保存成功')
     } else {
       const errorData = await response.json().catch(() => ({}))
       ElMessage.error(`保存失败: ${errorData.error || '未知错误，请稍后重试'}`)
@@ -639,7 +638,7 @@ const viewDetails = (row) => {
             ${row.time}
           </div>
           <div class="status-badge ${row.status === 'replied' ? 'status-replied' : 'status-pending'}">
-            ${row.status === 'replied' ? '✅ 已回复' : '⏳ 待回复'}
+            ${row.status === 'replied' ? '✅ 已回复' : '⏳ 未回复'}
           </div>
         </div>
         

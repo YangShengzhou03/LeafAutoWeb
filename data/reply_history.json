@@ -1,8 +1,8 @@
 {
-  "total_replies": 10,
-  "successful_replies": 10,
-  "failed_replies": 0,
-  "average_response_time": 4.0,
+  "total_replies": 17,
+  "successful_replies": 14,
+  "failed_replies": 3,
+  "average_response_time": 2.86,
   "history": [
     {
       "sender": "杨圣洲",
@@ -103,6 +103,76 @@
       "timestamp": "2025-09-05T21:49:18.596515",
       "id": "665e0275-054c-4dfb-8f5b-3abba7307d6c",
       "time": "2025-09-05 21:49:18"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "你好啊，嘻嘻",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T21:58:18.806924",
+      "id": "75301565-a076-4f2c-90ea-29c8e8afa539",
+      "time": "2025-09-05 21:58:18"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你饿了？",
+      "reply": "饿了就吃饿了么！",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T21:58:25.324992",
+      "id": "aad45157-26c6-4ab1-8f56-32c3c83667ee",
+      "time": "2025-09-05 21:58:25"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "阿里巴巴",
+      "reply": "张勇哈哈哈哈",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T21:58:31.970472",
+      "id": "5012443b-3afb-4a03-9788-0bbad6d3f903",
+      "time": "2025-09-05 21:58:31"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "你好啊，嘻嘻",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T22:00:10.493688",
+      "id": "7f5919c4-aea8-489f-9698-65fefd8c3449",
+      "time": "2025-09-05 22:00:10"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "你好啊，嘻嘻",
+      "status": "pending",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T22:19:09.686189",
+      "id": "85cd2f78-9fdb-4596-a8df-d1fc482dad8e",
+      "time": "2025-09-05 22:19:09"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "你好啊，嘻嘻",
+      "status": "pending",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T22:19:29.177187",
+      "id": "e245d220-f06b-45c6-8fda-f4bb0b6ea729",
+      "time": "2025-09-05 22:19:29"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好你好",
+      "reply": "你好啊，嘻嘻",
+      "status": "pending",
+      "responseTime": 0,
+      "timestamp": "2025-09-05T22:19:31.355885",
+      "id": "5edf0786-14a5-4644-ae08-c86276cbde5a",
+      "time": "2025-09-05 22:19:31"
     }
   ]
 }

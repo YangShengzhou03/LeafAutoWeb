@@ -20,6 +20,18 @@ def send_msg(who, msg):
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
 
         if not increment_message_count():
+            # 添加历史记录但状态为pending（未回复）
+            from data_manager import add_ai_history
+            from datetime import datetime
+            history_data = {
+                "sender": who,
+                "message": "",
+                "reply": msg,
+                "status": "pending",
+                "responseTime": 0,
+                "timestamp": datetime.now().isoformat(),
+            }
+            add_ai_history(history_data)
             return {"status": "failed", "message": "信息余量耗尽，无法发送消息"}
 
         result = wx.SendMsg(msg, who)
