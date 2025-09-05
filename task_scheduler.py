@@ -1,3 +1,5 @@
+import os
+import re
 import threading
 import time
 from datetime import datetime, timedelta
@@ -7,9 +9,17 @@ from data_manager import (increment_message_count, load_tasks,
 from logging_config import get_logger, handle_errors
 from wechat_instance import get_wechat_instance, is_wechat_online
 
+# 获取日志器
+logger = get_logger(__name__)
+
 
 def send_msg(who, msg):
-    """发送微信消息"""
+    """发送微信消息或文件
+    
+    Args:
+        who: 接收者
+        msg: 消息内容或文件路径
+    """
     try:
         wx = get_wechat_instance()
         if wx is None:
@@ -20,7 +30,7 @@ def send_msg(who, msg):
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
 
         if not increment_message_count():
-            # 添加历史记录但状态为pending（未回复）
+            # 添加历史记录但状态为pending（未回复）,余量耗尽
             from data_manager import add_ai_history
             from datetime import datetime
             history_data = {
@@ -34,19 +44,34 @@ def send_msg(who, msg):
             add_ai_history(history_data)
             return {"status": "failed", "message": "信息余量耗尽，无法发送消息"}
 
-        result = wx.SendMsg(msg, who)
+        # 判断是发送消息还是文件
+        
+        # 检查消息内容是否直接是一个存在的文件路径
+        if os.path.exists(msg):
+            result = wx.SendFiles(msg, who)
+            success_msg = "文件发送成功"
+        elif msg.startswith("SendEmotion:"):
+            # 发送表情包
+            match = re.search(r'SendEmotion:(\d+)', msg)
+            if match:
+                emotion_index = int(match.group(1))
+                result = wx.SendEmotion(emotion_index-1, who)
+                success_msg = "表情包发送成功"
+            else:
+                return {"status": "failed", "message": "表情包格式错误，应为SendEmotion:数字"}
+        else:
+            # 发送消息
+            result = wx.SendMsg(msg, who)
+            success_msg = "消息发送成功"
+            
         if result["status"] == "成功":
             # 增加消息配额计数
-            return {"status": "success", "message": "消息发送成功"}
+            return {"status": "success", "message": success_msg}
         else:
             return {"status": "failed", "message": result.get("message", "发送失败")}
     except Exception as e:
-        logger.error(f"发送消息时发生错误: {e}")
+        logger.error(f"发送消息/文件时发生错误: {e}")
         return {"status": "failed", "message": f"发送失败: {str(e)}"}
-
-
-# 获取日志器
-logger = get_logger(__name__)
 
 
 class TaskScheduler:
@@ -186,7 +211,7 @@ class TaskScheduler:
             message_content = task.get("messageContent", "")
 
             if recipient and message_content:
-                # 发送消息
+                # 发送消息或文件
                 result = send_msg(recipient, message_content)
 
                 if result.get("status") == "success":

@@ -60,9 +60,14 @@
 
             <el-col :span="24">
               <el-form-item label="信息内容" prop="messageContent">
-                <el-input v-model="formData.messageContent" type="textarea" placeholder="输入信息内容" :rows="4"
+                <el-input v-model="formData.messageContent" type="textarea" placeholder="输入要发送的消息内容或文件路径" :rows="4"
                   show-word-limit maxlength="500" />
+                <div class="el-form-item__tip">
+                  <p>如需发送文件，请直接输入完整文件路径，如：D:\杨圣洲\工作文件.pdf</p>
+                  <p>如需发送表情包，请输入 <strong>SendEmotion:1</strong> 其中1为表情包次序 </p>
+                </div>
               </el-form-item>
+
             </el-col>
           </el-row>
 
@@ -114,8 +119,10 @@
           <el-table-column prop="recipient" label="接收者" min-width="20px" />
           <el-table-column prop="messageContent" label="内容" min-width="20px">
             <template #default="{ row }">
-              <el-tooltip :content="row.messageContent" placement="top">
-                <div class="message-content">{{ row.messageContent }}</div>
+              <el-tooltip :content="row.filePath || row.messageContent" placement="top">
+                <div class="message-content">
+                  {{ row.filePath || row.messageContent }}
+                </div>
               </el-tooltip>
             </template>
           </el-table-column>
@@ -196,7 +203,13 @@ const rules = {
     { required: true, message: '请选择发送时间', trigger: 'change' }
   ],
   messageContent: [
-    { required: true, message: '请输入消息内容', trigger: 'blur' }
+    { 
+      validator: (_, value, callback) => {
+        // 不再要求必须填写消息内容或文件，因为现在可以同时创建两个任务
+        callback()
+      }, 
+      trigger: 'blur' 
+    }
   ],
   repeatType: [
     { required: true, message: '请选择重复类型', trigger: 'change' }
@@ -241,26 +254,43 @@ const resetForm = () => {
 const submitForm = async () => {
   try {
     await taskForm.value.validate()
+    
+    // 自定义验证：确保填写了消息内容
+    if (!formData.messageContent) {
+      ElMessage.error('请填写消息内容')
+      return
+    }
 
-    const taskData = {
+    // 创建任务
+    const tasksToCreate = [{
       ...formData,
       status: 'pending',
       createdAt: new Date().toISOString()
+    }]
+    
+    // 批量创建任务
+    let successCount = 0
+    for (const taskData of tasksToCreate) {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(taskData)
+      })
+      
+      if (response.ok) {
+        const newTask = await response.json()
+        tasks.value.push(newTask)
+        successCount++
+      }
     }
-
-    const response = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(taskData)
-    })
-
-    if (response.ok) {
-      const newTask = await response.json()
-      tasks.value.push(newTask)
-      ElMessage.success('任务创建成功')
+    
+    if (successCount === tasksToCreate.length) {
+      ElMessage.success(`成功创建 ${successCount} 个任务`)
       resetForm()
+    } else {
+      ElMessage.error(`部分任务创建失败，成功创建 ${successCount}/${tasksToCreate.length} 个任务`)
     }
   } catch (error) {
     if (!error.errors) {
@@ -282,6 +312,7 @@ const editTask = async (taskId) => {
     formData.repeatType = task.repeatType
     formData.repeatDays = task.repeatDays
     formData.messageContent = task.messageContent
+
 
     // 删除原任务
     try {
@@ -397,7 +428,7 @@ const exportTasks = () => {
   const exportData = tasks.value.map(task => ({
     '发送时间': formatDateTime(task.sendTime),
     '接收者': task.recipient,
-    '内容': task.messageContent,
+    '内容': task.filePath || task.messageContent,
     '重复类型': getRepeatText(task.repeatType, task.repeatDays)
   }))
 
@@ -475,7 +506,7 @@ const handleFileImport = async (event) => {
           }
         }).filter(task => {
           // 检查必要字段
-          return task.recipient && task.sendTime && task.messageContent
+          return task.recipient && task.sendTime && (task.messageContent || task.filePath)
         })
 
         // 上传到服务器
@@ -505,6 +536,8 @@ const handleFileImport = async (event) => {
   // 重置文件输入，以便可以重复选择同一个文件
   event.target.value = ''
 }
+
+
 
 const getRepeatText = (repeatType, repeatDays) => {
   const dayMap = {
