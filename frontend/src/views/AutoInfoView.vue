@@ -63,8 +63,8 @@
                 <el-input v-model="formData.messageContent" type="textarea" placeholder="输入要发送的消息内容或文件路径" :rows="4"
                   show-word-limit maxlength="500" />
                 <div class="el-form-item__tip">
-                  <p>如需发送文件，请直接输入完整文件路径，如：D:\杨圣洲\工作文件.pdf</p>
-                  <p>如需发送表情包，请输入 <strong>SendEmotion:1</strong> ，其中1为表情包次序 </p>
+                  <p>如需发送文件，请直接输入完整的文件路径，如：<strong>D:\杨圣洲作品\软件需求文档.pdf</strong>，应尽量避免发送桌面的文件，桌面路径过长可能会发送失败。</p>
+                  <p>如需发送表情包，请输入 <strong>SendEmotion:1</strong> ，其中1为表情包次序， <strong>SendEmotion:2,3,4</strong> 表示系统随机从第2、3、4个表情包中选一个发送。</p>
                 </div>
               </el-form-item>
 

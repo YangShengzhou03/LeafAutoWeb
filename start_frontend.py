@@ -70,30 +70,57 @@ def start_frontend_dev_server():
                 # 使用Python内置的http.server提供静态文件服务
                 import http.server
                 import socketserver
-                
-                os.chdir(str(frontend_dist_path))
-                PORT = 8080
-                
-                with socketserver.TCPServer(("", PORT), http.server.SimpleHTTPRequestHandler) as httpd:
-                    logger.info(f"前端静态文件服务运行在: http://localhost:{PORT}")
-                    logger.info("按Ctrl+C停止服务")
-                    httpd.serve_forever()
-                return 0
+        
+                # 保存当前工作目录
+                original_cwd = os.getcwd()
+                try:
+                    os.chdir(str(frontend_dist_path))
+                    PORT = 8080
+                    
+                    # 创建自定义请求处理器，支持SPA路由
+                    class SPARequestHandler(http.server.SimpleHTTPRequestHandler):
+                        def do_GET(self):
+                            # 检查请求的文件是否存在
+                            file_path = self.path.split('?')[0]  # 移除查询参数
+                            if file_path != '/' and os.path.exists(file_path[1:]):
+                                # 文件存在，正常处理
+                                super().do_GET()
+                            else:
+                                # 文件不存在，返回index.html
+                                self.path = '/index.html'
+                                super().do_GET()
+                    
+                    with socketserver.TCPServer(("", PORT), SPARequestHandler) as httpd:
+                        logger.info(f"前端静态文件服务运行在: http://localhost:{PORT}")
+                        logger.info("按Ctrl+C停止服务")
+                        httpd.serve_forever()
+                except Exception as e:
+                    logger.error(f"静态文件服务启动失败: {e}")
+                    return 1
+                finally:
+                    # 恢复原始工作目录
+                    os.chdir(original_cwd)
+                    return 0
             else:
                 logger.warning(f"未找到前端构建文件: {frontend_dist_path}")
                 logger.info("请确保前端文件已正确打包")
                 return 1
         
         # 切换到前端目录
-        if is_frozen():
-            frontend_path = get_resource_path('frontend')
-            if frontend_path.exists():
-                os.chdir(str(frontend_path))
+        original_cwd = os.getcwd()
+        try:
+            if is_frozen():
+                frontend_path = get_resource_path('frontend')
+                if frontend_path.exists():
+                    os.chdir(str(frontend_path))
+                else:
+                    logger.error(f"找不到前端目录: {frontend_path}")
+                    return 1
             else:
-                logger.error(f"找不到前端目录: {frontend_path}")
-                return 1
-        else:
-            os.chdir(str(FRONTEND_DIR))
+                os.chdir(str(FRONTEND_DIR))
+        except Exception as e:
+            logger.error(f"切换目录失败: {e}")
+            return 1
         
         # 检查Node.js
         if not check_node_installed():
@@ -130,8 +157,16 @@ def start_frontend_dev_server():
         logger.error(f"启动前端服务失败: {e}")
         return 1
     finally:
-        # 切换回原目录
-        os.chdir(str(ROOT_DIR))
+        # 切换回原目录，确保无论发生什么情况都恢复目录
+        try:
+            os.chdir(original_cwd)
+        except Exception as e:
+            logger.warning(f"恢复工作目录失败: {e}")
+            # 如果恢复失败，尝试切换到项目根目录
+            try:
+                os.chdir(str(ROOT_DIR))
+            except Exception:
+                pass
 
 def start_frontend():
     """启动前端服务"""

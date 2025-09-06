@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import re
 import threading
 import time
@@ -270,13 +271,17 @@ class AiWorkerThread:
                 success_msg = "文件发送成功"
             elif reply_content.startswith("SendEmotion:"):
                 # 发送表情包
-                match = re.search(r'SendEmotion:(\d+)', reply_content)
+                match = re.search(r'SendEmotion:([\d,，]+)', reply_content)
                 if match:
-                    emotion_index = int(match.group(1))
+                    # 同时支持中文逗号和英文逗号
+                    emotion_str = match.group(1).replace('，', ',')
+                    emotion_indices = [int(idx) for idx in emotion_str.split(',')]
+                    # 随机选择一个表情包索引
+                    emotion_index = random.choice(emotion_indices)
                     response = self.wx_instance.SendEmotion(emotion_index - 1, sender)
-                    success_msg = "表情包发送成功"
+                    success_msg = f"表情包发送成功（选择第{emotion_index}个表情）"
                 else:
-                    logger.error("表情包格式错误，应为SendEmotion:数字")
+                    logger.error("表情包格式错误，应为SendEmotion:数字或多个数字用逗号（中文或英文）分隔")
                     return
             else:
                 response = self.wx_instance.SendMsg(msg=reply_content, who=sender)

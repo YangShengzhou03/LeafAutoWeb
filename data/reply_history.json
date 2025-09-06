@@ -1,6 +1,6 @@
 {
-  "total_replies": 14,
-  "successful_replies": 13,
+  "total_replies": 20,
+  "successful_replies": 19,
   "failed_replies": 1,
   "average_response_time": 0.0,
   "history": [
@@ -143,6 +143,66 @@
       "timestamp": "2025-09-07T00:05:02.480960",
       "id": "c268bbac-76c1-462b-810d-23f3b71076eb",
       "time": "2025-09-07 00:05:02"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "吃饭",
+      "reply": "饮食健康很重要哦！记得按时吃饭，保持营养均衡~",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-07T00:23:35.588119",
+      "id": "51127e7e-f767-4d1e-aa28-9a32b02c9f48",
+      "time": "2025-09-07 00:23:35"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "睡觉",
+      "reply": "良好的睡眠是健康的基础，建议每天保持7-8小时的充足睡眠",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-07T00:23:38.960176",
+      "id": "fd80294e-095b-404b-a2a2-e213d6505e12",
+      "time": "2025-09-07 00:23:38"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "吃饭",
+      "reply": "饮食健康很重要哦！记得按时吃饭，保持营养均衡~",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-07T00:23:41.246856",
+      "id": "ce9e4539-7e87-4a15-96f8-8c15ae52dc25",
+      "time": "2025-09-07 00:23:41"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "嘻嘻",
+      "reply": "😊 有什么开心的事情要分享吗？",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-07T00:23:44.555467",
+      "id": "713044e0-12ce-4b21-a1d8-2552111fb692",
+      "time": "2025-09-07 00:23:44"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "表情1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-07T00:23:58.179108",
+      "id": "e69231a4-3126-4247-826c-83a227887bc4",
+      "time": "2025-09-07 00:23:58"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "发送文件",
+      "reply": "C:\\Users\\YangShengzhou\\Desktop\\iCloud 照片\\IMG_0010-1.JPEG",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-07T00:25:27.256245",
+      "id": "29d09320-b438-4711-94c2-00ed16aa0093",
+      "time": "2025-09-07 00:25:27"
     }
   ]
 }

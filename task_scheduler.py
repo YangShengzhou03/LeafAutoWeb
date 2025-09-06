@@ -1,5 +1,6 @@
 import os
 import re
+import random
 import threading
 import time
 from datetime import datetime, timedelta
@@ -52,13 +53,17 @@ def send_msg(who, msg):
             success_msg = "文件发送成功"
         elif msg.startswith("SendEmotion:"):
             # 发送表情包
-            match = re.search(r'SendEmotion:(\d+)', msg)
+            match = re.search(r'SendEmotion:([\d,，]+)', msg)
             if match:
-                emotion_index = int(match.group(1))
+                # 同时支持中文逗号和英文逗号
+                emotion_str = match.group(1).replace('，', ',')
+                emotion_indices = [int(idx) for idx in emotion_str.split(',')]
+                # 随机选择一个表情包索引
+                emotion_index = random.choice(emotion_indices)
                 result = wx.SendEmotion(emotion_index-1, who)
-                success_msg = "表情包发送成功"
+                success_msg = f"表情包发送成功（选择第{emotion_index}个表情）"
             else:
-                return {"status": "failed", "message": "表情包格式错误，应为SendEmotion:数字"}
+                return {"status": "failed", "message": "表情包格式错误，应为SendEmotion:数字或多个数字用逗号（中文或英文）分隔"}
         else:
             # 发送消息
             result = wx.SendMsg(msg, who)
@@ -148,20 +153,29 @@ class TaskScheduler:
                 if send_time_str:
                     try:
                         # 处理时间格式，支持带时区和不带时区的时间
+                        # 统一转换为本地时区时间进行比较
                         if "Z" in send_time_str:
                             send_time = datetime.fromisoformat(
                                 send_time_str.replace("Z", "+00:00")
-                            )
+                            ).astimezone()
                         elif "+" in send_time_str or "-" in send_time_str:
-                            send_time = datetime.fromisoformat(send_time_str)
+                            send_time = datetime.fromisoformat(send_time_str).astimezone()
                         else:
                             # 如果没有时区信息，假设为本地时间
                             send_time = datetime.fromisoformat(send_time_str)
 
                         # 精确到秒级别的时间比较
-                        # 将时间都截断到秒级别进行比较
+                        # 将时间都截断到秒级别进行比较，并确保都是本地时区
                         current_time_seconds = current_time.replace(microsecond=0)
                         send_time_seconds = send_time.replace(microsecond=0)
+                        
+                        # 确保两个时间对象都是naive（无时区信息）或都有相同时区
+                        if send_time_seconds.tzinfo is not None and current_time_seconds.tzinfo is None:
+                            # 如果send_time有时区信息而current_time没有，将current_time转换为相同时区
+                            current_time_seconds = current_time_seconds.astimezone(send_time_seconds.tzinfo)
+                        elif send_time_seconds.tzinfo is None and current_time_seconds.tzinfo is not None:
+                            # 如果current_time有时区信息而send_time没有，将send_time转换为相同时区
+                            send_time_seconds = send_time_seconds.astimezone(current_time_seconds.tzinfo)
 
                         if current_time_seconds >= send_time_seconds:
                             # 记录任务执行开始时间
@@ -184,6 +198,9 @@ class TaskScheduler:
                     except (ValueError, TypeError) as e:
                         logger.error(f"任务 {task_id} 时间格式错误: {e}")
                         update_task_status(task_id, "failed", str(e))
+                    except Exception as e:
+                        logger.error(f"任务 {task_id} 处理过程中发生未知错误: {e}")
+                        update_task_status(task_id, "failed", f"处理错误: {str(e)}")
 
         if executed_count > 0:
             avg_execution_time = (
