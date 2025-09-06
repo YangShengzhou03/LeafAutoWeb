@@ -50,7 +50,7 @@
             </div>
             
             <div class="qr-info">
-              <h4>扫描二维码获取激活码</h4>
+              <h3>{{random_code}}</h3>
               <p>扫描上方二维码，访问官方网站获取专属激活码</p>
               <div class="qr-steps">
                 <div class="step-item">
@@ -90,13 +90,13 @@
                 <input 
                   type="text" 
                   v-model="activationCode"
-                  placeholder="请输入16位激活码"
+                  placeholder="请输入激活码"
                   class="activation-field"
-                  maxlength="16"
+                  maxlength="6"
                   @input="formatActivationCode"
                   @keyup.enter="handleActivation"
                 />
-                <button class="activation-btn" @click="handleActivation" :disabled="!activationCode || activationCode.length !== 16">
+                <button class="activation-btn" @click="handleActivation" :disabled="!activationCode || activationCode.length < 5 || activationCode.length > 6">
                   <span>立即兑换</span>
                 </button>
               </div>
@@ -145,8 +145,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-
+import { ref, computed, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
 import { defineProps } from 'vue';
 defineProps({
   show: {
@@ -164,12 +164,70 @@ const emit = defineEmits(['close', 'confirm', 'activation', 'after-close']);
 
 // 状态管理
 const activationCode = ref('');
+const randomNum = ref('');
+
+// 生成6位随机数
+const generateRandomCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// 计算属性：显示的随机码
+const random_code = computed(() => {
+  if (!randomNum.value) {
+// 由于计算属性不应有副作用，因此不在这里修改 randomNum.value
+// 可依赖 onMounted 钩子在组件挂载时初始化 randomNum.value
+return generateRandomCode();
+  }
+  return randomNum.value;
+});
+
+// 组件挂载时生成随机码
+onMounted(() => {
+  if (!randomNum.value) {
+    randomNum.value = generateRandomCode();
+  }
+});
 
 // 方法
-const handleActivation = () => {
-  if (activationCode.value.trim() && activationCode.value.length === 16) {
-    emit('activation', activationCode.value.trim());
-    activationCode.value = '';
+const handleActivation = async () => {
+  console.log('收到点击')
+  if (activationCode.value.trim() && (activationCode.value.length >= 5 && activationCode.value.length <= 6)) {
+    // 将5-6位的激活码填充为16位
+    let paddedCode = activationCode.value.trim().toUpperCase();
+    paddedCode = paddedCode.padStart(16, '0');
+    
+    try {
+      const response = await fetch('/api/verify-activation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          randomCode: randomNum.value,
+          activationCode: paddedCode
+        })
+});
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // 激活成功，通知父组件
+        emit('activation', {
+          success: true,
+          version: result.version,
+          expiryDate: result.expiryDate
+        });
+        activationCode.value = '';
+      } else {
+        // 激活失败，显示错误信息
+        ElMessage.error(result.error || '激活码验证失败，请检查激活码是否正确');
+      }
+    } catch (error) {
+      console.error('激活码验证请求失败:', error);
+      ElMessage.error('激活码验证请求失败，请稍后重试');
+    }
+  } else {
+    ElMessage.error('激活码长度不正确，请输入5-6位激活码');
   }
 };
 

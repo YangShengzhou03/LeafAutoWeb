@@ -799,6 +799,53 @@ def increment_message_count():
     return True
 
 
+def update_account_level(level):
+    """
+    更新用户账户级别
+    
+    Args:
+        level: 账户级别，可以是 'free', 'basic' 或 'enterprise'
+    
+    Returns:
+        bool: 更新成功返回True，失败返回False
+    """
+    try:
+        # 验证账户级别是否有效
+        if level not in ["free", "basic", "enterprise"]:
+            logger.error(f"无效的账户级别: {level}")
+            return False
+        
+        # 加载当前配额数据
+        quota_data = load_message_quota()
+        
+        # 更新账户级别
+        quota_data["account_level"] = level
+        
+        # 根据新的账户级别更新每日限额
+        if level == "enterprise":
+            quota_data["daily_limit"] = "unlimited"
+            quota_data["blocked"] = False  # 企业版不限制
+        elif level == "basic":
+            quota_data["daily_limit"] = 1000
+            # 如果当前使用量超过新限额，则设置为限额
+            if quota_data.get("used_today", 0) > 1000:
+                quota_data["used_today"] = 1000
+        else:  # free
+            quota_data["daily_limit"] = 100
+            # 如果当前使用量超过新限额，则设置为限额
+            if quota_data.get("used_today", 0) > 100:
+                quota_data["used_today"] = 100
+        
+        # 保存更新后的配额数据
+        save_message_quota(quota_data)
+        
+        logger.info(f"账户级别已更新为: {level}")
+        return True
+    except Exception as e:
+        logger.error(f"更新账户级别失败: {e}")
+        return False
+
+
 # 在函数定义完成后加载数据
 if __name__ == "__main__":
     load_tasks()

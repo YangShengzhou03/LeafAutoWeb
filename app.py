@@ -21,7 +21,7 @@ from ai_worker import AiWorkerManager
 from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
                           get_ai_stats, import_tasks, load_ai_data,
                           load_home_data, load_reply_history, load_tasks,
-                          save_ai_settings, update_task_status)
+                          save_ai_settings, update_account_level, update_task_status)
 from logging_config import get_logger
 from task_scheduler import (start_task_scheduler, stop_task_scheduler,
                             task_scheduler)
@@ -825,6 +825,74 @@ def get_message_quota():
 @app.route("/api/export/group-links", methods=["GET"])
 def export_group_links():
     return jsonify({"error": "链接数据导出功能正在建设中"}), 501
+
+
+@app.route("/api/verify-activation", methods=["POST"])
+@handle_api_errors
+def verify_activation():
+    """
+    验证激活码
+    
+    Request Body:
+        JSON对象包含randomCode和activationCode字段
+    
+    Returns:
+        Response: 验证结果，包含成功状态、版本和过期时间
+    """
+    data = request.json
+    
+    if not data or "randomCode" not in data or "activationCode" not in data:
+        return jsonify({"success": False, "error": "请求参数不完整"}), 400
+    
+    random_code = data["randomCode"]
+    activation_code = data["activationCode"]
+    
+    # 验证randomCode是否为6位数字
+    if not random_code or not random_code.isdigit() or len(random_code) != 6:
+        return jsonify({"success": False, "error": "随机码格式不正确"}), 400
+    
+    # 验证activationCode是否为16位字母数字
+    if not activation_code or not activation_code.isalnum() or len(activation_code) != 16:
+        return jsonify({"success": False, "error": "激活码格式不正确"}), 400
+    
+    try:
+        # 将随机码转换为整数
+        random_num = int(random_code)
+        
+        # 计算basic版和企业版的密钥
+        basic_key = hex(random_num + 1)[2:].upper().zfill(16)
+        enterprise_key = hex(random_num + 2)[2:].upper().zfill(16)
+        
+        # 验证激活码
+        version = None
+        expiry_days = 30  # 默认30天有效期
+        
+        if activation_code == basic_key:
+            version = "basic"
+            expiry_days = 30  # 基础版30天
+        elif activation_code == enterprise_key:
+            version = "enterprise"
+            expiry_days = 90  # 企业版90天
+        else:
+            return jsonify({"success": False, "error": "激活码无效"}), 400
+        
+        # 计算过期时间
+        from datetime import datetime, timedelta
+        expiry_date = (datetime.now() + timedelta(days=expiry_days)).strftime("%Y-%m-%d")
+        
+        # 更新用户账户级别
+        from data_manager import update_account_level
+        update_account_level(version)
+        
+        return jsonify({
+            "success": True,
+            "version": version,
+            "expiryDate": expiry_date
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"激活码验证失败: {e}")
+        return jsonify({"success": False, "error": "激活码验证过程中发生错误"}), 500
 
 
 if __name__ == "__main__":

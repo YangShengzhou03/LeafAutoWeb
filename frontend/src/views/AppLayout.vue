@@ -49,6 +49,7 @@
 <script setup>
 import { useRoute, onBeforeRouteUpdate } from 'vue-router';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ElMessage } from 'element-plus';
 import UpgradeModal from '@/components/UpgradeModal.vue';
 
 const nickname = ref("未登录");
@@ -91,7 +92,7 @@ const handleUpgrade = () => {
 // 处理支付
 const handlePayment = () => {
   // 这里可以添加实际的支付逻辑
-  alert('支付功能即将上线，请稍后再试');
+  ElMessage.warning('支付功能即将上线，请稍后再试');
   showUpgradeModal.value = false;
 };
 
