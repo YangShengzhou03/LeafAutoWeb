@@ -1,0 +1,118 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Definitions for gradients and filters -->
+  <defs>
+    <!-- Main gradient for trophy -->
+    <linearGradient id="trophyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFC107;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Light gradient for highlights -->
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#FFF8E1;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <!-- Gradient for accent elements -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F8FF7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E5FCC;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter with soft edges -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="4" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Glow effect for futuristic feel -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 3D effect filter -->
+    <filter id="effect3d" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="5" dy="5" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.25"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="400" height="300" fill="#F5FAFF" />
+  
+  <!-- Central Trophy - Main Subject -->
+  <g transform="translate(200, 150)">
+    <!-- Trophy shadow -->
+    <ellipse cx="0" cy="55" rx="70" ry="18" fill="#000000" opacity="0.15" filter="url(#softShadow)" />
+    
+    <!-- Trophy cup base (3D effect) -->
+    <path d="M-35,-35 C-35,-50 -20,-55 0,-55 C20,-55 35,-50 35,-35 L35,15 C35,30 20,35 0,35 C-20,35 -35,30 -35,15 Z" fill="url(#trophyGradient)" filter="url(#effect3d)" />
+    
+    <!-- Trophy cup highlight -->
+    <path d="M-30,-30 C-30,-45 -17,-50 0,-50 C17,-50 30,-45 30,-30 L30,10 C30,25 17,30 0,30 C-17,30 -30,25 -30,10 Z" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Trophy handles (more realistic) -->
+    <path d="M-35,-25 C-45,-25 -50,-15 -45,-5 C-40,5 -30,5 -25,-5" stroke="url(#trophyGradient)" stroke-width="6" fill="none" stroke-linecap="round" filter="url(#effect3d)" />
+    <path d="M35,-25 C45,-25 50,-15 45,-5 C40,5 30,5 25,-5" stroke="url(#trophyGradient)" stroke-width="6" fill="none" stroke-linecap="round" filter="url(#effect3d)" />
+    
+    <!-- Trophy stem (more detailed) -->
+    <rect x="-10" y="35" width="20" height="25" rx="2" ry="2" fill="url(#trophyGradient)" filter="url(#effect3d)" />
+    <rect x="-10" y="35" width="20" height="5" rx="2" ry="2" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Trophy base (more realistic) -->
+    <ellipse cx="0" cy="60" rx="30" ry="10" fill="url(#trophyGradient)" filter="url(#effect3d)" />
+    <ellipse cx="0" cy="58" rx="30" ry="10" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Trophy rim detail -->
+    <ellipse cx="0" cy="-35" rx="35" ry="8" fill="url(#trophyGradient)" filter="url(#effect3d)" />
+    <ellipse cx="0" cy="-37" rx="35" ry="8" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Star on trophy (larger and more prominent) -->
+    <path d="M0,-30 L4,-22 L12,-22 L6,-16 L8,-8 L0,-12 L-8,-8 L-6,-16 L-12,-22 L-4,-22 Z" fill="#FFFFFF" opacity="0.9" filter="url(#glow)" />
+    
+    <!-- Trophy engraving details -->
+    <path d="M-15,-15 Q-10,-12 -5,-15" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M5,-15 Q10,-12 15,-15" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M-15,0 Q-10,3 -5,0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M5,0 Q10,3 15,0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    
+    <!-- Trophy texture details -->
+    <circle cx="-20" cy="-20" r="2" fill="#FFFFFF" opacity="0.4" />
+    <circle cx="20" cy="-20" r="2" fill="#FFFFFF" opacity="0.4" />
+    <circle cx="-20" cy="5" r="2" fill="#FFFFFF" opacity="0.4" />
+    <circle cx="20" cy="5" r="2" fill="#FFFFFF" opacity="0.4" />
+    <circle cx="0" cy="-10" r="2" fill="#FFFFFF" opacity="0.4" />
+    
+    <!-- Top highlight for 3D effect -->
+    <ellipse cx="0" cy="-45" rx="30" ry="12" fill="url(#lightGradient)" opacity="0.5" />
+    
+    <!-- Inner glow effect -->
+    <ellipse cx="0" cy="-10" rx="25" ry="20" fill="url(#lightGradient)" opacity="0.3" />
+    
+    <!-- Floating achievement particles (subtle) -->
+    <circle cx="-40" cy="-40" r="3" fill="#FFC107" opacity="0.6" filter="url(#glow)" />
+    <circle cx="40" cy="-40" r="3" fill="#FFC107" opacity="0.6" filter="url(#glow)" />
+    <circle cx="-40" cy="40" r="3" fill="#FFC107" opacity="0.6" filter="url(#glow)" />
+    <circle cx="40" cy="40" r="3" fill="#FFC107" opacity="0.6" filter="url(#glow)" />
+    
+    <!-- Trophy outer glow -->
+    <circle cx="0" cy="0" r="65" fill="none" stroke="#FFD700" stroke-width="1" opacity="0.3" filter="url(#glow)" />
+  </g>
+</svg>

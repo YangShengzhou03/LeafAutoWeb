@@ -82,7 +82,7 @@ const handleUpgrade = () => {
     showUpgradeModal.value = true;
   } else {
     // 企业版用户点击时打开帮助链接
-    window.open('https://help.example.com', '_blank');
+    window.open('https://qm.qq.com/q/EYFzhIHdhC', '_blank');
   }
 };
 

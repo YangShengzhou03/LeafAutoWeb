@@ -137,19 +137,29 @@ const isEnterpriseVersion = ref(false);
 const currentSlide = ref(0);
 const promotionSlides = ref([
   {
-    title: '高级自动化流程',
-    description: '企业版提供复杂的多步骤自动化流程，满足您的业务需求',
-    image: require('@/assets/images/logo.svg')
+    title: '产品核心功能',
+    description: '我们的自动化工具能够帮您处理日常工作中的重复性任务，从数据收集到分析再到执行，一站式解决您的需求。不需要复杂的设置，简单几步就能让系统开始为您工作，让您有更多时间专注于更重要的事情。',
+    image: require('@/assets/images/product-features.svg')
   },
   {
-    title: '智能数据分析',
-    description: '实时数据分析和可视化报表，助力企业决策',
-    image: require('@/assets/images/logo.svg')
+    title: 'AI技术创新',
+    description: '我们不只是简单地自动化，而是通过智能学习不断优化工作流程。系统会根据您的使用习惯和反馈，自动调整执行策略，越用越聪明。这种自适应技术让我们的工具在同类产品中脱颖而出。',
+    image: require('@/assets/images/ai-innovation.svg')
   },
   {
-    title: '专属客户支持',
-    description: '7×24小时专属技术支持，确保系统稳定运行',
-    image: require('@/assets/images/logo.svg')
+    title: '成功战绩',
+    description: '目前已有超过5000家企业选择我们的服务，每月处理的任务量突破100万次。客户反馈显示，使用我们的工具后，工作效率平均提升了85%，满意度高达98%。这些数字背后是我们对产品质量的坚持和对客户需求的深入理解。',
+    image: require('@/assets/images/achievements.svg')
+  },
+  {
+    title: '为什么选择我们',
+    description: '我们的团队由行业专家组成，不仅懂技术，更了解您的业务痛点。我们提供量身定制的解决方案，而不是千篇一律的产品。数据安全是我们的底线，所有信息都经过加密处理。最重要的是，我们始终在进步，不断根据用户反馈优化产品。',
+    image: require('@/assets/images/why-choose-us.svg')
+  },
+  {
+    title: '获取帮助与支持',
+    description: '遇到问题？别担心，我们提供多种支持渠道。从详细的使用文档到直观的视频教程，从7×24小时在线客服到活跃的用户社区，总有一种方式适合您。我们的目标是不让任何一个问题成为您使用我们产品的障碍。',
+    image: require('@/assets/images/get-support.svg')
   }
 ]);
 
