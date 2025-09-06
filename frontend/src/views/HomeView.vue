@@ -511,7 +511,7 @@ onMounted(() => {
 }
 
 .trend-up {
-  color: var(--success-color);
+  color: var(--danger-color);
   font-size: 0.85rem;
   font-weight: 600;
   display: flex;
@@ -520,7 +520,7 @@ onMounted(() => {
 }
 
 .trend-down {
-  color: var(--danger-color);
+  color: var(--success-color);
   font-size: 0.85rem;
   font-weight: 600;
   display: flex;

@@ -499,7 +499,7 @@ const fetchAiSettings = async () => {
       Object.assign(formData, {
         ...settingsData,
         replyDelay: Number(settingsData.replyDelay ?? 0),
-        minReplyInterval: Number(settingsData.minReplyInterval ?? 30),
+        minReplyInterval: Number(settingsData.minReplyInterval ?? 0),
         customRules: settingsData.customRules || [],
         aiStatus: Boolean(settingsData.aiStatus ?? false) // 确保使用API返回的状态
       })
