@@ -4,14 +4,13 @@
 支持定期状态检查和自动重连
 """
 
+import subprocess
+import sys
 import threading
 import time
 from datetime import datetime
 
 from wxautox import WeChat
-import os
-import subprocess
-import sys
 
 from logging_config import get_logger
 
@@ -103,11 +102,6 @@ def init_wechat():
     
     # 检查COM组件错误冷却时间
     current_time = datetime.now()
-    if _last_com_error_time is not None:
-        time_since_last_error = (current_time - _last_com_error_time).total_seconds()
-        if time_since_last_error < _com_error_cooldown:
-            logger.warning(f"COM组件错误冷却中，剩余 {int(_com_error_cooldown - time_since_last_error)} 秒")
-            return False
     
     try:
         # 先释放现有实例（如果存在）

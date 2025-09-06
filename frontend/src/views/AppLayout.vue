@@ -114,7 +114,7 @@ const checkWeChatStatus = async () => {
       
       if (result.success && result.online) {
         // 显示真实的微信用户名，如果获取不到则显示"微信在线"
-        nickname.value = result.username || '微信在钱';
+        nickname.value = result.username || '微信在线';
         avatarChar.value = result.username ? result.username.charAt(0) : '微';
         return; // 成功获取状态，退出函数
       } else {
