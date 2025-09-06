@@ -29,7 +29,8 @@ vue_process = start_vue_server(8080)
 # 等待前端服务器启动
 time.sleep(3)
 
-# 自动打开浏览器
+# 延迟3秒后自动打开浏览器
+time.sleep(3)
 open_browser(8080)
 
 

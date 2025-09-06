@@ -247,6 +247,8 @@ def main():
     
     # 等待服务启动后自动打开浏览器
     time.sleep(3)
+    # 延迟3秒后打开浏览器
+    time.sleep(3)
     try:
         webbrowser.open("http://localhost:5000")
         logger.info("已自动打开浏览器访问应用")

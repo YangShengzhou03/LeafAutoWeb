@@ -26,7 +26,7 @@ from logging_config import get_logger
 from task_scheduler import (start_task_scheduler, stop_task_scheduler,
                             task_scheduler)
 from wechat_instance import (get_status_info, get_wechat_instance,
-                             is_wechat_online, start_status_monitor)
+                             is_wechat_online, start_status_monitor, diagnose_com_error)
 
 # 创建Flask应用实例
 app = Flask(__name__)
@@ -391,6 +391,27 @@ def add_ai_history_route():
     history_data = request.json
     new_history = add_ai_history(history_data)
     return jsonify(new_history), 201
+
+
+@app.route("/api/com-diagnose", methods=["GET"])
+def get_com_diagnose():
+    """
+    获取COM组件诊断信息
+    
+    Returns:
+        Response: JSON格式的COM组件诊断信息
+    """
+    try:
+        solutions = diagnose_com_error()
+        return jsonify({
+            "success": True,
+            "diagnose_info": solutions,
+            "com_error_code": -2147467259,
+            "description": "COM组件初始化错误，通常由于微信未正确安装、未登录或COM组件注册问题"
+        }), 200
+    except Exception as e:
+        logger.error(f"获取COM诊断信息失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/wechat-status", methods=["GET"])
