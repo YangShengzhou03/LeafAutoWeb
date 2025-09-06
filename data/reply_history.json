@@ -1,8 +1,38 @@
 {
-  "total_replies": 0,
-  "successful_replies": 0,
+  "total_replies": 3,
+  "successful_replies": 3,
   "failed_replies": 0,
-  "average_response_time": 0,
+  "average_response_time": 0.0,
   "history": [
+    {
+      "sender": "杨圣洲",
+      "message": "嘻嘻",
+      "reply": "嘻泥马勒戈壁",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-06T22:48:41.123634",
+      "id": "558fd784-149c-457f-b6df-227e3876a713",
+      "time": "2025-09-06 22:48:41"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "吃饭了吗",
+      "reply": "我爱吃饭啊",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-06T22:48:52.183418",
+      "id": "13171a32-0172-40b9-8c68-1fb86fc2f0c5",
+      "time": "2025-09-06 22:48:52"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "睡觉",
+      "reply": "我最爱睡觉了",
+      "status": "replied",
+      "responseTime": 0,
+      "timestamp": "2025-09-06T22:49:01.012994",
+      "id": "f3f1c659-4865-4894-8a44-8524035c10d6",
+      "time": "2025-09-06 22:49:01"
+    }
   ]
 }

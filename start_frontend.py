@@ -26,6 +26,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def is_frozen():
+    """检查是否在打包环境中运行"""
+    return getattr(sys, 'frozen', False)
+
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if is_frozen():
+        # 在打包环境中，资源文件在_MEIPASS文件夹中
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 在开发环境中，使用项目根目录
+        base_path = Path(__file__).parent
+    return base_path / relative_path
+
 def check_node_installed():
     """检查Node.js是否安装"""
     try:
@@ -42,8 +56,44 @@ def check_node_installed():
 def start_frontend_dev_server():
     """启动前端开发服务器"""
     try:
+        # 检查是否在打包环境中运行
+        if is_frozen():
+            logger.info("检测到在打包环境中运行")
+            
+            # 检查前端构建文件是否存在
+            frontend_dist_path = get_resource_path('frontend/dist')
+            
+            if frontend_dist_path.exists():
+                logger.info(f"检测到前端构建文件已存在于: {frontend_dist_path}")
+                logger.info("使用Python内置HTTP服务器提供静态文件服务")
+                
+                # 使用Python内置的http.server提供静态文件服务
+                import http.server
+                import socketserver
+                
+                os.chdir(str(frontend_dist_path))
+                PORT = 8080
+                
+                with socketserver.TCPServer(("", PORT), http.server.SimpleHTTPRequestHandler) as httpd:
+                    logger.info(f"前端静态文件服务运行在: http://localhost:{PORT}")
+                    logger.info("按Ctrl+C停止服务")
+                    httpd.serve_forever()
+                return 0
+            else:
+                logger.warning(f"未找到前端构建文件: {frontend_dist_path}")
+                logger.info("请确保前端文件已正确打包")
+                return 1
+        
         # 切换到前端目录
-        os.chdir(str(FRONTEND_DIR))
+        if is_frozen():
+            frontend_path = get_resource_path('frontend')
+            if frontend_path.exists():
+                os.chdir(str(frontend_path))
+            else:
+                logger.error(f"找不到前端目录: {frontend_path}")
+                return 1
+        else:
+            os.chdir(str(FRONTEND_DIR))
         
         # 检查Node.js
         if not check_node_installed():

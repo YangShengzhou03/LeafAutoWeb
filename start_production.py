@@ -12,17 +12,39 @@ import time
 import signal
 import threading
 import logging
+import logging.handlers
 import webbrowser
 from pathlib import Path
 
 # 配置日志
+# 创建日志目录
+log_dir = Path('logs')
+log_dir.mkdir(exist_ok=True)
+
 # 配置日志格式
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# 配置文件处理器，指定utf-8编码
-file_handler = logging.FileHandler('production.log', encoding='utf-8')
+# 配置文件处理器，指定utf-8编码，每天轮转，保留7天
+file_handler = logging.handlers.TimedRotatingFileHandler(
+    log_dir / 'production.log',
+    encoding='utf-8',
+    when='D',  # 每天轮转
+    interval=1,
+    backupCount=7  # 保留7天的日志
+)
 file_handler.setFormatter(formatter)
 file_handler.setLevel(logging.INFO)
+
+# 配置错误日志文件处理器
+error_file_handler = logging.handlers.TimedRotatingFileHandler(
+    log_dir / 'error.log',
+    encoding='utf-8',
+    when='D',
+    interval=1,
+    backupCount=7
+)
+error_file_handler.setFormatter(formatter)
+error_file_handler.setLevel(logging.ERROR)
 
 # 配置控制台处理器，使用errors='replace'处理编码问题
 console_handler = logging.StreamHandler(sys.stdout)
@@ -33,7 +55,11 @@ console_handler.setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
+logger.addHandler(error_file_handler)
 logger.addHandler(console_handler)
+
+# 设置werkzeug日志级别为WARNING，减少不必要的日志输出
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # 获取项目根目录
 ROOT_DIR = Path(__file__).parent

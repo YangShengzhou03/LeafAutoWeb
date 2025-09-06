@@ -27,9 +27,36 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def is_frozen():
+    """检查是否在打包环境中运行"""
+    return getattr(sys, 'frozen', False)
+
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if is_frozen():
+        # 在打包环境中，资源文件在_MEIPASS文件夹中
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 在开发环境中，使用项目根目录
+        base_path = Path(__file__).parent
+    return base_path / relative_path
+
 def start_backend():
     """启动Flask后端服务"""
     try:
+        # 检查是否在打包环境中运行
+        if is_frozen():
+            logger.info("检测到在打包环境中运行")
+            
+            # 检查数据文件是否存在
+            data_path = get_resource_path('data')
+            if data_path.exists():
+                logger.info(f"检测到数据文件已存在于: {data_path}")
+            else:
+                logger.warning(f"未找到数据文件: {data_path}")
+                logger.info("尝试创建数据目录")
+                data_path.mkdir(parents=True, exist_ok=True)
+        
         # 导入并启动Flask应用
         from app import app
         from task_scheduler import start_task_scheduler

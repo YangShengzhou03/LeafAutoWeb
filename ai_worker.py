@@ -185,10 +185,13 @@ class AiWorkerThread:
                     matched_replies.append(rule["reply"])
                 elif match_type == "contains" and keyword in msg:
                     matched_replies.append(rule["reply"])
-                elif match_type == "regex" and re.search(keyword, msg):
-                    matched_replies.append(rule["reply"])
-            except re.error:
-                logger.error(f"Invalid regular expression: {keyword}")
+                elif match_type == "regex":
+                    # 预编译正则表达式以提高性能并验证有效性
+                    pattern = re.compile(keyword)
+                    if pattern.search(msg):
+                        matched_replies.append(rule["reply"])
+            except re.error as e:
+                logger.error(f"Invalid regular expression '{keyword}': {e}")
             except Exception as e:
                 logger.error(f"Error matching rule: {e}")
 

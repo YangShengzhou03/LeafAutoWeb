@@ -453,29 +453,37 @@ def save_daily_stats(date, stats):
 
 def calculate_automation_completion_rate():
     """计算自动化任务完成率"""
-    total_tasks = len(tasks)
-    completed_tasks = sum(
-        1 for task in tasks.values() if task.get("status") == "completed"
-    )
+    try:
+        total_tasks = len(tasks)
+        completed_tasks = sum(
+            1 for task in tasks.values() if task.get("status") == "completed"
+        )
 
-    if total_tasks > 0:
-        return round((completed_tasks / total_tasks) * 100, 1)
-    else:
+        if total_tasks > 0:
+            return round((completed_tasks / total_tasks) * 100, 1)
+        else:
+            return 0
+    except Exception as e:
+        logger.error(f"计算自动化任务完成率失败: {e}")
         return 0
 
 
 def calculate_message_delivery_rate():
     """计算消息送达率"""
-    total_tasks = len(tasks)
-    completed_tasks = sum(
-        1 for task in tasks.values() if task.get("status") == "completed"
-    )
-    failed_tasks = sum(1 for task in tasks.values() if task.get("status") == "failed")
+    try:
+        total_tasks = len(tasks)
+        completed_tasks = sum(
+            1 for task in tasks.values() if task.get("status") == "completed"
+        )
+        failed_tasks = sum(1 for task in tasks.values() if task.get("status") == "failed")
 
-    # 送达率 = 成功任务数 / (成功任务数 + 失败任务数)
-    if completed_tasks + failed_tasks > 0:
-        return round((completed_tasks / (completed_tasks + failed_tasks)) * 100, 1)
-    else:
+        # 送达率 = 成功任务数 / (成功任务数 + 失败任务数)
+        if completed_tasks + failed_tasks > 0:
+            return round((completed_tasks / (completed_tasks + failed_tasks)) * 100, 1)
+        else:
+            return 0
+    except Exception as e:
+        logger.error(f"计算消息送达率失败: {e}")
         return 0
 
 
@@ -483,16 +491,20 @@ def calculate_ai_usage_rate():
     """计算AI辅助功能使用率"""
     global reply_history
 
-    # reply_history是列表格式，计算成功回复的比例
-    total_replies = len(reply_history)
-    successful_replies = sum(
-        1 for item in reply_history if item.get("status") == "replied"
-    )
+    try:
+        # reply_history是列表格式，计算成功回复的比例
+        total_replies = len(reply_history)
+        successful_replies = sum(
+            1 for item in reply_history if item.get("status") == "replied"
+        )
 
-    # 如果有总回复记录，计算使用率
-    if total_replies > 0:
-        return round((successful_replies / total_replies) * 100, 1)
-    else:
+        # 如果有总回复记录，计算使用率
+        if total_replies > 0:
+            return round((successful_replies / total_replies) * 100, 1)
+        else:
+            return 0
+    except Exception as e:
+        logger.error(f"计算AI辅助功能使用率失败: {e}")
         return 0
 
 

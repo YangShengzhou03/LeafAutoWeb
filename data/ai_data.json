@@ -3,11 +3,29 @@
     "aiStatus": false,
     "replyDelay": 0,
     "minReplyInterval": 0,
-    "contactPerson": "文件传输助手",
+    "contactPerson": "杨圣洲",
     "aiPersona": "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。",
     "customRules": [
+      {
+        "id": 1757170037733,
+        "keyword": "吃饭",
+        "matchType": "contains",
+        "reply": "我爱吃饭啊"
+      },
+      {
+        "id": 1757170047961,
+        "keyword": "睡觉",
+        "matchType": "contains",
+        "reply": "我最爱睡觉了"
+      },
+      {
+        "id": 1757170065629,
+        "keyword": "嘻嘻",
+        "matchType": "equals",
+        "reply": "嘻泥马勒戈壁"
+      }
     ],
     "onlyAt": false,
-    "updatedAt": "2025-09-05T22:20:05.902877"
+    "updatedAt": "2025-09-06T22:49:10.831860"
   }
 }
