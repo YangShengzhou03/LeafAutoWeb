@@ -6,10 +6,8 @@
 """
 
 import os
-import sys
 import subprocess
-import threading
-import time
+import sys
 from pathlib import Path
 
 # 获取项目根目录

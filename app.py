@@ -10,12 +10,12 @@ Flask应用主模块
 - 前后端路由转发
 """
 
+import sys
 from datetime import datetime
+from pathlib import Path
+
 from flask import Flask, jsonify, redirect, request, send_from_directory
 from flask_cors import CORS
-import os
-import sys
-from pathlib import Path
 
 from ai_worker import AiWorkerManager
 from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,

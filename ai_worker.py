@@ -4,7 +4,6 @@ import threading
 import time
 from datetime import datetime
 
-from data_manager import add_ai_history
 from logging_config import get_logger
 
 # Initialize logger
