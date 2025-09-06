@@ -2,6 +2,16 @@ const { defineConfig } = require('@vue/cli-service')
 const path = require('path');
 
 module.exports = defineConfig({
+  // 配置HTML模板和favicon
+  pages: {
+    index: {
+      entry: 'src/main.js',
+      template: 'public/index.html',
+      filename: 'index.html',
+      title: 'LeafAuto Web',
+      chunks: ['chunk-vendors', 'chunk-common', 'index']
+    }
+  },
   transpileDependencies: true,
   configureWebpack: {
     resolve: {
