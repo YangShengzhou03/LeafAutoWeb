@@ -186,7 +186,7 @@
             <el-input v-model="newRule.keyword" placeholder="输入关键词或规则" class="custom-input"></el-input>
           </el-form-item>
           <el-form-item label="回复内容" prop="reply">
-            <el-input v-model="newRule.reply" type="textarea" placeholder="输入回复内容" :rows="4"
+            <el-input v-model="newRule.reply" type="textarea" placeholder="输入回复内容（文字，文件路径 或 SendEmotion:2）" :rows="4"
               class="custom-input"></el-input>
           </el-form-item>
         </el-form>

@@ -1,9 +1,12 @@
 import json
+import os
 import re
 import threading
 import time
+import uuid
 from datetime import datetime
 
+from data_manager import add_ai_history
 from logging_config import get_logger
 
 # Initialize logger
@@ -78,6 +81,7 @@ class AiWorkerThread:
         ]
         self.listen_list = []
         self.last_sent_messages = {}
+        self.last_reply_time = 0  # 初始化最后回复时间
         self._message_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._is_running = False
@@ -197,6 +201,94 @@ class AiWorkerThread:
 
         return matched_replies
 
+    def _is_target_message(self, message):
+        """
+        检查消息是否来自目标联系人
+        
+        Args:
+            message: 消息对象
+        
+        Returns:
+            bool: True表示来自目标联系人，False表示不是
+        """
+        try:
+            # 获取发送者信息
+            if hasattr(message, 'sender'):
+                sender = message.sender
+            elif hasattr(message, 'get') and callable(getattr(message, 'get')):
+                sender = message.get('sender', '')
+            else:
+                return False
+            
+            # 检查发送者是否在接收者列表中
+            return sender in self.receiver_list
+        except Exception as e:
+            logger.error(f"Error checking target message: {e}")
+            return False
+
+    def _apply_custom_rules(self, message_content):
+        """
+        应用自定义回复规则
+        
+        Args:
+            message_content: 消息内容
+        
+        Returns:
+            str: 匹配的回复内容，如果没有匹配则返回空字符串
+        """
+        matched_replies = self._match_rule(message_content)
+        if matched_replies:
+            return matched_replies[0]  # 返回第一个匹配的回复
+        return ""
+
+    def _generate_ai_reply(self, message_content):
+        """
+        生成AI回复内容
+        
+        Args:
+            message_content: 消息内容
+        
+        Returns:
+            str: AI生成的回复内容
+        """
+        # 这里应该调用AI模型生成回复
+        # 暂时返回一个简单的回复
+        return f"已收到您的消息: {message_content}"
+
+    def _send_reply(self, sender, reply_content):
+        """
+        发送回复消息
+        
+        Args:
+            sender: 发送者标识
+            reply_content: 回复内容
+        """
+        try:
+            # 检查回复内容是否直接是一个存在的文件路径
+            if os.path.exists(reply_content):
+                response = self.wx_instance.SendFiles(reply_content, sender)
+                success_msg = "文件发送成功"
+            elif reply_content.startswith("SendEmotion:"):
+                # 发送表情包
+                match = re.search(r'SendEmotion:(\d+)', reply_content)
+                if match:
+                    emotion_index = int(match.group(1))
+                    response = self.wx_instance.SendEmotion(emotion_index - 1, sender)
+                    success_msg = "表情包发送成功"
+                else:
+                    logger.error("表情包格式错误，应为SendEmotion:数字")
+                    return
+            else:
+                response = self.wx_instance.SendMsg(msg=reply_content, who=sender)
+                success_msg = "消息发送成功"
+            
+            if response.get("status") == "失败":
+                logger.error(f"Failed to send reply to {sender}: {response.get('message', 'Unknown error')}")
+            else:
+                logger.info(f"Reply sent to {sender}: {reply_content} ({success_msg})")
+        except Exception as e:
+            logger.error(f"Error sending reply to {sender}: {e}")
+
     def _cleanup(self):
         """
         清理监听器资源
@@ -301,83 +393,117 @@ class AiWorkerThread:
         """
         return self._stop_event.is_set() or not self._is_running
 
-    def _process_message(self, content, who):
-        """
-        处理接收到的消息
-        
-        Args:
-            content: 消息内容
-            who: 发送者标识
-        """
-        chat_name = self._get_chat_name(who)
+    def _process_message(self, msg):
+        """处理接收到的消息"""
         try:
-            if self.only_at and self.at_me not in content:
+            # 记录消息接收时间戳
+            receive_time = time.time()
+            
+            # 检查消息是否来自目标联系人
+            if not self._is_target_message(msg):
                 return
 
+            # 检查最小回复间隔
             current_time = time.time()
-
-            # 检查是否为连续重复内容
-            if chat_name in self.last_sent_messages:
-                last_message_data = self.last_sent_messages[chat_name]
-                last_content = last_message_data["content"]
-                last_timestamp = last_message_data["timestamp"]
-
-                # 仅在内容完全一致时检查时间间隔
-                if content == last_content:
-                    if current_time - last_timestamp < self.min_reply_interval:
-                        return
-
-            matched_replies = self._match_rule(content)
-            if not matched_replies:
+            if current_time - self.last_reply_time < self.min_reply_interval:
+                content = msg.content if hasattr(msg, 'content') else str(msg)
+                logger.info(f"[AI接管] 未达到最小回复间隔，忽略消息: {content}")
                 return
 
-            reply_content = matched_replies[0]
+            # 处理消息内容
+            if hasattr(msg, 'content'):
+                message_content = msg.content
+            elif hasattr(msg, 'get') and callable(getattr(msg, 'get')):
+                message_content = msg.get("content", "")
+            else:
+                message_content = str(msg)
+                
+            if hasattr(msg, 'sender'):
+                sender = msg.sender
+            elif hasattr(msg, 'get') and callable(getattr(msg, 'get')):
+                sender = msg.get("sender", "")
+            else:
+                sender = ""
 
-            # 先检查消息配额
-            from data_manager import increment_message_count, add_ai_history
-            if not increment_message_count():
-                logger.error(f"信息余量耗尽，无法发送消息给 {chat_name}")
-                # 添加历史记录但状态为pending（未回复）
+            # 应用自定义规则
+            custom_reply = self._apply_custom_rules(message_content)
+            if custom_reply:
+                # 计算实际响应时间
+                actual_response_time = round(time.time() - receive_time, 2)
+                
+                # 发送自定义回复
+                self._send_reply(sender, custom_reply)
+                self.last_reply_time = time.time()
+
+                # 记录回复历史（使用实际响应时间）
                 history_data = {
-                    "sender": chat_name,
-                    "message": content,
-                    "reply": reply_content,
-                    "status": "pending",
-                    "responseTime": self.reply_delay,
+                    "sender": sender,
+                    "message": message_content,
+                    "reply": custom_reply,
+                    "status": "replied",
+                    "responseTime": actual_response_time,  # 使用实际计算的响应时间
                     "timestamp": datetime.now().isoformat(),
+                    "id": str(uuid.uuid4()),
+                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 add_ai_history(history_data)
                 return
 
+            # 生成AI回复
             if self.reply_delay > 0:
                 time.sleep(self.reply_delay)
 
-            response = self.wx_instance.SendMsg(msg=reply_content, who=who)
+            # 计算实际响应时间（包括延迟）
+            actual_response_time = round(time.time() - receive_time, 2)
+            
+            # 生成AI回复内容
+            reply_content = self._generate_ai_reply(message_content)
 
-            if isinstance(response, dict) and response.get("status") == "成功":
+            # 发送回复
+            self._send_reply(sender, reply_content)
+            self.last_reply_time = time.time()
 
-                # 存储最后发送的消息内容和时间戳
-                self.last_sent_messages[chat_name] = {
-                    "content": content,
-                    "timestamp": time.time(),
-                }
-
-                history_data = {
-                    "sender": chat_name,
-                    "message": content,
-                    "reply": reply_content,
-                    "status": "replied",
-                    "responseTime": self.reply_delay,
-                    "timestamp": datetime.now().isoformat(),
-                }
-                add_ai_history(history_data)
-
-                logger.info(f"Replied to {chat_name}: {reply_content}")
-            else:
-                logger.error(f"Failed to send message to {chat_name}: {response}")
+            # 记录回复历史（使用实际响应时间）
+            history_data = {
+                "sender": sender,
+                "message": message_content,
+                "reply": reply_content,
+                "status": "replied",
+                "responseTime": actual_response_time,  # 使用实际计算的响应时间
+                "timestamp": datetime.now().isoformat(),
+                "id": str(uuid.uuid4()),
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            add_ai_history(history_data)
 
         except Exception as e:
-            logger.error(f"Error processing message: {e}")
+            logger.error(f"处理消息时发生错误: {e}")
+            # 记录错误历史
+            if hasattr(msg, 'sender'):
+                error_sender = msg.sender
+            elif hasattr(msg, 'get') and callable(getattr(msg, 'get')):
+                error_sender = msg.get("sender", "")
+            else:
+                error_sender = ""
+                
+            if hasattr(msg, 'content'):
+                error_content = msg.content
+            elif hasattr(msg, 'get') and callable(getattr(msg, 'get')):
+                error_content = msg.get("content", "")
+            else:
+                error_content = str(msg)
+                
+            history_data = {
+                "sender": error_sender,
+                "message": error_content,
+                "reply": "",
+                "status": "failed",
+                "responseTime": 0,
+                "timestamp": datetime.now().isoformat(),
+                "id": str(uuid.uuid4()),
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            add_ai_history(history_data)
 
     def run(self):
         """
@@ -423,7 +549,7 @@ class AiWorkerThread:
                             continue
 
                         with self._message_lock:
-                            self._process_message(message.content, chat.who)
+                            self._process_message(message)
 
             except Exception as e:
                 logger.error(f"Exception while processing messages: {e}")
