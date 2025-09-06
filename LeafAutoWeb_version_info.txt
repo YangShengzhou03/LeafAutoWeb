@@ -16,13 +16,16 @@ VSVersionInfo(
           '040904B0',
           [
             StringStruct('CompanyName', 'Yangshengzhou'),
-            StringStruct('FileDescription', 'LeafAuto_Web'),
+            StringStruct('FileDescription', 'LeafAuto Web - 智能微信消息自动回复系统'),
             StringStruct('FileVersion', '1.0.0.0'),
             StringStruct('InternalName', 'LeafAuto_Web'),
             StringStruct('LegalCopyright', 'Copyright © 2025 YangShengzhou 版权所有'),
-            StringStruct('OriginalFilename', 'LeafAuto_Web.exe'),
-            StringStruct('ProductName', 'LeafAuto_Web'),
-            StringStruct('ProductVersion', '1.0.0.0')
+            StringStruct('OriginalFilename', 'LeafAutoWeb.exe'),
+            StringStruct('ProductName', 'LeafAuto Web'),
+            StringStruct('ProductVersion', '1.0.0.0'),
+            StringStruct('Comments', '基于Flask和Vue.js开发的智能微信消息自动回复系统'),
+            StringStruct('BuildDate', '2025-01-01'),
+            StringStruct('BuildVersion', 'Release 1.0')
           ]
         )
       ]

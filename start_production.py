@@ -12,6 +12,7 @@ import time
 import signal
 import threading
 import logging
+import webbrowser
 from pathlib import Path
 
 # 配置日志
@@ -243,6 +244,14 @@ def main():
     
     logger.info("所有服务正在启动中...")
     logger.info("按 Ctrl+C 可停止所有服务")
+    
+    # 等待服务启动后自动打开浏览器
+    time.sleep(3)
+    try:
+        webbrowser.open("http://localhost:5000")
+        logger.info("已自动打开浏览器访问应用")
+    except Exception as e:
+        logger.error(f"自动打开浏览器失败: {e}")
     
     try:
         # 保持主线程运行
