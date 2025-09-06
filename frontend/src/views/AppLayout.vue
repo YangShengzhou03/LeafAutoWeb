@@ -58,9 +58,9 @@ const currentRoute = ref(route.path);
 const wxStatusInterval = ref(null);
 const quotaInfo = ref({
   used_today: 0,
-  daily_limit: 1000,
-  remaining: 1000,
-  account_level: 'basic',
+  daily_limit: 100,
+  remaining: 100,
+  account_level: 'free',
   is_unlimited: false
 });
 const quotaInterval = ref(null);
@@ -69,6 +69,7 @@ const showUpgradeModal = ref(false);
 // 计算升级按钮文本
 const upgradeButtonText = computed(() => {
   const level = quotaInfo.value.account_level;
+  console.log(level)
   if (level === 'free') return '升级基础版';
   if (level === 'basic') return '升级企业版';
   return '获取帮助';

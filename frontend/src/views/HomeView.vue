@@ -1,7 +1,8 @@
 <template>
   <div class="home-container">
 
-    <section class="pricing">
+    <!-- 当不是企业版时显示定价方案 -->
+    <section v-if="!isEnterpriseVersion" class="pricing">
       <div class="section-header">
         <h2>选择适合您企业的方案</h2>
         <p>灵活的定价策略，满足不同规模企业的需求</p>
@@ -28,6 +29,35 @@
             </button>
           </div>
         </template>
+      </div>
+    </section>
+
+    <!-- 当是企业版时显示宣传轮播图 -->
+    <section v-else class="promotion-carousel">
+      <div class="carousel-container">
+        <div class="carousel-wrapper" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
+          <div class="carousel-slide" v-for="(slide, index) in promotionSlides" :key="index">
+            <div class="slide-content">
+              <div class="slide-image">
+                <img :src="slide.image" :alt="slide.title">
+              </div>
+              <div class="slide-info">
+                <h3>{{ slide.title }}</h3>
+                <p>{{ slide.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-control prev" @click="prevSlide">❮</button>
+        <button class="carousel-control next" @click="nextSlide">❯</button>
+      </div>
+      <div class="carousel-indicators">
+        <span 
+          v-for="(slide, index) in promotionSlides" 
+          :key="index" 
+          :class="['indicator', { active: currentSlide === index }]"
+          @click="goToSlide(index)"
+        ></span>
       </div>
     </section>
 
@@ -95,12 +125,78 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import UpgradeModal from '@/components/UpgradeModal.vue';
 import { ElMessage } from 'element-plus'
 
 const animationActive = ref(false);
 const showUpgradeModal = ref(false);
+// 添加版本状态变量
+const isEnterpriseVersion = ref(false);
+// 添加轮播图相关变量
+const currentSlide = ref(0);
+const promotionSlides = ref([
+  {
+    title: '高级自动化流程',
+    description: '企业版提供复杂的多步骤自动化流程，满足您的业务需求',
+    image: require('@/assets/images/logo.svg')
+  },
+  {
+    title: '智能数据分析',
+    description: '实时数据分析和可视化报表，助力企业决策',
+    image: require('@/assets/images/logo.svg')
+  },
+  {
+    title: '专属客户支持',
+    description: '7×24小时专属技术支持，确保系统稳定运行',
+    image: require('@/assets/images/logo.svg')
+  }
+]);
+
+// 轮播图控制函数
+const nextSlide = () => {
+  currentSlide.value = (currentSlide.value + 1) % promotionSlides.value.length;
+};
+
+const prevSlide = () => {
+  currentSlide.value = (currentSlide.value - 1 + promotionSlides.value.length) % promotionSlides.value.length;
+};
+
+const goToSlide = (index) => {
+  currentSlide.value = index;
+};
+
+// 自动轮播
+let autoSlideInterval;
+const startAutoSlide = () => {
+  autoSlideInterval = setInterval(() => {
+    nextSlide();
+  }, 5000);
+};
+
+const stopAutoSlide = () => {
+  clearInterval(autoSlideInterval);
+};
+
+// 检查当前版本状态
+const checkVersionStatus = async () => {
+  try {
+    // 从message_quota.json获取版本状态
+    const response = await fetch('/api/message-quota');
+    const result = await response.json();
+    // 判断account_level是否为enterprise
+    if (result.success) {
+      isEnterpriseVersion.value = result.quota.account_level === 'enterprise';
+    } else {
+      isEnterpriseVersion.value = false;
+    }
+  } catch (error) {
+    console.error('获取版本状态失败:', error);
+    // 默认设置为非企业版
+    isEnterpriseVersion.value = false;
+  }
+};
+
 const homeData = ref({
   pricingPlans: [
     { id: 1, name: '基础版', price: '--', period: '/月', features: ['--', '--', '--'], isPopular: false },
@@ -202,7 +298,7 @@ const triggerAnimations = () => {
   }
 
   setTimeout(() => {
-    document.querySelectorAll('.pricing-card, .dashboard-card, .testimonial-card, .metric-card').forEach((el, index) => {
+    document.querySelectorAll('.pricing-card, .dashboard-card, .testimonial-card, .metric-card, .carousel-slide').forEach((el, index) => {
       el.style.opacity = '0';
       el.style.transform = 'translateY(20px)';
       el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
@@ -235,11 +331,24 @@ const handleActivation = (activationCode) => {
 };
 
 onMounted(() => {
+  // 检查版本状态
+  checkVersionStatus();
+  
   // 立即触发框架动画，不等待数据加载
   triggerAnimations();
   
   // 异步获取数据
   fetchHomeData();
+  
+  // 如果是企业版，启动自动轮播
+  if (isEnterpriseVersion.value) {
+    startAutoSlide();
+  }
+});
+
+// 组件卸载时清除自动轮播
+onUnmounted(() => {
+  stopAutoSlide();
 });
 </script>
 
@@ -689,6 +798,186 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
+
+@media (max-width: 768px) {
+  .metrics-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .metric-card {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 576px) {
+
+  .pricing-card,
+  .dashboard-card,
+  .testimonial-card {
+    max-width: 100%;
+  }
+
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .section-header p {
+    font-size: 1rem;
+  }
+}
+
+/* 轮播图样式 */
+.promotion-carousel {
+  padding: 2rem 2%;
+  background-color: white;
+}
+
+.carousel-container {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-wrapper {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  background-color: #f8fafc;
+}
+
+.slide-content {
+  display: flex;
+  align-items: center;
+  padding: 2rem;
+  height: 400px;
+}
+
+.slide-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.slide-image img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.slide-info {
+  flex: 1;
+  padding: 1rem 2rem;
+}
+
+.slide-info h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.slide-info p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.carousel-control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.7);
+  color: var(--primary-color);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.carousel-control:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.carousel-control.prev {
+  left: 10px;
+}
+
+.carousel-control.next {
+  right: 10px;
+}
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--border-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background-color: var(--primary-color);
+  transform: scale(1.2);
+}
+
+@media (max-width: 768px) {
+  .slide-content {
+    flex-direction: column;
+    height: auto;
+    padding: 1.5rem;
+  }
+  
+  .slide-info {
+    padding: 1rem 0;
+    text-align: center;
+  }
+  
+  .slide-info h3 {
+    font-size: 1.5rem;
+  }
+  
+  .slide-info p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .carousel-control {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+  
+  .indicator {
+    width: 10px;
+    height: 10px;
+  }
+}
 
 @media (max-width: 768px) {
   .metrics-container {

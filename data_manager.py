@@ -739,7 +739,7 @@ def get_quota_info():
 
     # 根据账户等级设置不同的每日限额
     if account_level == "enterprise":
-        daily_limit = float("inf")  # 企业版无限制
+        daily_limit = "unlimited"  # 企业版无限制，使用字符串而不是float('inf')
     elif account_level == "basic":
         daily_limit = 1000  # 基础版1000条
     else:
@@ -755,14 +755,14 @@ def get_quota_info():
 
     # 计算剩余配额，确保不会出现负数
     used_today = quota_data.get("used_today", 0)
-    if daily_limit != float("inf"):
+    if daily_limit != "unlimited":
         # 如果已使用量超过限额，剩余为0
         if used_today >= daily_limit:
             remaining = 0
         else:
             remaining = daily_limit - used_today
     else:
-        remaining = float("inf")
+        remaining = "unlimited"
 
     return {
         "account_level": account_level,
