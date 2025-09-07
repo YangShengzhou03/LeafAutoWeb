@@ -493,7 +493,9 @@ class AiWorkerThread:
                 add_ai_history(history_data)
                 return
             
-            raise ValueError("No custom reply or AI reply generated")
+            # 如果没有匹配到自定义规则，记录但不抛出异常
+            logger.debug(f"[AI接管] 没有匹配到自定义规则，忽略消息: {message_content}")
+            return
 
         except Exception as e:
             logger.error(f"处理消息时发生错误: {e}")
