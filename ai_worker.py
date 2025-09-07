@@ -102,7 +102,8 @@ class AiWorkerThread:
             list: 自动回复规则列表，如果加载失败返回空列表
         """
         try:
-            with open("data/ai_data.json", "r", encoding="utf-8") as f:
+            rules_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ai_data.json")
+            with open(rules_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 # 检查数据结构是否正确，确保settings和customRules存在
                 if isinstance(data, dict) and "settings" in data:
@@ -119,6 +120,41 @@ class AiWorkerThread:
         except Exception as e:
             logger.error(f"Unexpected error loading rules: {e}")
             return []
+    
+    def update_rules(self):
+        """更新自定义回复规则，使规则变更立即生效"""
+        try:
+            rules_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ai_data.json")
+            with open(rules_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                new_rules = []
+                # 检查数据结构是否正确，确保settings和customRules存在
+                if isinstance(data, dict) and "settings" in data:
+                    settings = data["settings"]
+                    if isinstance(settings, dict) and "customRules" in settings:
+                        new_rules = settings["customRules"]
+                
+                # 检查规则是否有变化
+                if new_rules != self.rules:
+                    self.rules = new_rules
+                    logger.info(f"[AI接管] 已更新自定义规则，当前规则数: {len(self.rules)}")
+                    return True
+                else:
+                    logger.debug("[AI接管] 自定义规则无变化，无需更新")
+                    return False
+        except FileNotFoundError:
+            logger.warning("Auto-reply rules file not found")
+            if self.rules:
+                self.rules = []
+                logger.info("[AI接管] 规则文件不存在，已清空自定义规则")
+                return True
+            return False
+        except json.JSONDecodeError:
+            logger.error("Auto-reply rules file parsing failed")
+            return False
+        except Exception as e:
+            logger.error(f"更新自定义规则失败: {e}")
+            return False
 
     def init_listeners(self):
         """
@@ -430,6 +466,9 @@ class AiWorkerThread:
             else:
                 sender = ""
 
+            if self.reply_delay > 0:
+                time.sleep(self.reply_delay)
+
             # 应用自定义规则
             custom_reply = self._apply_custom_rules(message_content)
             if custom_reply:
@@ -446,40 +485,15 @@ class AiWorkerThread:
                     "message": message_content,
                     "reply": custom_reply,
                     "status": "replied",
-                    "responseTime": actual_response_time,  # 使用实际计算的响应时间
+                    "responseTime": actual_response_time,
                     "timestamp": datetime.now().isoformat(),
                     "id": str(uuid.uuid4()),
                     "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 add_ai_history(history_data)
                 return
-
-            # 生成AI回复
-            if self.reply_delay > 0:
-                time.sleep(self.reply_delay)
-
-            # 计算实际响应时间（包括延迟）
-            actual_response_time = round(time.time() - receive_time, 2)
             
-            # 生成AI回复内容
-            reply_content = self._generate_ai_reply(message_content)
-
-            # 发送回复
-            self._send_reply(sender, reply_content)
-            self.last_reply_time = time.time()
-
-            # 记录回复历史（使用实际响应时间）
-            history_data = {
-                "sender": sender,
-                "message": message_content,
-                "reply": reply_content,
-                "status": "replied",
-                "responseTime": actual_response_time,  # 使用实际计算的响应时间
-                "timestamp": datetime.now().isoformat(),
-                "id": str(uuid.uuid4()),
-                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            add_ai_history(history_data)
+            raise ValueError("No custom reply or AI reply generated")
 
         except Exception as e:
             logger.error(f"处理消息时发生错误: {e}")
@@ -545,6 +559,10 @@ class AiWorkerThread:
 
         while not self._should_stop():
             try:
+                # 定期检查规则更新
+                if int(time.time()) % 10 == 0:  # 每10秒检查一次
+                    self.update_rules()
+                    
                 messages_dict = self.wx_instance.GetListenMessage()
                 for chat, messages in messages_dict.items():
                     if self._should_stop():
@@ -709,3 +727,17 @@ class AiWorkerManager:
             for worker in self.workers.values():
                 worker.stop()
             self.workers.clear()
+    
+    def update_all_workers_rules(self):
+        """通知所有AI工作线程更新规则"""
+        updated_count = 0
+        for worker_key, worker in self.workers.items():
+            if worker.update_rules():
+                updated_count += 1
+        
+        if updated_count > 0:
+            logger.info(f"[AI接管] 已通知 {updated_count} 个AI工作线程更新规则")
+        else:
+            logger.debug("[AI接管] 没有工作线程需要更新规则")
+        
+        return updated_count > 0

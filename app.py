@@ -356,6 +356,10 @@ def save_ai_settings_route():
             ai_manager = AiWorkerManager()
             ai_manager.stop_worker(contact_person)
             logger.info(f"[AI接管] 已停止监听: {contact_person}")
+    
+    # 通知所有AI工作线程更新规则
+    ai_manager = AiWorkerManager()
+    ai_manager.update_all_workers_rules()
 
     return jsonify(saved_settings), 200
 

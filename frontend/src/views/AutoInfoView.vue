@@ -436,6 +436,20 @@ const exportTasks = () => {
   const ws = XLSX.utils.json_to_sheet(exportData)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, '任务列表')
+  
+  // 设置所有单元格为文本格式
+  const range = XLSX.utils.decode_range(ws['!ref'])
+  for (let row = range.s.r; row <= range.e.r; row++) {
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
+      if (!ws[cellAddress]) continue
+      
+      // 设置单元格格式为文本
+      if (!ws[cellAddress].z) {
+        ws[cellAddress].z = '@' // @ 表示文本格式
+      }
+    }
+  }
 
   // 导出Excel文件
   XLSX.writeFile(wb, `tasks_export_${new Date().toISOString().slice(0, 10)}.xlsx`)
