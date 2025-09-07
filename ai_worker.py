@@ -301,9 +301,14 @@ class AiWorkerThread:
             reply_content: 回复内容
         """
         try:
-            # 检查回复内容是否直接是一个存在的文件路径
-            if os.path.exists(reply_content):
-                response = self.wx_instance.SendFiles(reply_content, sender)
+            # 检查回复内容是否直接是一个存在的文件路径（支持带引号的路径）
+            file_path = reply_content
+            # 如果回复内容以引号开头和结尾，尝试去除引号后检查文件是否存在
+            if (reply_content.startswith('"') and reply_content.endswith('"')) or (reply_content.startswith("'") and reply_content.endswith("'")):
+                file_path = reply_content[1:-1]  # 去除首尾的引号
+            
+            if os.path.exists(file_path):
+                response = self.wx_instance.SendFiles(file_path, sender)
                 success_msg = "文件发送成功"
             elif reply_content.startswith("SendEmotion:"):
                 # 发送表情包

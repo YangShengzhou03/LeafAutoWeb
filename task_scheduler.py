@@ -47,9 +47,14 @@ def send_msg(who, msg):
 
         # 判断是发送消息还是文件
         
-        # 检查消息内容是否直接是一个存在的文件路径
-        if os.path.exists(msg):
-            result = wx.SendFiles(msg, who)
+        # 检查消息内容是否直接是一个存在的文件路径（支持带引号的路径）
+        file_path = msg
+        # 如果消息内容以引号开头和结尾，尝试去除引号后检查文件是否存在
+        if (msg.startswith('"') and msg.endswith('"')) or (msg.startswith("'") and msg.endswith("'")):
+            file_path = msg[1:-1]  # 去除首尾的引号
+        
+        if os.path.exists(file_path):
+            result = wx.SendFiles(file_path, who)
             success_msg = "文件发送成功"
         elif msg.startswith("SendEmotion:"):
             # 发送表情包
