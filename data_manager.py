@@ -136,27 +136,27 @@ def create_default_home_data():
         ],
         "testimonials": [
             {
-                "id": 1,
-                "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了60%以上。",
-                "customerName": "张三",
-                "customerCompany": "某科技公司市场总监",
-                "customerAvatar": "@/assets/images/user-avatar.svg",
+            "id": 1,
+            "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了80%以上。",
+            "customerName": "陈明远",
+            "customerCompany": "明远科技集团数字营销总监",
+            "customerAvatar": "@/assets/images/user-avatar.svg"
             },
             {
-                "id": 2,
-                "quote": "数据分析功能非常强大，让我们能够精准了解客户需求，提升转化率。",
-                "customerName": "李四",
-                "customerCompany": "某电商平台运营主管",
-                "customerAvatar": "@/assets/images/user-avatar.svg",
+            "id": 2,
+            "quote": "Ai托管功能非常强大，好似一个智能助手，能够帮助我们自动回答客户问题，提升客户满意度。",
+            "customerName": "林晓薇",
+            "customerCompany": "优品电商平台客户运营总监",
+            "customerAvatar": "@/assets/images/user-avatar.svg"
             },
             {
-                "id": 3,
-                "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
-                "customerName": "王五",
-                "customerCompany": "某金融机构IT负责人",
-                "customerAvatar": "@/assets/images/user-avatar.svg",
-            },
-        ],
+            "id": 3,
+            "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
+            "customerName": "郑浩然",
+            "customerCompany": "星海金融科技公司技术总监",
+            "customerAvatar": "@/assets/images/user-avatar.svg"
+            }
+        ]
     }
 
 

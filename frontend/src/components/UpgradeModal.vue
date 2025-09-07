@@ -190,7 +190,6 @@ onMounted(() => {
 
 // 方法
 const handleActivation = async () => {
-  console.log('收到点击')
   if (activationCode.value.trim() && (activationCode.value.length >= 7 && activationCode.value.length <= 8)) {
     // 将7-8位的激活码填充为16位
     let paddedCode = activationCode.value.trim().toUpperCase();

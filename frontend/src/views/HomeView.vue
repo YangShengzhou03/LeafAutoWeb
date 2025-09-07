@@ -333,8 +333,7 @@ const handleSelectPlan = (plan) => {
 };
 
 // 处理激活码提交
-const handleActivation = (activationCode) => {
-  console.log('提交激活码:', activationCode);
+const handleActivation = () => {
   // 这里可以添加激活码验证逻辑
   ElMessage.success('提交激活码成功，等待验证结果')
   showUpgradeModal.value = false;
