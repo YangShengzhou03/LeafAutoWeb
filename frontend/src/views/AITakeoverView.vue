@@ -1087,11 +1087,14 @@ onMounted(async () => {
 
 .el-button {
   transition: all 0.2s ease;
+  padding: 0 16px;
+  min-width: 80px;
 }
 
 .el-button--primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
+  padding: 0 20px;
 }
 
 .el-button--primary:hover {
@@ -1099,6 +1102,35 @@ onMounted(async () => {
   border-color: #1e3a8a;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+}
+
+/* 渐变按钮样式 */
+.gradient-btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  padding: 0 20px !important;
+}
+
+.gradient-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  z-index: -1;
+  transition: all 0.3s ease;
+}
+
+.gradient-btn:hover::before {
+  transform: scale(1.05);
+}
+
+.gradient-btn span {
+  position: relative;
+  z-index: 1;
 }
 
 .operation-buttons {
