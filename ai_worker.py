@@ -301,6 +301,17 @@ class AiWorkerThread:
             reply_content: 回复内容
         """
         try:
+            # 先检查配额是否足够，但不增加计数
+            from data_manager import load_message_quota
+            quota_data = load_message_quota()
+            account_level = quota_data.get("account_level", "free")
+            
+            if account_level != "enterprise":
+                daily_limit = 1000 if account_level == "basic" else 100
+                if quota_data.get("used_today", 0) >= daily_limit:
+                    logger.warning(f"[AI接管] 配额已耗尽，无法发送回复给 {sender}")
+                    return
+
             # 检查回复内容是否直接是一个存在的文件路径（支持带引号的路径）
             file_path = reply_content
             # 如果回复内容以引号开头和结尾，尝试去除引号后检查文件是否存在
@@ -331,6 +342,9 @@ class AiWorkerThread:
             if response.get("status") == "失败":
                 logger.error(f"Failed to send reply to {sender}: {response.get('message', 'Unknown error')}")
             else:
+                # 消息发送成功后，才增加消息配额计数
+                from data_manager import increment_message_count
+                increment_message_count()
                 logger.info(f"Reply sent to {sender}: {reply_content} ({success_msg})")
         except Exception as e:
             logger.error(f"Error sending reply to {sender}: {e}")

@@ -30,20 +30,27 @@ def send_msg(who, msg):
         if not is_wechat_online():
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
 
-        if not increment_message_count():
-            # 添加历史记录但状态为pending（未回复）,余量耗尽
-            from data_manager import add_ai_history
-            from datetime import datetime
-            history_data = {
-                "sender": who,
-                "message": "",
-                "reply": msg,
-                "status": "pending",
-                "responseTime": 0,
-                "timestamp": datetime.now().isoformat(),
-            }
-            add_ai_history(history_data)
-            return {"status": "failed", "message": "信息余量耗尽，无法发送消息"}
+        # 先检查配额是否足够，但不增加计数
+        from data_manager import load_message_quota
+        quota_data = load_message_quota()
+        account_level = quota_data.get("account_level", "free")
+        
+        if account_level != "enterprise":
+            daily_limit = 1000 if account_level == "basic" else 100
+            if quota_data.get("used_today", 0) >= daily_limit:
+                # 配额已耗尽，添加历史记录但状态为pending（未回复）
+                from data_manager import add_ai_history
+                from datetime import datetime
+                history_data = {
+                    "sender": who,
+                    "message": "",
+                    "reply": msg,
+                    "status": "pending",
+                    "responseTime": 0,
+                    "timestamp": datetime.now().isoformat(),
+                }
+                add_ai_history(history_data)
+                return {"status": "failed", "message": "信息余量耗尽，无法发送消息"}
 
         # 判断是发送消息还是文件
         
@@ -75,7 +82,8 @@ def send_msg(who, msg):
             success_msg = "消息发送成功"
             
         if result["status"] == "成功":
-            # 增加消息配额计数
+            # 消息发送成功后，才增加消息配额计数
+            increment_message_count()
             return {"status": "success", "message": success_msg}
         else:
             return {"status": "failed", "message": result.get("message", "发送失败")}
