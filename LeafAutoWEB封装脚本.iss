@@ -22,15 +22,16 @@ AppSupportURL={#AppSupportURL}
 AppUpdatesURL={#MyAppURL}
 VersionInfoVersion=1.0.0.0
 DefaultDirName={autopf}\{#MyAppName}
+OutputDir=output\installer
 DisableProgramGroupPage=yes
-LicenseFile=D:\code\Python\LeafAuto_Web\license.txt
+LicenseFile=license.txt
 ; 以下行取消注释，以在非管理安装模式下运行（仅为当前用户安装）。
 ;PrivilegesRequired=lowest
 ; 以管理员身份运行
 PrivilegesRequired=admin
 OutputDir=C:\Users\YangShengzhou\Desktop
 OutputBaseFilename=LeafAuto Web {#MyAppVersion}
-SetupIconFile=D:\code\Python\LeafAuto_Web\resources\setup.ico
+SetupIconFile=resources\setup.ico
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -50,8 +51,8 @@ Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkablealone
 
 [Files]
-Source: "D:\LeafAutoWeb\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\LeafAutoWeb\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "output\LeafAutoWeb\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "output\LeafAutoWeb\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; 注意: 不要在任何共享系统文件上使用“Flags: ignoreversion”
 
 [Icons]
