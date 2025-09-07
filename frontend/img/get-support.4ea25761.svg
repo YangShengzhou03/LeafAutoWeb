@@ -1,0 +1,105 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Definitions for gradients and filters -->
+  <defs>
+    <!-- Main gradient for 2.5D effect -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BB6FF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4F8FF7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E5FCC;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Light gradient for highlights -->
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#E6F2FF;stop-opacity:0.3" />
+    </linearGradient>
+    
+    <!-- Accent gradient for question mark -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter with soft edges -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="3" dy="3" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.15"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 2.5D effect filter -->
+    <filter id="effect2-5d" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="4" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Glow effect for futuristic feel -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="400" height="300" fill="#F5FAFF" />
+  
+  <!-- Central 2.5D Question Mark representing get support -->
+  <g transform="translate(200, 150)">
+    <!-- Question mark shadow -->
+    <path d="M-40,40 L0,60 L40,40 L0,20 Z" fill="#000000" opacity="0.1" filter="url(#softShadow)" />
+    
+    <!-- Question mark base (3D effect) -->
+    <path d="M-40,20 L0,0 L40,20 L0,40 Z" fill="url(#lightGradient)" filter="url(#effect2-5d)" />
+    
+    <!-- Question mark left side (3D effect) -->
+    <path d="M-40,20 L0,40 L0,60 L-40,40 Z" fill="url(#mainGradient)" filter="url(#effect2-5d)" />
+    
+    <!-- Question mark right side (3D effect) -->
+    <path d="M0,40 L40,20 L40,40 L0,60 Z" fill="#1E5FCC" filter="url(#effect2-5d)" />
+    
+    <!-- Realistic question mark symbol -->
+    <path d="M0,-40 C-15,-40 -25,-30 -25,-15 C-25,-5 -20,0 -15,5 L-15,15 L15,15 L15,5 C20,0 25,-5 25,-15 C25,-30 15,-40 0,-40 Z" fill="none" stroke="url(#accentGradient)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+    
+    <!-- Question mark dot -->
+    <circle cx="0" cy="25" r="6" fill="url(#accentGradient)" filter="url(#glow)" />
+    
+    <!-- Inner highlight for 3D effect -->
+    <ellipse cx="0" cy="-10" rx="25" ry="35" fill="url(#lightGradient)" opacity="0.3" />
+    
+    <!-- Top highlight for 3D effect -->
+    <ellipse cx="0" cy="-40" rx="15" ry="10" fill="url(#lightGradient)" opacity="0.5" />
+    
+    <!-- Subtle detail lines for realism -->
+    <path d="M-25,-20 Q-15,-10 0,0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.4" />
+    <path d="M25,-20 Q15,-10 0,0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.4" />
+    
+    <!-- Floating particles around question mark -->
+    <circle cx="-30" cy="-30" r="3" fill="#FFD700" opacity="0.6" filter="url(#glow)" />
+    <circle cx="30" cy="-30" r="3" fill="#FFD700" opacity="0.6" filter="url(#glow)" />
+    <circle cx="-30" cy="30" r="3" fill="#FFD700" opacity="0.6" filter="url(#glow)" />
+    <circle cx="30" cy="30" r="3" fill="#FFD700" opacity="0.6" filter="url(#glow)" />
+    
+    <!-- Additional detail particles -->
+    <circle cx="-20" cy="-20" r="2" fill="#6BB6FF" opacity="0.8" />
+    <circle cx="20" cy="-20" r="2" fill="#6BB6FF" opacity="0.8" />
+    <circle cx="-20" cy="20" r="2" fill="#6BB6FF" opacity="0.8" />
+    <circle cx="20" cy="20" r="2" fill="#6BB6FF" opacity="0.8" />
+    
+    <!-- Question mark outer glow -->
+    <circle cx="0" cy="0" r="50" fill="none" stroke="#FFD700" stroke-width="1" opacity="0.3" filter="url(#glow)" />
+  </g>
+</svg>

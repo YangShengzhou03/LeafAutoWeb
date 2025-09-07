@@ -177,7 +177,7 @@ import { ElMessage } from 'element-plus'
 
 const exportGroupMembers = async () => {
   try {
-    const response = await fetch('/api/export/group-members')
+    const response = await fetch('http://localhost:5000/api/export/group-members')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -199,7 +199,7 @@ const exportGroupMembers = async () => {
 
 const exportGroupMessages = async () => {
   try {
-    const response = await fetch('/api/export/group-messages')
+    const response = await fetch('http://localhost:5000/api/export/group-messages')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -221,7 +221,7 @@ const exportGroupMessages = async () => {
 
 const exportGroupFiles = async () => {
   try {
-    const response = await fetch('/api/export/group-files')
+    const response = await fetch('http://localhost:5000/api/export/group-files')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -243,7 +243,7 @@ const exportGroupFiles = async () => {
 
 const exportGroupImages = async () => {
   try {
-    const response = await fetch('/api/export/group-images')
+    const response = await fetch('http://localhost:5000/api/export/group-images')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -265,7 +265,7 @@ const exportGroupImages = async () => {
 
 const exportGroupVoices = async () => {
   try {
-    const response = await fetch('/api/export/group-voices')
+    const response = await fetch('http://localhost:5000/api/export/group-voices')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -287,7 +287,7 @@ const exportGroupVoices = async () => {
 
 const exportGroupVideos = async () => {
   try {
-    const response = await fetch('/api/export/group-videos')
+    const response = await fetch('http://localhost:5000/api/export/group-videos')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -309,7 +309,7 @@ const exportGroupVideos = async () => {
 
 const exportGroupLinks = async () => {
   try {
-    const response = await fetch('/api/export/group-links')
+    const response = await fetch('http://localhost:5000/api/export/group-links')
     if (response.ok) {
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)

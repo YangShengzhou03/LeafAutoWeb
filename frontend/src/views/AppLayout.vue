@@ -103,7 +103,7 @@ const checkWeChatStatus = async () => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch('/api/wechat-status');
+      const response = await fetch('http://localhost:5000/api/wechat-status');
       
       
       if (!response.ok) {
@@ -142,7 +142,7 @@ const checkWeChatStatus = async () => {
 // 检查消息配额状态
 const checkMessageQuota = async () => {
   try {
-    const response = await fetch('/api/message-quota');
+    const response = await fetch('http://localhost:5000/api/message-quota');
     if (!response.ok) {
       throw new Error(`HTTP错误: ${response.status}`);
     }

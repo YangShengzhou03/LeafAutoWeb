@@ -192,7 +192,7 @@ const stopAutoSlide = () => {
 const checkVersionStatus = async () => {
   try {
     // 从message_quota.json获取版本状态
-    const response = await fetch('/api/message-quota');
+    const response = await fetch('http://localhost:5000/api/message-quota');
     const result = await response.json();
     // 判断account_level是否为enterprise
     if (result.success) {

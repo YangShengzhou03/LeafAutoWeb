@@ -1,0 +1,123 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Definitions for gradients and filters -->
+  <defs>
+    <!-- Main gradient for central processor -->
+    <linearGradient id="processorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#357ABD;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E5FCC;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Light gradient for highlights -->
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#E6F2FF;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <!-- Gradient for accent elements -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter with soft edges -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="4" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 3D effect filter -->
+    <filter id="effect3d" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="5" dy="5" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.25"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Glow effect for futuristic feel -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="400" height="300" fill="#F5FAFF" />
+  
+  <!-- Central Data Processor - Single Elegant Design -->
+  <g transform="translate(200, 150)">
+    <!-- Processor shadow -->
+    <ellipse cx="0" cy="45" rx="90" ry="18" fill="#000000" opacity="0.15" filter="url(#softShadow)" />
+    
+    <!-- Processor base (3D effect) -->
+    <rect x="-80" y="-40" width="160" height="80" rx="10" ry="10" fill="url(#processorGradient)" filter="url(#effect3d)" />
+    
+    <!-- Processor top surface with 3D effect -->
+    <rect x="-80" y="-40" width="160" height="80" rx="10" ry="10" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Processor core details (more realistic) -->
+    <rect x="-60" y="-25" width="120" height="50" rx="5" ry="5" fill="#1E5FCC" opacity="0.7" filter="url(#effect3d)" />
+    
+    <!-- Core circuit pattern (more detailed) -->
+    <rect x="-50" y="-15" width="100" height="30" rx="3" ry="3" fill="url(#processorGradient)" filter="url(#effect3d)" />
+    
+    <!-- Circuit board lines -->
+    <line x1="-40" y1="-10" x2="40" y2="-10" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+    <line x1="-40" y1="0" x2="40" y2="0" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+    <line x1="-40" y1="10" x2="40" y2="10" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+    <line x1="-30" y1="-15" x2="-30" y2="15" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+    <line x1="0" y1="-15" x2="0" y2="15" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+    <line x1="30" y1="-15" x2="30" y2="15" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+    
+    <!-- Central processing unit (more realistic) -->
+    <rect x="-15" y="-10" width="30" height="20" rx="2" ry="2" fill="#FFFFFF" opacity="0.9" filter="url(#effect3d)" />
+    <circle cx="0" cy="0" r="8" fill="url(#accentGradient)" filter="url(#glow)" />
+    
+    <!-- Data input/output ports (more realistic) -->
+    <rect x="-80" y="-10" width="15" height="20" rx="2" ry="2" fill="#FFFFFF" opacity="0.8" filter="url(#effect3d)" />
+    <rect x="65" y="-10" width="15" height="20" rx="2" ry="2" fill="#FFFFFF" opacity="0.8" filter="url(#effect3d)" />
+    <rect x="-10" y="-40" width="20" height="15" rx="2" ry="2" fill="#FFFFFF" opacity="0.8" filter="url(#effect3d)" />
+    <rect x="-10" y="25" width="20" height="15" rx="2" ry="2" fill="#FFFFFF" opacity="0.8" filter="url(#effect3d)" />
+    
+    <!-- Connection pins (more realistic) -->
+    <rect x="-75" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-65" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-55" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-45" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-35" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-25" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-15" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="-5" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="5" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="15" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="25" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="35" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="45" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="55" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="65" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    <rect x="75" y="-35" width="5" height="10" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    
+    <!-- Processor label (more realistic) -->
+    <rect x="-30" y="-30" width="60" height="8" rx="1" ry="1" fill="#000000" opacity="0.3" />
+    <rect x="-28" y="-28" width="56" height="4" rx="1" ry="1" fill="#FFD700" opacity="0.8" filter="url(#glow)" />
+    
+    <!-- Top highlight for 3D effect -->
+    <rect x="-80" y="-40" width="160" height="20" rx="10" ry="10" fill="url(#lightGradient)" opacity="0.5" />
+    
+    <!-- Processor outer glow -->
+    <rect x="-85" y="-45" width="170" height="90" rx="12" ry="12" fill="none" stroke="#4A90E2" stroke-width="1" opacity="0.3" filter="url(#glow)" />
+  </g>
+</svg>

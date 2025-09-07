@@ -57,7 +57,7 @@ echo sLinkFile = "%~dp0output\LeafAutoWeb\LeafAuto Web.lnk" >> %VBS_FILE%
 echo Set oLink = oWS.CreateShortcut(sLinkFile) >> %VBS_FILE%
 echo oLink.TargetPath = "%~dp0output\LeafAutoWeb\start_both.bat" >> %VBS_FILE%
 echo oLink.WorkingDirectory = "%~dp0output\LeafAutoWeb" >> %VBS_FILE%
-echo oLink.IconLocation = "%~dp0output\LeafAutoWeb\LeafAutoBackend\_internal\resources\icon.ico" >> %VBS_FILE%
+echo oLink.IconLocation = "\LeafAutoBackend\_internal\resources\icon.ico" >> %VBS_FILE%
 echo oLink.Save >> %VBS_FILE%
 cscript %VBS_FILE%
 del %VBS_FILE%

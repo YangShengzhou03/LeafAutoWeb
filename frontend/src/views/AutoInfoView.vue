@@ -271,7 +271,7 @@ const submitForm = async () => {
     // 批量创建任务
     let successCount = 0
     for (const taskData of tasksToCreate) {
-      const response = await fetch('/api/tasks', {
+      const response = await fetch('http://localhost:5000/api/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -316,7 +316,7 @@ const editTask = async (taskId) => {
 
     // 删除原任务
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
         method: 'DELETE'
       })
 
@@ -340,7 +340,7 @@ const deleteTask = async (taskId) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
         method: 'DELETE'
       })
 
@@ -365,7 +365,7 @@ const clearAllTasks = async () => {
     confirmButtonClass: 'el-button--danger'
   }).then(async () => {
     try {
-      const response = await fetch('/api/tasks', {
+      const response = await fetch('http://localhost:5000/api/tasks', {
         method: 'DELETE'
       })
 
@@ -396,7 +396,7 @@ const padZero = (num) => {
 
 const refreshTasks = async () => {
   try {
-    const response = await fetch('/api/tasks')
+    const response = await fetch('http://localhost:5000/api/tasks')
     if (response.ok) {
       const data = await response.json()
       tasks.value = data
@@ -510,7 +510,7 @@ const handleFileImport = async (event) => {
         })
 
         // 上传到服务器
-        const response = await fetch('/api/tasks/import', {
+        const response = await fetch('http://localhost:5000/api/tasks/import', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -559,7 +559,7 @@ const toggleTaskScheduler = async () => {
   try {
     if (isSchedulerRunning.value) {
       // 停止调度器
-      const response = await fetch('/api/task-scheduler/stop', {
+      const response = await fetch('http://localhost:5000/api/task-scheduler/stop', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -575,7 +575,7 @@ const toggleTaskScheduler = async () => {
       }
     } else {
       // 启动调度器
-      const response = await fetch('/api/task-scheduler/start', {
+      const response = await fetch('http://localhost:5000/api/task-scheduler/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -598,7 +598,7 @@ const toggleTaskScheduler = async () => {
 
 const checkSchedulerStatus = async () => {
   try {
-    const response = await fetch('/api/task-scheduler/status')
+    const response = await fetch('http://localhost:5000/api/task-scheduler/status')
     if (response.ok) {
       const data = await response.json()
       isSchedulerRunning.value = data.isRunning

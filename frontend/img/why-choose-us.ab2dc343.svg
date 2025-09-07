@@ -1,0 +1,104 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Definitions for gradients and filters -->
+  <defs>
+    <!-- Main gradient for shield -->
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5FE3A1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2CB67D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A8A5C;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Light gradient for highlights -->
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#E6FFF2;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <!-- Gradient for accent elements -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F8FF7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E5FCC;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter with soft edges -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="4" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Glow effect for futuristic feel -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="400" height="300" fill="#F5FAFF" />
+  
+  <!-- Central Shield - Main Subject -->
+  <g transform="translate(200, 150)">
+    <!-- Shield shadow -->
+    <path d="M0,40 C-40,40 -60,20 -60,-10 C-60,-30 -40,-40 0,-50 C40,-40 60,-30 60,-10 C60,20 40,40 0,40 Z" fill="#000000" opacity="0.15" filter="url(#softShadow)" />
+    
+    <!-- Shield main body -->
+    <path d="M0,35 C-35,35 -50,15 -50,-10 C-50,-30 -35,-40 0,-45 C35,-40 50,-30 50,-10 C50,15 35,35 0,35 Z" fill="url(#shieldGradient)" filter="url(#softShadow)" />
+    
+    <!-- Shield highlight -->
+    <path d="M0,30 C-30,30 -40,10 -40,-10 C-40,-30 -30,-35 0,-40 C30,-35 40,-30 40,-10 C40,10 30,30 0,30 Z" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Shield emblem - checkmark -->
+    <path d="M-20,0 L-5,15 L20,-15" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)" />
+    
+    <!-- Shield border details -->
+    <path d="M0,35 C-35,35 -50,15 -50,-10 C-50,-30 -35,-40 0,-45 C35,-40 50,-30 50,-10 C50,15 35,35 0,35 Z" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.5" />
+    
+    <!-- Shield connection nodes -->
+    <circle cx="-50" cy="-10" r="5" fill="#5FE3A1" filter="url(#glow)" />
+    <circle cx="50" cy="-10" r="5" fill="#5FE3A1" filter="url(#glow)" />
+    <circle cx="-35" cy="25" r="5" fill="#5FE3A1" filter="url(#glow)" />
+    <circle cx="35" cy="25" r="5" fill="#5FE3A1" filter="url(#glow)" />
+    
+    <!-- Shield connections -->
+    <path d="M-50,-10 Q-25,-5 -15,0" stroke="#5FE3A1" stroke-width="2" fill="none" opacity="0.6" filter="url(#glow)" />
+    <path d="M50,-10 Q25,-5 15,0" stroke="#5FE3A1" stroke-width="2" fill="none" opacity="0.6" filter="url(#glow)" />
+    <path d="M-35,25 Q-20,15 -10,10" stroke="#5FE3A1" stroke-width="2" fill="none" opacity="0.6" filter="url(#glow)" />
+    <path d="M35,25 Q20,15 10,10" stroke="#5FE3A1" stroke-width="2" fill="none" opacity="0.6" filter="url(#glow)" />
+    
+    <!-- Shield particles -->
+    <circle cx="-25" cy="-5" r="2" fill="#5FE3A1" opacity="0.8" />
+    <circle cx="25" cy="-5" r="2" fill="#5FE3A1" opacity="0.8" />
+    <circle cx="-20" cy="15" r="2" fill="#5FE3A1" opacity="0.8" />
+    <circle cx="20" cy="15" r="2" fill="#5FE3A1" opacity="0.8" />
+    
+    <!-- Floating shield particles -->
+    <circle cx="-30" cy="-30" r="3" fill="#2CB67D" opacity="0.6" filter="url(#glow)" />
+    <circle cx="30" cy="-30" r="3" fill="#2CB67D" opacity="0.6" filter="url(#glow)" />
+    <circle cx="-30" cy="30" r="3" fill="#2CB67D" opacity="0.6" filter="url(#glow)" />
+    <circle cx="30" cy="30" r="3" fill="#2CB67D" opacity="0.6" filter="url(#glow)" />
+    
+    <!-- Additional shield details -->
+    <path d="M-15,-10 Q-7,-5 0,0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M15,-10 Q7,-5 0,0" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M-15,5 Q-7,10 0,15" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M15,5 Q7,10 0,15" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    
+    <!-- Top highlight for 3D effect -->
+    <ellipse cx="0" cy="-35" rx="20" ry="10" fill="url(#lightGradient)" opacity="0.5" />
+    
+    <!-- Inner glow effect -->
+    <ellipse cx="0" cy="-5" rx="15" ry="10" fill="url(#lightGradient)" opacity="0.3" />
+    
+    <!-- Shield emblem glow -->
+    <circle cx="0" cy="0" r="25" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.3" filter="url(#glow)" />
+  </g>
+</svg>

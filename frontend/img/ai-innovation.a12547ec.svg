@@ -1,0 +1,140 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Definitions for gradients and filters -->
+  <defs>
+    <!-- Main gradient for AI brain -->
+    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BB6FF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4F8FF7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E5FCC;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Light gradient for highlights -->
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#E6F2FF;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <!-- Gradient for neural connections -->
+    <linearGradient id="neuralGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9D50BB;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#6E48AA;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#9D50BB;stop-opacity:0.8" />
+    </linearGradient>
+    
+    <!-- Gradient for accent elements -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter with soft edges -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="4" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 3D effect filter -->
+    <filter id="effect3d" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="5" dy="5" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.25"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Glow effect for futuristic feel -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="400" height="300" fill="#F5FAFF" />
+  
+  <!-- Central AI Brain - Main Subject -->
+  <g transform="translate(200, 150)">
+    <!-- Brain shadow -->
+    <ellipse cx="0" cy="45" rx="90" ry="18" fill="#000000" opacity="0.15" filter="url(#softShadow)" />
+    
+    <!-- Brain base (3D effect) -->
+    <path d="M-80,-40 C-80,-55 -40,-60 0,-60 C40,-60 80,-55 80,-40 L80,30 C80,45 40,50 0,50 C-40,50 -80,45 -80,30 Z" fill="url(#brainGradient)" filter="url(#effect3d)" />
+    
+    <!-- Brain top surface with 3D effect -->
+    <path d="M-80,-40 C-80,-55 -40,-60 0,-60 C40,-60 80,-55 80,-40 L80,30 C80,45 40,50 0,50 C-40,50 -80,45 -80,30 Z" fill="url(#lightGradient)" opacity="0.7" />
+    
+    <!-- Left hemisphere (more realistic shape) -->
+    <path d="M-40,-50 C-60,-50 -70,-30 -70,-10 C-70,10 -60,30 -40,30 L0,30 L0,-50 Z" fill="#1E5FCC" opacity="0.7" filter="url(#effect3d)" />
+    
+    <!-- Right hemisphere (more realistic shape) -->
+    <path d="M40,-50 C60,-50 70,-30 70,-10 C70,10 60,30 40,30 L0,30 L0,-50 Z" fill="#1E5FCC" opacity="0.7" filter="url(#effect3d)" />
+    
+    <!-- Brain division (more prominent) -->
+    <path d="M0,-50 Q-5,-25 0,0 Q5,25 0,50" stroke="#FFFFFF" stroke-width="3" fill="none" opacity="0.6" />
+    
+    <!-- Brain lobes details (left hemisphere) -->
+    <path d="M-60,-30 C-50,-35 -40,-35 -30,-30" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M-65,-10 C-55,-15 -45,-15 -35,-10" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M-60,10 C-50,5 -40,5 -30,10" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    
+    <!-- Brain lobes details (right hemisphere) -->
+    <path d="M60,-30 C50,-35 40,-35 30,-30" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M65,-10 C55,-15 45,-15 35,-10" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    <path d="M60,10 C50,5 40,5 30,10" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.5" />
+    
+    <!-- Brain cortex details (left hemisphere) -->
+    <circle cx="-50" cy="-20" r="8" fill="#4F8FF7" opacity="0.8" />
+    <circle cx="-35" cy="0" r="8" fill="#4F8FF7" opacity="0.8" />
+    <circle cx="-50" cy="20" r="8" fill="#4F8FF7" opacity="0.8" />
+    
+    <!-- Brain cortex details (right hemisphere) -->
+    <circle cx="50" cy="-20" r="8" fill="#4F8FF7" opacity="0.8" />
+    <circle cx="35" cy="0" r="8" fill="#4F8FF7" opacity="0.8" />
+    <circle cx="50" cy="20" r="8" fill="#4F8FF7" opacity="0.8" />
+    
+    <!-- Central processing unit (more prominent) -->
+    <circle cx="0" cy="0" r="20" fill="#9D50BB" opacity="0.8" filter="url(#glow)" />
+    <circle cx="0" cy="0" r="15" fill="#FFFFFF" opacity="0.9" />
+    <circle cx="0" cy="0" r="8" fill="url(#accentGradient)" filter="url(#glow)" />
+    
+    <!-- Neural connections (more realistic) -->
+    <path d="M-50,-20 Q-25,-10 0,0" stroke="url(#neuralGradient)" stroke-width="2" fill="none" filter="url(#glow)" />
+    <path d="M50,-20 Q25,-10 0,0" stroke="url(#neuralGradient)" stroke-width="2" fill="none" filter="url(#glow)" />
+    <path d="M-35,0 Q-17,0 0,0" stroke="url(#neuralGradient)" stroke-width="2" fill="none" filter="url(#glow)" />
+    <path d="M35,0 Q17,0 0,0" stroke="url(#neuralGradient)" stroke-width="2" fill="none" filter="url(#glow)" />
+    <path d="M-50,20 Q-25,10 0,0" stroke="url(#neuralGradient)" stroke-width="2" fill="none" filter="url(#glow)" />
+    <path d="M50,20 Q25,10 0,0" stroke="url(#neuralGradient)" stroke-width="2" fill="none" filter="url(#glow)" />
+    
+    <!-- Neural particles (subtle) -->
+    <circle cx="-25" cy="-10" r="2" fill="#9D50BB" opacity="0.8" />
+    <circle cx="25" cy="-10" r="2" fill="#9D50BB" opacity="0.8" />
+    <circle cx="-17" cy="0" r="2" fill="#9D50BB" opacity="0.8" />
+    <circle cx="17" cy="0" r="2" fill="#9D50BB" opacity="0.8" />
+    <circle cx="-25" cy="10" r="2" fill="#9D50BB" opacity="0.8" />
+    <circle cx="25" cy="10" r="2" fill="#9D50BB" opacity="0.8" />
+    
+    <!-- Floating neural particles (subtle) -->
+    <circle cx="-70" cy="-40" r="3" fill="#6E48AA" opacity="0.6" filter="url(#glow)" />
+    <circle cx="70" cy="-40" r="3" fill="#6E48AA" opacity="0.6" filter="url(#glow)" />
+    <circle cx="-70" cy="40" r="3" fill="#6E48AA" opacity="0.6" filter="url(#glow)" />
+    <circle cx="70" cy="40" r="3" fill="#6E48AA" opacity="0.6" filter="url(#glow)" />
+    
+    <!-- Top highlight for 3D effect -->
+    <ellipse cx="0" cy="-40" rx="50" ry="25" fill="url(#lightGradient)" opacity="0.5" />
+    
+    <!-- Brain outer glow -->
+    <circle cx="0" cy="0" r="85" fill="none" stroke="#6BB6FF" stroke-width="1" opacity="0.3" filter="url(#glow)" />
+  </g>
+</svg>

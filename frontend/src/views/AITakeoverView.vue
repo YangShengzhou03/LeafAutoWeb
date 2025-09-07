@@ -307,7 +307,7 @@ const handleSwitchChange = async (newStatus) => {
   try {
     if (newStatus) {
       // 发送开始接管请求
-      const response = await fetch('/api/ai-takeover/start', {
+      const response = await fetch('http://localhost:5000/api/ai-takeover/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -338,7 +338,7 @@ const handleSwitchChange = async (newStatus) => {
       }
     } else {
       // 发送停止接管请求
-      const response = await fetch('/api/ai-takeover/stop', {
+      const response = await fetch('http://localhost:5000/api/ai-takeover/stop', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -466,7 +466,7 @@ const replyHistory = ref([])
 const fetchReplyHistory = async () => {
   try {
     isLoadingHistory.value = true
-    const response = await fetch('/api/ai-history')
+    const response = await fetch('http://localhost:5000/api/ai-history')
     if (response.ok) {
       const data = await response.json()
       // 转换数据格式以匹配前端表格
@@ -490,7 +490,7 @@ const fetchReplyHistory = async () => {
 // 获取AI设置 ai接管状态 回复延迟 最小回复间隔 接管联系人 AI人设 自定义规则
 const fetchAiSettings = async () => {
   try {
-    const response = await fetch('api/ai-settings')
+    const response = await fetch('http://localhost:5000/api/ai-settings')
     if (response.ok) {
       const data = await response.json()
       const settingsData = Array.isArray(data) && data.length > 0 ? data[0] : data
@@ -578,7 +578,7 @@ const submitForm = async () => {
 
     
 
-    const response = await fetch('api/ai-settings', {
+    const response = await fetch('http://localhost:5000/api/ai-settings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -699,7 +699,7 @@ const fetchChartData = async (range) => {
   activeChartRequest.value = controller;
 
   try {
-    const response = await fetch(`/api/stats/${range}`, { signal });
+    const response = await fetch(`http://localhost:5000/api/stats/${range}`, { signal });
     if (response.ok) {
       const data = await response.json();
       chartData.value = data.chartData || { dates: [], counts: [] };
