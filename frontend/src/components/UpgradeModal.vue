@@ -92,11 +92,11 @@
                   v-model="activationCode"
                   placeholder="请输入激活码"
                   class="activation-field"
-                  maxlength="6"
+                  maxlength="8"
                   @input="formatActivationCode"
                   @keyup.enter="handleActivation"
                 />
-                <button class="activation-btn" @click="handleActivation" :disabled="!activationCode || activationCode.length < 5 || activationCode.length > 6">
+                <button class="activation-btn" @click="handleActivation" :disabled="!activationCode || activationCode.length < 7 || activationCode.length > 8">
                   <span>立即兑换</span>
                 </button>
               </div>
@@ -166,9 +166,9 @@ const emit = defineEmits(['close', 'confirm', 'activation', 'after-close']);
 const activationCode = ref('');
 const randomNum = ref('');
 
-// 生成6位随机数
+// 生成8位随机数
 const generateRandomCode = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(10000000 + Math.random() * 90000000).toString();
 };
 
 // 计算属性：显示的随机码
@@ -191,8 +191,8 @@ onMounted(() => {
 // 方法
 const handleActivation = async () => {
   console.log('收到点击')
-  if (activationCode.value.trim() && (activationCode.value.length >= 5 && activationCode.value.length <= 6)) {
-    // 将5-6位的激活码填充为16位
+  if (activationCode.value.trim() && (activationCode.value.length >= 7 && activationCode.value.length <= 8)) {
+    // 将7-8位的激活码填充为16位
     let paddedCode = activationCode.value.trim().toUpperCase();
     paddedCode = paddedCode.padStart(16, '0');
     
@@ -227,7 +227,7 @@ const handleActivation = async () => {
       ElMessage.error('激活码验证请求失败，请稍后重试');
     }
   } else {
-    ElMessage.error('激活码长度不正确，请输入5-6位激活码');
+    ElMessage.error('激活码长度不正确，请输入7-8位激活码');
   }
 };
 
