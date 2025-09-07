@@ -1,0 +1,38 @@
+/* 状态标签样式 */
+.status-tag {
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* 状态标签 - 成功状态 */
+.el-tag.status-tag.el-tag--success {
+  color: var(--success-color);
+  background-color: rgba(var(--success-rgb), 0.15);
+  border-color: rgba(var(--success-rgb), 0.3);
+}
+
+/* 状态标签 - 警告状态 */
+.el-tag.status-tag.el-tag--warning {
+  color: var(--warning-color);
+  background-color: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* 状态标签 - 危险状态 */
+.el-tag.status-tag.el-tag--danger {
+  color: var(--danger-color);
+  background-color: rgba(var(--danger-rgb), 0.15);
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+
+/* 状态标签 - 信息状态 */
+.el-tag.status-tag.el-tag--info {
+  color: var(--primary-color);
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+}

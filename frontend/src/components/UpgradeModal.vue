@@ -226,7 +226,7 @@ const handleActivation = async () => {
       ElMessage.error('激活码验证请求失败，请稍后重试');
     }
   } else {
-    ElMessage.error('激活码长度不正确，请输入7-8位激活码');
+    ElMessage.error('激活码格式不正确，请输入7-8位字母数字组合');
   }
 };
 

@@ -847,8 +847,8 @@ def verify_activation():
     random_code = data["randomCode"]
     activation_code = data["activationCode"]
     
-    # 验证randomCode是否为6位数字
-    if not random_code or not random_code.isdigit() or len(random_code) != 6:
+    # 验证randomCode是否为8位数字
+    if not random_code or not random_code.isdigit() or len(random_code) != 8:
         return jsonify({"success": False, "error": "随机码格式不正确"}), 400
     
     # 验证activationCode是否为16位字母数字

@@ -6,6 +6,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import './assets/css/reset.css'
 import './assets/css/modern-theme.css'
+import './assets/css/status-tag.css'
 
 const app = createApp(App)
 const pinia = createPinia()

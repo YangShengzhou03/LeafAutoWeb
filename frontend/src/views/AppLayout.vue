@@ -42,6 +42,7 @@
       :account-level="quotaInfo.account_level"
       @close="showUpgradeModal = false"
       @confirm="handlePayment"
+      @activation="handleActivation"
     />
   </div>
 </template>
@@ -92,6 +93,21 @@ const handleUpgrade = () => {
 const handlePayment = () => {
   // 这里可以添加实际的支付逻辑
   ElMessage.warning('支付功能即将上线，请稍后再试');
+  showUpgradeModal.value = false;
+};
+
+// 处理激活
+const handleActivation = (result) => {
+  if (result.success) {
+    // 根据激活的版本显示不同的成功消息
+    const versionText = result.version === 'enterprise' ? '企业版' : '基础版';
+    ElMessage.success(`${versionText}激活成功`);
+    
+    // 刷新页面以更新用户状态
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  }
   showUpgradeModal.value = false;
 };
 

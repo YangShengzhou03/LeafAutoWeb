@@ -333,9 +333,17 @@ const handleSelectPlan = (plan) => {
 };
 
 // 处理激活码提交
-const handleActivation = () => {
-  // 这里可以添加激活码验证逻辑
-  ElMessage.success('提交激活码成功，等待验证结果')
+const handleActivation = (result) => {
+  if (result.success) {
+    // 根据激活的版本显示不同的成功消息
+    const versionText = result.version === 'enterprise' ? '企业版' : '基础版';
+    ElMessage.success(`${versionText}激活成功`);
+    
+    // 刷新页面以更新用户状态
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  }
   showUpgradeModal.value = false;
 };
 
@@ -490,16 +498,13 @@ onUnmounted(() => {
   transform: translateY(-15px) scale(1.03);
 }
 
-.pricing-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-}
+
 
 .pricing-card.popular {
-  border-color: var(--primary-color);
-  transform: translateY(-10px);
-  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.1);
-}
+    border-color: var(--primary-color);
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(30, 64, 175, 0.1);
+  }
 
 .popular-tag {
   position: absolute;
@@ -808,34 +813,7 @@ onUnmounted(() => {
 }
 
 
-@media (max-width: 768px) {
-  .metrics-container {
-    flex-direction: column;
-    align-items: center;
-  }
 
-  .metric-card {
-    width: 100%;
-    max-width: 300px;
-  }
-}
-
-@media (max-width: 576px) {
-
-  .pricing-card,
-  .dashboard-card,
-  .testimonial-card {
-    max-width: 100%;
-  }
-
-  .section-header h2 {
-    font-size: 1.5rem;
-  }
-
-  .section-header p {
-    font-size: 1rem;
-  }
-}
 
 /* 轮播图样式 */
 .promotion-carousel {
