@@ -5,7 +5,7 @@
     "minReplyInterval": 0,
     "contactPerson": "杨圣洲",
     "aiPersona": "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。",
-    "aiModel": "disabled",
+    "aiModel": "moonshot",
     "customRules": [
       {
         "id": 1757239007794,
@@ -46,6 +46,6 @@
     ],
     "onlyAt": false,
     "onlyAtTrigger": true,
-    "updatedAt": "2025-09-08T23:26:54.062089"
+    "updatedAt": "2025-09-09T00:20:20.667709"
   }
 }

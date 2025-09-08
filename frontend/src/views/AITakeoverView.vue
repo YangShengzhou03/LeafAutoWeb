@@ -34,7 +34,8 @@
                 <el-form-item label="AI大模型" prop="aiModel" class="inline-form-item">
                   <el-select v-model="formData.aiModel" placeholder="请选择" :loading="isTakeoverLoading">
                     <el-option label="禁用模型" value="disabled"></el-option>
-                    <el-option label="通义千问" value="tongyiqianwen"></el-option>
+                    <el-option label="文心一言" value="wenxin"></el-option>
+                    <el-option label="月之暗面" value="moonshot"></el-option>
                     <el-option label="星火讯飞" value="xinghuoxunfei"></el-option>
                   </el-select>
                 </el-form-item>

@@ -582,15 +582,145 @@ class AiWorkerThread:
             logger.error("Unexpected error checking target message: %s", e)
             return False
 
-    def _generate_ai_reply(self, _message_content: str) -> None:
+    def _generate_ai_reply(self, message_content: str) -> None:
         """
-        预留AI回复方法
+        AI回复方法
 
         Args:
-            _message_content: 消息内容（未使用）
+            message_content: 消息内容
         """
-        # 预留AI回复方法，暂时不实现任何功能
-        return
+        try:
+            # 根据配置的模型调用相应的AI接口
+            reply = self._query_ai_model(message_content)
+            if reply:
+                # 使用保存的消息上下文
+                if hasattr(self, '_current_message_context'):
+                    context = self._current_message_context
+                    is_group = context.get("is_group", False)
+                    sender = context.get("sender", "")
+                    group_name = context.get("group_name", "")
+                    receive_time = context.get("receive_time", time.time())
+                else:
+                    # 如果没有保存的上下文，使用默认值
+                    is_group = False
+                    sender = ""
+                    group_name = ""
+                    receive_time = time.time()
+                
+                # 发送AI回复
+                if is_group:
+                    self.reply_handler.send_reply(group_name, reply, at_user=sender)
+                else:
+                    self.reply_handler.send_reply(sender, reply)
+                    
+                self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                
+                # 记录回复历史
+                history = MessageHistory(
+                    sender, 
+                    message_content, 
+                    reply, 
+                    "replied", 
+                    round(time.time() - receive_time, 2)
+                )
+                self._record_history(history)
+        except Exception as e:
+            logger.error("生成AI回复失败: %s", e)
+    
+    def _query_ai_model(self, message: str) -> str:
+        """
+        查询AI模型获取回复
+        
+        Args:
+            message: 用户消息
+            
+        Returns:
+            str: AI回复内容
+        """
+        model = self.config.model
+        
+        if model == "wenxin":
+            return self._query_wenxin(message)
+        elif model == "moonshot":
+            return self._query_moonshot(message)
+        elif model == "xinghuoxunfei":
+            return self._query_spark(message)
+        else:
+            logger.warning("未知的AI模型: %s", model)
+            return ""
+    
+    def _query_wenxin(self, message: str) -> str:
+        """
+        查询文心一言模型
+        
+        Args:
+            message: 用户消息
+            
+        Returns:
+            str: AI回复内容
+        """
+        try:
+            # 这里应该调用文心一言的API
+            # 由于没有实际的API密钥，这里返回一个模拟回复
+            logger.info("调用文心一言模型处理消息: %s", message)
+            return f"文心一言回复: {message}"
+        except Exception as e:
+            logger.error("文心一言模型调用失败: %s", e)
+            return ""
+    
+    def _query_moonshot(self, message: str) -> str:
+        """
+        查询月之暗面模型
+        
+        Args:
+            message: 用户消息
+            
+        Returns:
+            str: AI回复内容
+        """
+        try:
+            # 这里应该调用月之暗面的API
+            # 由于没有实际的API密钥，这里返回一个模拟回复
+            logger.info("调用月之暗面模型处理消息: %s", message)
+            return f"月之暗面回复: {message}"
+        except Exception as e:
+            logger.error("月之暗面模型调用失败: %s", e)
+            return ""
+    
+    def _query_spark(self, message: str) -> str:
+        """
+        查询星火讯飞模型
+        
+        Args:
+            message: 用户消息
+            
+        Returns:
+            str: AI回复内容
+        """
+        try:
+            # 这里应该调用星火讯飞的API
+            # 由于没有实际的API密钥，这里返回一个模拟回复
+            logger.info("调用星火讯飞模型处理消息: %s", message)
+            return f"星火讯飞回复: {message}"
+        except Exception as e:
+            logger.error("星火讯飞模型调用失败: %s", e)
+            return ""
+    
+    def _get_chat_info_from_message(self) -> Dict[str, Any]:
+        """
+        从当前消息中获取聊天信息
+        
+        Returns:
+            Dict[str, Any]: 包含聊天类型、名称、发送者和接收时间的字典
+        """
+        # 这里应该从当前消息中获取聊天信息
+        # 由于没有当前消息的上下文，这里返回一个默认值
+        return {
+            "type": "friend",
+            "name": "",
+            "sender": "",
+            "receive_time": time.time()
+        }
 
     def _cleanup(self) -> None:
         """
@@ -783,9 +913,20 @@ class AiWorkerThread:
                 self._record_history(history)
                 return
 
-            # 预留AI回复方法，暂时不发送任何消息
-            self._generate_ai_reply(message_content)
-            logger.debug("[AI接管] 消息已处理，不发送回复: %s", message_content)
+            # 如果没有匹配的自定义规则，则使用AI模型生成回复
+            if self.config.model != "disabled":
+                # 保存当前消息的上下文，以便在_generate_ai_reply方法中使用
+                self._current_message_context = {
+                    "sender": sender,
+                    "message_content": message_content,
+                    "receive_time": receive_time,
+                    "is_group": is_group,
+                    "group_name": group_name if is_group else ""
+                }
+                self._generate_ai_reply(message_content)
+                logger.debug("[AI接管] 使用AI模型回复消息: %s", message_content)
+            else:
+                logger.debug("[AI接管] AI模型已禁用，不回复消息: %s", message_content)
             return
 
         except (ValueError, TypeError, AttributeError, KeyError) as e:
@@ -985,6 +1126,7 @@ class AiWorkerManager:
         Returns:
             bool: True表示启动成功，False表示启动失败
         """
+        print(f"1129: {config.model}")
         with self.lock:
             worker_key = f"{config.receiver}_{config.model}"
             if worker_key in self.workers:
