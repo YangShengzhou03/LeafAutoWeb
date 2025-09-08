@@ -16,37 +16,53 @@
             </template>
 
             <el-form ref="aiForm" :model="formData" :rules="rules" class="custom-input">
-              <el-form-item label="AI接管状态" prop="aiStatus">
-                <div class="status-toggle">
-                  <el-switch v-model="formData.aiStatus" active-color="#3b82f6" inactive-color="#d1d5db"
-                    @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
-                  <div v-if="formData.aiStatus" class="takeover-time ml-3">
-                    已接管: <span class="text-primary">{{ formattedTakeoverTime }}</span>
+              <div class="controls-row">
+                <el-form-item label="AI接管状态" prop="aiStatus" class="inline-form-item">
+                  <div class="status-toggle inline-status">
+                    <el-switch v-model="formData.aiStatus" active-color="#3b82f6" inactive-color="#d1d5db"
+                      @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
                   </div>
-                </div>
-              </el-form-item>
+                </el-form-item>
+
+                <el-form-item label="仅被@时触发" prop="onlyAtTrigger" class="inline-form-item">
+                  <div class="status-toggle">
+                    <el-switch v-model="formData.onlyAtTrigger" active-color="#3b82f6" inactive-color="#d1d5db"
+                      @change="handleOnlyAtChange" :loading="isTakeoverLoading"></el-switch>
+                  </div>
+                </el-form-item>
+
+                <el-form-item label="AI大模型" prop="aiModel" class="inline-form-item">
+                  <el-select v-model="formData.aiModel" placeholder="请选择" :loading="isTakeoverLoading">
+                    <el-option label="禁用模型" value="disabled"></el-option>
+                    <el-option label="通义千问" value="tongyiqianwen"></el-option>
+                    <el-option label="星火讯飞" value="xinghuoxunfei"></el-option>
+                  </el-select>
+                </el-form-item>
+              </div>
 
               <el-form-item label="回复延迟(秒)" prop="replyDelay">
-                <el-input-number v-model="formData.replyDelay" :min="0" :max="30"
-                  placeholder="输入回复延迟时间" :disabled="isTakeoverLoading"></el-input-number>
+                <el-input-number v-model="formData.replyDelay" :min="0" :max="30" placeholder="输入回复延迟时间"
+                  :disabled="isTakeoverLoading"></el-input-number>
               </el-form-item>
 
               <el-form-item label="相同内容最小回复间隔(秒)" prop="minReplyInterval">
-                <el-input-number v-model="formData.minReplyInterval" :min="0" :max="3600"
-                  placeholder="输入相同内容最小回复间隔" :disabled="isTakeoverLoading"></el-input-number>
+                <el-input-number v-model="formData.minReplyInterval" :min="0" :max="3600" placeholder="输入相同内容最小回复间隔"
+                  :disabled="isTakeoverLoading"></el-input-number>
               </el-form-item>
 
               <el-form-item label="接管联系人" prop="contactPerson">
-                <el-input v-model="formData.contactPerson" placeholder="输入接管联系人姓名" :disabled="isTakeoverLoading"></el-input>
+                <el-input v-model="formData.contactPerson" placeholder="输入接管联系人姓名"
+                  :disabled="isTakeoverLoading"></el-input>
               </el-form-item>
 
               <el-form-item label="AI人设" prop="aiPersona">
-                <el-input v-model="formData.aiPersona" type="textarea" placeholder="描述AI的性格和回复风格" :rows="4" :disabled="isTakeoverLoading"></el-input>
+                <el-input v-model="formData.aiPersona" type="textarea" placeholder="描述AI的性格和回复风格" :rows="4"
+                  :disabled="isTakeoverLoading"></el-input>
               </el-form-item>
 
               <div class="action-buttons">
-                <el-button type="primary" :loading="isSubmitting" @click="submitForm"
-                  class="gradient-btn" :disabled="isTakeoverLoading">保存设置</el-button>
+                <el-button type="primary" :loading="isSubmitting" :loading-icon="Loading" @click="submitForm" class="gradient-btn"
+                  :disabled="isTakeoverLoading">保存设置</el-button>
                 <el-button @click="resetForm" :disabled="isTakeoverLoading">重置</el-button>
               </div>
             </el-form>
@@ -141,14 +157,15 @@
 
         <div class="custom-rules-container">
           <div class="rule-actions">
-            <el-button type="primary" @click="openAddRuleDialog" class="gradient-btn" :disabled="isTakeoverLoading">添加规则</el-button>
+            <el-button type="primary" @click="openAddRuleDialog" class="gradient-btn"
+              :disabled="isTakeoverLoading">添加规则</el-button>
           </div>
 
           <el-table v-model:data="formData.customRules" class="rules-table" ref="rulesForm" row-key="id">
             <el-table-column prop="matchType" label="匹配类型" width="180">
               <template #default="{ row }">
                 <span>{{ row.matchType === 'contains' ? '包含关键词' : row.matchType === 'equals' ? '完全匹配' : '正则表达式'
-                }}</span>
+                  }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="keyword" label="关键词/规则" width="240">
@@ -164,7 +181,8 @@
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ $index }">
                 <div class="operation-buttons">
-                  <el-button type="danger" size="small" @click="removeRule($index)" class="delete-btn" :disabled="isTakeoverLoading">删除</el-button>
+                  <el-button type="danger" size="small" @click="removeRule($index)" class="delete-btn"
+                    :disabled="isTakeoverLoading">删除</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -269,7 +287,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { View, Search } from '@element-plus/icons-vue'
+import { View, Search, Loading } from '@element-plus/icons-vue'
 
 
 const aiForm = ref(null)
@@ -279,31 +297,18 @@ const rulesForm = ref(null)
 const formData = reactive({
   aiStatus: false,
   replyDelay: 0,
-  minReplyInterval: 30,
+  minReplyInterval: 0,
   contactPerson: '文件传输助手',
   aiPersona: '你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。',
+  aiModel: 'disabled',
   customRules: []
 })
 
 const isTakeoverLoading = ref(false)
 
-
-const startTime = ref(null)
-const takeoverDuration = ref(0)
-const timerInterval = ref(null)
-
-
-const formattedTakeoverTime = computed(() => {
-  const seconds = Math.floor(takeoverDuration.value / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-})
-
-
 const handleSwitchChange = async (newStatus) => {
   isTakeoverLoading.value = true
-  
+
   try {
     if (newStatus) {
       // 发送开始接管请求
@@ -315,21 +320,17 @@ const handleSwitchChange = async (newStatus) => {
         body: JSON.stringify({
           contactPerson: formData.contactPerson,
           aiPersona: formData.aiPersona,
-          onlyAt: false,
+          onlyAt: formData.onlyAtTrigger,
           replyDelay: formData.replyDelay,
           minReplyInterval: formData.minReplyInterval
         })
       })
-      
+
       const result = await response.json()
-      
+
       if (result.success) {
         // 使用API返回的状态确保同步
         formData.aiStatus = Boolean(result.aiStatus ?? true)
-        startTime.value = Date.now()
-        timerInterval.value = setInterval(() => {
-          takeoverDuration.value = Date.now() - startTime.value
-        }, 1000)
         ElMessage.success('AI已成功开始接管消息回复')
       } else {
         // 操作失败时恢复开关状态
@@ -347,14 +348,12 @@ const handleSwitchChange = async (newStatus) => {
           contactPerson: formData.contactPerson
         })
       })
-      
+
       const result = await response.json()
-      
+
       if (result.success) {
         // 使用API返回的状态确保同步
         formData.aiStatus = Boolean(result.aiStatus ?? false)
-        clearInterval(timerInterval.value)
-        timerInterval.value = null
         ElMessage.success('AI已成功停止接管消息回复')
       } else {
         // 操作失败时恢复开关状态
@@ -373,11 +372,7 @@ const handleSwitchChange = async (newStatus) => {
 }
 
 
-onUnmounted(() => {
-  if (timerInterval.value) {
-    clearInterval(timerInterval.value)
-  }
-})
+
 
 const rules = {
   replyDelay: [
@@ -494,7 +489,7 @@ const fetchAiSettings = async () => {
     if (response.ok) {
       const data = await response.json()
       const settingsData = Array.isArray(data) && data.length > 0 ? data[0] : data
-      
+
       // 直接从API响应中获取aiStatus状态
       Object.assign(formData, {
         ...settingsData,
@@ -503,7 +498,7 @@ const fetchAiSettings = async () => {
         customRules: settingsData.customRules || [],
         aiStatus: Boolean(settingsData.aiStatus ?? false) // 确保使用API返回的状态
       })
-      
+
       await nextTick() // 确保UI更新
     } else {
       ElMessage.error('获取AI设置失败')
@@ -576,7 +571,7 @@ const submitForm = async () => {
       customRules: Array.isArray(formData.customRules) ? formData.customRules : []
     }
 
-    
+
 
     const response = await fetch('http://localhost:5000/api/ai-settings', {
       method: 'POST',
@@ -806,6 +801,21 @@ const tableRowClassName = ({ row }) => {
   return row.status === 'pending' ? 'task-pending' : 'task-completed';
 }
 
+// 处理仅被@时触发开关变化
+const handleOnlyAtChange = async () => {
+  isTakeoverLoading.value = true
+  
+  try {
+    // 仅保存设置，不改变接管状态
+    await submitForm()
+    ElMessage.success('仅被@时触发设置已更新')
+  } catch (error) {
+    console.error('更新仅被@时触发设置失败:', error)
+    ElMessage.error(`更新设置失败: ${error.message || '网络错误'}`)
+  } finally {
+    isTakeoverLoading.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -828,8 +838,7 @@ onMounted(async () => {
     ElMessage.error('初始化AI统计数据失败');
     console.error('初始化AI统计数据失败:', error);
   }
-})
-</script>
+});</script>
 
 <style scoped>
 :root {
@@ -982,14 +991,40 @@ onMounted(async () => {
   align-items: center;
 }
 
-.takeover-time {
-  font-size: 14px;
-  color: var(--text-secondary);
+/* 水平布局样式 */
+.controls-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0px;
+  margin-bottom: 0px;
+  flex-wrap: wrap;
 }
 
-.takeover-time.text-primary {
-  color: var(--primary-color);
-  font-weight: 500;
+.inline-form-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0px;
+  padding: 0 2px;
+}
+
+.inline-form-item .el-select {
+  width: 100%;
+  min-width: 0px;
+}
+
+.inline-form-item .el-form-item__label {
+  margin-right: 4px;
+  min-width: 0px;
+  line-height: 32px;
+  white-space: nowrap;
+}
+
+.inline-status {
+  display: flex;
+  align-items: center;
+  gap: 0px;
 }
 
 
@@ -1570,30 +1605,36 @@ onMounted(async () => {
     width: 90vw !important;
     max-width: 400px;
   }
-  
+
   .detail-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .message-bubble {
     padding: 10px 14px;
     font-size: 14px;
   }
-  
+
   .add-rule-dialog .el-dialog {
     width: 90vw !important;
     max-width: 400px;
     margin: 20px auto;
   }
-  
+
   .add-rule-dialog .el-dialog__body {
     padding: 16px;
   }
-  
+
   .add-rule-dialog .el-form-item {
     margin-bottom: 16px;
   }
 }
 </style>
+
+
+
+
+
+

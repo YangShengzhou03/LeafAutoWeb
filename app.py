@@ -331,7 +331,7 @@ def save_ai_settings_route():
             success = ai_manager.start_worker(
                 wx,
                 contact_person,
-                role=settings_data.get("aiPersona", "你很温馨,回复简单明了。"),
+                role=settings_data.get("aiPersona", "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。"),
                 only_at=settings_data.get("onlyAt", False),
                 reply_delay=settings_data.get("replyDelay", 0),
                 min_reply_interval=settings_data.get("minReplyInterval", 0),
@@ -749,37 +749,7 @@ def get_chart_data(time_range):
 # 导出功能API
 @app.route("/api/export/group-members", methods=["GET"])
 def export_group_members():
-    try:
-        # 这里应该实现实际的群成员导出逻辑
-        # 返回一个空的Excel文件作为示例
-        import io
-
-        import pandas as pd
-
-        # 创建示例数据
-        data = pd.DataFrame(
-            {
-                "群名称": ["示例群1", "示例群2"],
-                "成员数量": [100, 200],
-                "导出时间": [pd.Timestamp.now(), pd.Timestamp.now()],
-            }
-        )
-
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            data.to_excel(writer, index=False, sheet_name="群成员")
-
-        output.seek(0)
-        return (
-            output.getvalue(),
-            200,
-            {
-                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "Content-Disposition": "attachment; filename=group_members_export.xlsx",
-            },
-        )
-    except Exception as e:
-        return jsonify({"error": f"群成员导出功能正在建设中: {str(e)}"}), 500
+    return jsonify({"error": "群成员导出功能正在建设中"}), 501
 
 
 @app.route("/api/export/group-messages", methods=["GET"])

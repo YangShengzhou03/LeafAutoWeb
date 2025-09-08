@@ -1,8 +1,138 @@
 {
-  "total_replies": 0,
-  "successful_replies": 0,
-  "failed_replies": 0,
-  "average_response_time": 0,
+  "total_replies": 13,
+  "successful_replies": 10,
+  "failed_replies": 3,
+  "average_response_time": 0.0,
   "history": [
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:04:00.354149",
+      "id": "3ff0fb49-f4ea-4624-809f-3b572a4382af",
+      "time": "2025-09-08 21:04:00"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:09:32.044479",
+      "id": "a0f988a3-86a9-4325-8cea-22ea20de740b",
+      "time": "2025-09-08 21:09:32"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "",
+      "status": "failed",
+      "responseTime": 0,
+      "timestamp": "2025-09-08T21:26:41.005285",
+      "id": "bec7d954-43f5-4cbc-852a-02ec2e7dded2",
+      "time": "2025-09-08 21:26:41"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:27:52.346610",
+      "id": "5163b1ee-fdef-488d-9f0a-69e71e9f6b69",
+      "time": "2025-09-08 21:27:52"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:27:57.805050",
+      "id": "b4321a83-7a96-4f0d-aa97-11108de226b0",
+      "time": "2025-09-08 21:27:57"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "请求",
+      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:28:06.744140",
+      "id": "05db2334-7b6f-4698-8ed1-b47aff7e2701",
+      "time": "2025-09-08 21:28:06"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:36:34.750886",
+      "id": "7fbdb652-fe56-4b70-9354-21857709ee3f",
+      "time": "2025-09-08 21:36:34"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "@小羊 测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T21:36:39.216513",
+      "id": "48c859cf-b8b1-4394-82da-1727cfa4e620",
+      "time": "2025-09-08 21:36:39"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "",
+      "status": "failed",
+      "responseTime": 0,
+      "timestamp": "2025-09-08T21:59:25.534191",
+      "id": "3a45bcf3-8557-4533-9b71-97527d1c217c",
+      "time": "2025-09-08 21:59:25"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "快出来",
+      "reply": "",
+      "status": "failed",
+      "responseTime": 0,
+      "timestamp": "2025-09-08T22:05:06.549077",
+      "id": "354818a2-4082-4b26-8411-56c50dc3c73d",
+      "time": "2025-09-08 22:05:06"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:07:57.872932",
+      "id": "bedac213-4a6f-43f8-96c7-6daec7bd44af",
+      "time": "2025-09-08 22:07:57"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:18:01.625696",
+      "id": "5d20196b-0cc2-4162-8389-91d58d1233b9",
+      "time": "2025-09-08 22:18:01"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:18:11.618270",
+      "id": "5f06a289-5edd-41fb-99a5-32841ae46f59",
+      "time": "2025-09-08 22:18:11"
+    }
   ]
 }
