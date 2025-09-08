@@ -1,6 +1,6 @@
 {
-  "total_replies": 13,
-  "successful_replies": 10,
+  "total_replies": 25,
+  "successful_replies": 22,
   "failed_replies": 3,
   "average_response_time": 0.0,
   "history": [
@@ -133,6 +133,126 @@
       "timestamp": "2025-09-08T22:18:11.618270",
       "id": "5f06a289-5edd-41fb-99a5-32841ae46f59",
       "time": "2025-09-08 22:18:11"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:48:03.714161",
+      "id": "e9733543-fca9-4aa2-9179-54c1cd91d6f2",
+      "time": "2025-09-08 22:48:03"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "请求",
+      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:48:11.430031",
+      "id": "22d0fc6e-758c-407f-8380-cbcc719a788d",
+      "time": "2025-09-08 22:48:11"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "天气",
+      "reply": "抱歉，我目前无法查询实时天气信息。建议您查看天气应用或网站获取最新天气情况。",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:48:29.039911",
+      "id": "03710e45-6f84-4061-8c84-26d1d159933e",
+      "time": "2025-09-08 22:48:29"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:48:50.586071",
+      "id": "4611939a-36de-4027-a7f8-cef93b7ee33b",
+      "time": "2025-09-08 22:48:50"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:48:56.669635",
+      "id": "ba2bcd74-dee9-4c94-9bba-a3f078c6f9ca",
+      "time": "2025-09-08 22:48:56"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "请求",
+      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:49:05.462115",
+      "id": "ddb17835-c690-4ce8-95dc-01b0740dadce",
+      "time": "2025-09-08 22:49:05"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:49:32.480760",
+      "id": "ea8b1dbc-ba58-4b9a-a636-4e9fb323cfb7",
+      "time": "2025-09-08 22:49:32"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "请求",
+      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:49:39.849722",
+      "id": "20daa85e-0fad-40cb-aa14-e234c81f5986",
+      "time": "2025-09-08 22:49:39"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:50:33.503607",
+      "id": "5986d471-1c70-4e72-9f92-f40f7b9e5908",
+      "time": "2025-09-08 22:50:33"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:50:38.180110",
+      "id": "9d78dbd8-b853-4a2b-b7a3-368b9004d50c",
+      "time": "2025-09-08 22:50:38"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "请求",
+      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:50:47.213346",
+      "id": "2a2abbab-3b0c-4e85-a5c4-cf12d97b2e25",
+      "time": "2025-09-08 22:50:47"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "请求",
+      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
+      "status": "replied",
+      "responseTime": 0.0,
+      "timestamp": "2025-09-08T22:50:52.090006",
+      "id": "4642f1ed-0742-4286-9d2b-3d1e91f5fbc1",
+      "time": "2025-09-08 22:50:52"
     }
   ]
 }

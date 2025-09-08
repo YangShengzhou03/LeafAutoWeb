@@ -17,7 +17,7 @@ from pathlib import Path
 from flask import Flask, jsonify, redirect, request, send_from_directory
 from flask_cors import CORS
 
-from ai_worker import AiWorkerManager
+from ai_worker import AiWorkerManager, WorkerConfig
 from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
                           get_ai_stats, import_tasks, load_ai_data,
                           load_home_data, load_reply_history, load_tasks,
@@ -328,14 +328,15 @@ def save_ai_settings_route():
         if contact_person:
             wx = get_wechat_instance()
             ai_manager = AiWorkerManager()
-            success = ai_manager.start_worker(
-                wx,
-                contact_person,
+            config = WorkerConfig(
+                wx_instance=wx,
+                receiver=contact_person,
                 role=settings_data.get("aiPersona", "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。"),
                 only_at=settings_data.get("onlyAt", False),
                 reply_delay=settings_data.get("replyDelay", 0),
                 min_reply_interval=settings_data.get("minReplyInterval", 0),
             )
+            success = ai_manager.start_worker(config)
             if success:
                 logger.info(f"[AI接管] 已启动监听: {contact_person}")
             else:
@@ -473,14 +474,15 @@ def start_ai_takeover():
 
     wx = get_wechat_instance()
     ai_manager = AiWorkerManager()
-    success = ai_manager.start_worker(
-        wx,
-        contact_person,
+    config = WorkerConfig(
+        wx_instance=wx,
+        receiver=contact_person,
         role=ai_persona,
         only_at=only_at,
         reply_delay=data.get("replyDelay", 0),
         min_reply_interval=data.get("minReplyInterval", 0),
     )
+    success = ai_manager.start_worker(config)
 
     if success:
         logger.info(f"[AI接管] 已启动监听: {contact_person}")
