@@ -1126,7 +1126,6 @@ class AiWorkerManager:
         Returns:
             bool: True表示启动成功，False表示启动失败
         """
-        print(f"1129: {config.model}")
         with self.lock:
             worker_key = f"{config.receiver}_{config.model}"
             if worker_key in self.workers:

@@ -330,7 +330,6 @@ def save_ai_settings_route():
             ai_manager = AiWorkerManager()
             # 获取AI模型设置，默认为禁用
             ai_model = settings_data.get("aiModel", "disabled")
-            print(f"333: {ai_model}")
             config = WorkerConfig(
                 wx_instance=wx,
                 receiver=contact_person,
@@ -482,8 +481,6 @@ def start_ai_takeover():
     ai_manager = AiWorkerManager()
     # 获取AI模型设置，默认为禁用
     ai_model = data.get("aiModel", "disabled")
-    print("485", data)
-    print(f"486: {ai_model}")
     config = WorkerConfig(
         wx_instance=wx,
         receiver=contact_person,

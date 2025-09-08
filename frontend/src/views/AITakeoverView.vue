@@ -322,6 +322,7 @@ const handleSwitchChange = async (newStatus) => {
           contactPerson: formData.contactPerson,
           aiPersona: formData.aiPersona,
           onlyAt: formData.onlyAtTrigger,
+          aiModel: formData.aiModel,
           replyDelay: formData.replyDelay,
           minReplyInterval: formData.minReplyInterval
         })
@@ -346,7 +347,8 @@ const handleSwitchChange = async (newStatus) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          contactPerson: formData.contactPerson
+          contactPerson: formData.contactPerson,
+          aiModel: formData.aiModel
         })
       })
 

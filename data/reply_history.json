@@ -1,8 +1,8 @@
 {
-  "total_replies": 10,
-  "successful_replies": 10,
+  "total_replies": 12,
+  "successful_replies": 12,
   "failed_replies": 0,
-  "average_response_time": 2.12,
+  "average_response_time": 2.09,
   "history": [
     {
       "sender": "杨圣洲",
@@ -103,6 +103,26 @@
       "timestamp": "2025-09-09T00:00:04.946911",
       "id": "4b177143-047d-4f90-b500-d44cf08ea306",
       "time": "2025-09-09 00:00:04"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "哦哦",
+      "reply": "月之暗面回复: 哦哦",
+      "status": "replied",
+      "responseTime": 2.23,
+      "timestamp": "2025-09-09T00:23:18.683453",
+      "id": "1f84690e-26df-4fcd-b36e-82175df3787d",
+      "time": "2025-09-09 00:23:18"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "我来例假了",
+      "reply": "月之暗面回复: 我来例假了",
+      "status": "replied",
+      "responseTime": 1.62,
+      "timestamp": "2025-09-09T00:23:22.852497",
+      "id": "4f9252ee-f01e-4917-8214-2ff477562cab",
+      "time": "2025-09-09 00:23:22"
     }
   ]
 }
