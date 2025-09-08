@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta
 
 from data_manager import (increment_message_count, load_tasks,
-                          update_task_status)
+                          update_task_status, add_task)
 from logging_config import get_logger, handle_errors
 from wechat_instance import get_wechat_instance, is_wechat_online
 
@@ -141,10 +141,10 @@ class TaskScheduler:
 
         # 如果检测到系统时间向后调整超过1小时，记录警告
         if time_diff < -3600:
-            logger.warning(f"检测到系统时间向后调整: {time_diff:.1f}秒，可能影响任务调度")
+            logger.warning("检测到系统时间向后调整: %.1f秒，可能影响任务调度", time_diff)
         # 如果检测到系统时间向前跳跃超过1小时，记录警告
         elif time_diff > 3600:
-            logger.warning(f"检测到系统时间向前跳跃: {time_diff:.1f}秒，可能影响任务调度")
+            logger.warning("检测到系统时间向前跳跃: %.1f秒，可能影响任务调度", time_diff)
 
         tasks = load_tasks()
         executed_count = 0
@@ -205,14 +205,15 @@ class TaskScheduler:
                             # 如果任务执行时间过长（超过5秒），记录警告
                             if execution_time > 5.0:
                                 logger.warning(
-                                    f"任务 {task_id} 执行时间过长: {execution_time:.2f}秒"
+                                    "任务 %s 执行时间过长: %.2f秒",
+                                    task_id, execution_time
                                 )
 
                     except (ValueError, TypeError) as e:
-                        logger.error(f"任务 {task_id} 时间格式错误: {e}")
+                        logger.error("任务 %s 时间格式错误: %s", task_id, e)
                         update_task_status(task_id, "failed", str(e))
-                    except Exception as e:
-                        logger.error(f"任务 {task_id} 处理过程中发生未知错误: {e}")
+                    except (RuntimeError, ValueError, OSError) as e:
+                        logger.error("任务 %s 处理过程中发生未知错误: %s", task_id, e)
                         update_task_status(task_id, "failed", f"处理错误: {str(e)}")
 
         if executed_count > 0:
@@ -222,7 +223,8 @@ class TaskScheduler:
                 else 0
             )
             logger.info(
-                f"本次检查执行了 {executed_count} 个任务，平均执行时间: {avg_execution_time:.3f}秒"
+                "本次检查执行了 %d 个任务，平均执行时间: %.3f秒",
+                executed_count, avg_execution_time
             )
         else:
             logger.info("没有到期的任务")
@@ -233,7 +235,7 @@ class TaskScheduler:
         try:
             # 检查微信是否在线
             if not is_wechat_online():
-                logger.warning(f"微信未登录，跳过任务 {task_id}")
+                logger.warning("微信未登录，跳过任务 %s", task_id)
                 update_task_status(task_id, "failed", "微信未登录")
                 return
 
@@ -247,22 +249,22 @@ class TaskScheduler:
                 if result.get("status") == "success":
                     # 更新任务状态为已完成
                     update_task_status(task_id, "completed")
-                    logger.info(f"任务执行成功: {task_id} -> {recipient}")
+                    logger.info("任务执行成功: %s -> %s", task_id, recipient)
 
                     # 处理重复任务
                     self.handle_repeat_task(task_id, task)
                 else:
                     # 发送失败，更新任务状态为失败
                     error_msg = result.get("message", "未知错误")
-                    logger.error(f"任务发送失败 {task_id}: {error_msg}")
+                    logger.error("任务发送失败 %s: %s", task_id, error_msg)
                     update_task_status(task_id, "failed", error_msg)
             else:
-                logger.warning(f"任务数据不完整: {task_id}")
+                logger.warning("任务数据不完整: %s", task_id)
                 update_task_status(task_id, "failed", "任务数据不完整")
 
-        except Exception as e:
-            error_msg = f"执行任务时发生异常: {str(e)}"
-            logger.error(f"任务执行失败 {task_id}: {error_msg}")
+        except (RuntimeError, ValueError, OSError, AttributeError) as e:
+            error_msg = "执行任务时发生异常: {}".format(str(e))
+            logger.error("任务执行失败 %s: %s", task_id, error_msg)
             update_task_status(task_id, "failed", error_msg)
 
         # 检查是否所有任务都已完成或失败，自动停止调度器
@@ -283,7 +285,6 @@ class TaskScheduler:
             new_task = task.copy()
 
             # 根据重复类型计算下一次执行时间
-            current_time = datetime.now()
 
             # 处理时间格式，支持带时区和不带时区的时间
             send_time_str = task["sendTime"]
@@ -351,8 +352,6 @@ class TaskScheduler:
                 del new_task["errorMessage"]
 
             # 保存新任务
-            from data_manager import add_task
-
             add_task(new_task)
 
     @handle_errors()
@@ -389,15 +388,14 @@ class TaskScheduler:
                     consecutive_errors = 0  # 重置连续错误计数
 
                     # 动态调整检查间隔，处理时间突变
-                    current_time = datetime.now()
-                    time_diff = (current_time - last_check_time).total_seconds()
-                    last_check_time = current_time
+                    time_diff = (datetime.now() - last_check_time).total_seconds()
+                    last_check_time = datetime.now()
 
                     # 如果没有执行任何任务，根据时间差动态调整等待时间
                     if executed_count == 0:
                         # 处理时间突变（如系统时间被调整）
                         if abs(time_diff) > 5.0:  # 放宽时间突变阈值到5秒
-                            logger.warning(f"检测到时间突变: {time_diff:.3f}秒，重新校准调度器")
+                            logger.warning("检测到时间突变: %.3f秒，重新校准调度器", time_diff)
                             # 立即进行下一次检查，不等待
                             continue
 
@@ -409,9 +407,8 @@ class TaskScheduler:
                             )  # 最大5秒
 
                         # 计算到下一秒开始需要等待的毫秒数，结合自适应间隔
-                        now = datetime.now()
                         wait_ms = min(
-                            1000 - now.microsecond // 1000,
+                            1000 - datetime.now().microsecond // 1000,
                             int(adaptive_interval * 1000),
                         )
 
@@ -424,9 +421,9 @@ class TaskScheduler:
                         # 如果有任务执行，重置自适应间隔到更积极的值
                         adaptive_interval = 0.5  # 执行任务后使用更短的间隔
 
-                except Exception as e:
+                except (RuntimeError, ValueError, OSError, AttributeError) as e:
                     consecutive_errors += 1
-                    logger.error(f"调度器循环发生错误 ({consecutive_errors}): {e}")
+                    logger.error("调度器循环发生错误 (%d): %s", consecutive_errors, e)
 
                     # 根据连续错误次数动态调整等待时间
                     if consecutive_errors <= 3:
@@ -436,7 +433,7 @@ class TaskScheduler:
                         # 超过3次错误，使用固定长间隔
                         wait_time = 30
 
-                    logger.warning(f"调度器将在 {wait_time} 秒后重试")
+                    logger.warning("调度器将在 %d 秒后重试", wait_time)
                     time.sleep(wait_time)
 
         self.thread = threading.Thread(target=scheduler_loop, daemon=True)

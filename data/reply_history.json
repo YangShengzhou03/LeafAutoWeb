@@ -1,68 +1,48 @@
 {
-  "total_replies": 25,
-  "successful_replies": 22,
-  "failed_replies": 3,
-  "average_response_time": 0.0,
+  "total_replies": 7,
+  "successful_replies": 7,
+  "failed_replies": 0,
+  "average_response_time": 2.15,
   "history": [
     {
       "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
       "status": "replied",
       "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:04:00.354149",
-      "id": "3ff0fb49-f4ea-4624-809f-3b572a4382af",
-      "time": "2025-09-08 21:04:00"
+      "timestamp": "2025-09-08T23:24:20.838039",
+      "id": "bcdec57c-0933-4170-a814-a7d9a5211a44",
+      "time": "2025-09-08 23:24:20"
     },
     {
       "sender": "杨圣洲",
       "message": "测试",
       "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
       "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:09:32.044479",
-      "id": "a0f988a3-86a9-4325-8cea-22ea20de740b",
-      "time": "2025-09-08 21:09:32"
+      "responseTime": 5.0,
+      "timestamp": "2025-09-08T23:25:08.239973",
+      "id": "60352386-2cbb-4d62-8b35-c7fe390860fa",
+      "time": "2025-09-08 23:25:08"
     },
     {
       "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "",
-      "status": "failed",
-      "responseTime": 0,
-      "timestamp": "2025-09-08T21:26:41.005285",
-      "id": "bec7d954-43f5-4cbc-852a-02ec2e7dded2",
-      "time": "2025-09-08 21:26:41"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
       "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:27:52.346610",
-      "id": "5163b1ee-fdef-488d-9f0a-69e71e9f6b69",
-      "time": "2025-09-08 21:27:52"
+      "responseTime": 5.01,
+      "timestamp": "2025-09-08T23:25:30.959463",
+      "id": "1b8e9b09-8de4-44f7-b22d-31f117027a96",
+      "time": "2025-09-08 23:25:30"
     },
     {
       "sender": "杨圣洲",
       "message": "测试",
       "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
       "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:27:57.805050",
-      "id": "b4321a83-7a96-4f0d-aa97-11108de226b0",
-      "time": "2025-09-08 21:27:57"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "请求",
-      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:28:06.744140",
-      "id": "05db2334-7b6f-4698-8ed1-b47aff7e2701",
-      "time": "2025-09-08 21:28:06"
+      "responseTime": 5.01,
+      "timestamp": "2025-09-08T23:25:40.087547",
+      "id": "1a28fe99-99d5-429d-ba74-9aed2356f309",
+      "time": "2025-09-08 23:25:40"
     },
     {
       "sender": "杨圣洲",
@@ -70,39 +50,19 @@
       "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
       "status": "replied",
       "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:36:34.750886",
-      "id": "7fbdb652-fe56-4b70-9354-21857709ee3f",
-      "time": "2025-09-08 21:36:34"
+      "timestamp": "2025-09-08T23:26:41.616645",
+      "id": "ec524708-86bb-4699-85fd-bf6de4334b1c",
+      "time": "2025-09-08 23:26:41"
     },
     {
       "sender": "杨圣洲",
-      "message": "@小羊 测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
       "status": "replied",
       "responseTime": 0.0,
-      "timestamp": "2025-09-08T21:36:39.216513",
-      "id": "48c859cf-b8b1-4394-82da-1727cfa4e620",
-      "time": "2025-09-08 21:36:39"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "",
-      "status": "failed",
-      "responseTime": 0,
-      "timestamp": "2025-09-08T21:59:25.534191",
-      "id": "3a45bcf3-8557-4533-9b71-97527d1c217c",
-      "time": "2025-09-08 21:59:25"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "快出来",
-      "reply": "",
-      "status": "failed",
-      "responseTime": 0,
-      "timestamp": "2025-09-08T22:05:06.549077",
-      "id": "354818a2-4082-4b26-8411-56c50dc3c73d",
-      "time": "2025-09-08 22:05:06"
+      "timestamp": "2025-09-08T23:26:45.197850",
+      "id": "bc3f8d83-8a05-4212-9f1a-47a97210c8bf",
+      "time": "2025-09-08 23:26:45"
     },
     {
       "sender": "杨圣洲",
@@ -110,149 +70,9 @@
       "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
       "status": "replied",
       "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:07:57.872932",
-      "id": "bedac213-4a6f-43f8-96c7-6daec7bd44af",
-      "time": "2025-09-08 22:07:57"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:18:01.625696",
-      "id": "5d20196b-0cc2-4162-8389-91d58d1233b9",
-      "time": "2025-09-08 22:18:01"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:18:11.618270",
-      "id": "5f06a289-5edd-41fb-99a5-32841ae46f59",
-      "time": "2025-09-08 22:18:11"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:48:03.714161",
-      "id": "e9733543-fca9-4aa2-9179-54c1cd91d6f2",
-      "time": "2025-09-08 22:48:03"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "请求",
-      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:48:11.430031",
-      "id": "22d0fc6e-758c-407f-8380-cbcc719a788d",
-      "time": "2025-09-08 22:48:11"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "天气",
-      "reply": "抱歉，我目前无法查询实时天气信息。建议您查看天气应用或网站获取最新天气情况。",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:48:29.039911",
-      "id": "03710e45-6f84-4061-8c84-26d1d159933e",
-      "time": "2025-09-08 22:48:29"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:48:50.586071",
-      "id": "4611939a-36de-4027-a7f8-cef93b7ee33b",
-      "time": "2025-09-08 22:48:50"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:48:56.669635",
-      "id": "ba2bcd74-dee9-4c94-9bba-a3f078c6f9ca",
-      "time": "2025-09-08 22:48:56"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "请求",
-      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:49:05.462115",
-      "id": "ddb17835-c690-4ce8-95dc-01b0740dadce",
-      "time": "2025-09-08 22:49:05"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:49:32.480760",
-      "id": "ea8b1dbc-ba58-4b9a-a636-4e9fb323cfb7",
-      "time": "2025-09-08 22:49:32"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "请求",
-      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:49:39.849722",
-      "id": "20daa85e-0fad-40cb-aa14-e234c81f5986",
-      "time": "2025-09-08 22:49:39"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:50:33.503607",
-      "id": "5986d471-1c70-4e72-9f92-f40f7b9e5908",
-      "time": "2025-09-08 22:50:33"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:50:38.180110",
-      "id": "9d78dbd8-b853-4a2b-b7a3-368b9004d50c",
-      "time": "2025-09-08 22:50:38"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "请求",
-      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:50:47.213346",
-      "id": "2a2abbab-3b0c-4e85-a5c4-cf12d97b2e25",
-      "time": "2025-09-08 22:50:47"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "请求",
-      "reply": "收到您的请求，我会尽快为您处理。请稍等片刻，谢谢！",
-      "status": "replied",
-      "responseTime": 0.0,
-      "timestamp": "2025-09-08T22:50:52.090006",
-      "id": "4642f1ed-0742-4286-9d2b-3d1e91f5fbc1",
-      "time": "2025-09-08 22:50:52"
+      "timestamp": "2025-09-08T23:26:47.571782",
+      "id": "550d17bd-f8d1-4ab2-8143-87e8258ebfee",
+      "time": "2025-09-08 23:26:47"
     }
   ]
 }

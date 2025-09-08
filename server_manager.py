@@ -26,11 +26,10 @@ def is_vue_server_running(port=8080):
         bool: True表示服务器正在运行，False表示未运行
     """
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(("localhost", port))
-        sock.close()
-        return result == 0
-    except Exception:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            result = sock.connect_ex(("localhost", port))
+            return result == 0
+    except (OSError, OSError):
         return False
 
 
@@ -46,9 +45,11 @@ def start_vue_server(port=8080):
     """
     try:
         if is_vue_server_running(port):
-            return
+            logger.info("Vue服务器已在运行")
+            return None
 
         cmd = ["npm", "run", "serve", "--port", str(port)]
+        # pylint: disable=consider-using-with
         process = subprocess.Popen(
             cmd,
             cwd=os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend"),
@@ -56,11 +57,13 @@ def start_vue_server(port=8080):
             stderr=subprocess.PIPE,
             shell=False,
         )
+        # pylint: enable=consider-using-with
 
         time.sleep(3)
         return process
-    except Exception as e:
-        logger.error(f"启动Vue服务器失败: {e}")
+    except (OSError, subprocess.SubprocessError) as e:
+        logger.error("启动Vue服务器失败: %s", e)
+        return None
 
 
 def open_browser(port=8080):
@@ -72,5 +75,5 @@ def open_browser(port=8080):
     """
     try:
         webbrowser.open(f"http://localhost:{port}")
-    except Exception as e:
-        logger.error(f"打开浏览器失败: {e}")
+    except (OSError, webbrowser.Error) as e:
+        logger.error("打开浏览器失败: %s", e)
