@@ -60,8 +60,8 @@ const currentRoute = ref(route.path);
 const wxStatusInterval = ref(null);
 const quotaInfo = ref({
   used_today: 0,
-  daily_limit: 100,
-  remaining: 100,
+  daily_limit: 30,
+  remaining: 30,
   account_level: 'free',
   is_unlimited: false
 });

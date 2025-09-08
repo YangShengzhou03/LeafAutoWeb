@@ -698,7 +698,7 @@ def load_message_quota():
         else:
             # 默认配额数据
             default_quota = {
-                "daily_limit": 100,
+                "daily_limit": 30,
                 "used_today": 0,
                 "last_reset_date": datetime.datetime.now().date().isoformat(),
                 "blocked": False,
@@ -709,7 +709,7 @@ def load_message_quota():
     except Exception as e:
         logger.error(f"加载消息配额数据失败: {e}")
         return {
-            "daily_limit": 100,
+            "daily_limit": 30,
             "used_today": 0,
             "last_reset_date": datetime.datetime.now().date().isoformat(),
             "blocked": False,
@@ -741,9 +741,9 @@ def get_quota_info():
     if account_level == "enterprise":
         daily_limit = "unlimited"  # 企业版无限制，使用字符串而不是float('inf')
     elif account_level == "basic":
-        daily_limit = 1000  # 基础版1000条
+        daily_limit = 100  # 基础版100条
     else:
-        daily_limit = 100  # 免费版100条
+        daily_limit = 30  # 免费版30条
 
     # 检查是否需要重置每日使用量
     current_date = datetime.datetime.now().date().isoformat()
@@ -781,7 +781,7 @@ def increment_message_count():
     # 检查配额是否已耗尽（企业版除外）
     account_level = quota_data.get("account_level", "free")
     if account_level != "enterprise":
-        daily_limit = 1000 if account_level == "basic" else 100
+        daily_limit = 100 if account_level == "basic" else 30
         if quota_data.get("used_today", 0) >= daily_limit:
             # 配额已耗尽，不增加计数
             return False
@@ -791,7 +791,7 @@ def increment_message_count():
 
     # 检查是否超过限额（企业版除外）
     if account_level != "enterprise":
-        daily_limit = 1000 if account_level == "basic" else 100
+        daily_limit = 100 if account_level == "basic" else 30
         if quota_data["used_today"] >= daily_limit:
             quota_data["blocked"] = True
 
@@ -826,15 +826,15 @@ def update_account_level(level):
             quota_data["daily_limit"] = "unlimited"
             quota_data["blocked"] = False  # 企业版不限制
         elif level == "basic":
-            quota_data["daily_limit"] = 1000
-            # 如果当前使用量超过新限额，则设置为限额
-            if quota_data.get("used_today", 0) > 1000:
-                quota_data["used_today"] = 1000
-        else:  # free
             quota_data["daily_limit"] = 100
             # 如果当前使用量超过新限额，则设置为限额
             if quota_data.get("used_today", 0) > 100:
                 quota_data["used_today"] = 100
+        else:  # free
+            quota_data["daily_limit"] = 30
+            # 如果当前使用量超过新限额，则设置为限额
+            if quota_data.get("used_today", 0) > 30:
+                quota_data["used_today"] = 30
         
         # 保存更新后的配额数据
         save_message_quota(quota_data)
