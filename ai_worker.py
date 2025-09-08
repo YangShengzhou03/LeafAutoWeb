@@ -766,9 +766,7 @@ class AiWorkerThread:
             # 应用自定义规则
             custom_reply = self.rules_manager.apply_custom_rules(message_content)
             if custom_reply:
-                # 计算实际响应时间
-                actual_response_time = round(time.time() - receive_time, 2)
-                
+
                 # 发送自定义回复
                 if is_group:
                     self.reply_handler.send_reply(group_name, custom_reply, at_user=sender)
@@ -776,6 +774,9 @@ class AiWorkerThread:
                     self.reply_handler.send_reply(sender, custom_reply)
                     
                 self.state.last_reply_info = {"content": message_content, "time": time.time()}
+
+                # 计算实际响应时间
+                actual_response_time = round(time.time() - receive_time, 2)
 
                 # 记录回复历史（使用实际响应时间）
                 history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
