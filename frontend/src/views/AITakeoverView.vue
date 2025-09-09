@@ -934,7 +934,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
 }
 
 .config-card {

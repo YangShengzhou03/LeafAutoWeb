@@ -539,7 +539,8 @@ onMounted(() => {
 .top-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 0px;
+  margin-bottom: 0px;
 }
 
 .otherbox-card {
