@@ -43,12 +43,7 @@
 
 <script>
 export default {
-  name: 'AppNavigation',
-  data() {
-    return {
-      isCollapsed: false
-    }
-  }
+  name: 'AppNavigation'
 }
 </script>
 

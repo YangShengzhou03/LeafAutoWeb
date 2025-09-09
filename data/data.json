@@ -1,1 +1,13 @@
-{}
+{
+  "f94428ae-8c8f-45f6-b1d7-1485df944bf3": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-09T00:00",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "123",
+    "status": "completed",
+    "createdAt": "2025-09-09T22:00:41.240908",
+    "id": "f94428ae-8c8f-45f6-b1d7-1485df944bf3",
+    "updatedAt": "2025-09-09T22:00:47.634300"
+  }
+}

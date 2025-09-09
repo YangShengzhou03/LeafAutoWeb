@@ -129,7 +129,6 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import UpgradeModal from '@/components/UpgradeModal.vue';
 import { ElMessage } from 'element-plus'
 
-const animationActive = ref(false);
 const showUpgradeModal = ref(false);
 // 添加版本状态变量
 const isEnterpriseVersion = ref(false);
@@ -253,9 +252,7 @@ const fetchHomeData = async () => {
     }
 
     // 数据加载完成后触发动画
-    if (!animationActive.value) {
-      triggerAnimations();
-    }
+    triggerAnimations();
   } catch (error) {
     console.error('获取首页数据失败:', error);
     // 保持现有的占位符数据不变，框架始终可见
@@ -264,7 +261,6 @@ const fetchHomeData = async () => {
 
 // 触发动画的函数
 const triggerAnimations = () => {
-  animationActive.value = true;
   const counters = document.querySelectorAll('.counter');
   if (counters.length) {
     counters.forEach(counter => {

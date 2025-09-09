@@ -147,6 +147,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+
 import { defineProps } from 'vue';
 defineProps({
   show: {
@@ -174,9 +175,7 @@ const generateRandomCode = () => {
 // 计算属性：显示的随机码
 const random_code = computed(() => {
   if (!randomNum.value) {
-// 由于计算属性不应有副作用，因此不在这里修改 randomNum.value
-// 可依赖 onMounted 钩子在组件挂载时初始化 randomNum.value
-return generateRandomCode();
+    return generateRandomCode();
   }
   return randomNum.value;
 });
@@ -205,7 +204,7 @@ const handleActivation = async () => {
           randomCode: randomNum.value,
           activationCode: paddedCode
         })
-});
+      });
       
       const result = await response.json();
       
@@ -715,15 +714,6 @@ const getRandomStyle = (index) => {
   }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
 @keyframes bounce {
   0%, 100% {
     transform: translateX(0);
@@ -771,7 +761,6 @@ const getRandomStyle = (index) => {
   }
   
 
-  
   .qr-placeholder {
     width: 160px;
     height: 160px;
