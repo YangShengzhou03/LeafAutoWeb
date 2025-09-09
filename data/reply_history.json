@@ -1,8 +1,8 @@
 {
-  "total_replies": 10,
-  "successful_replies": 10,
+  "total_replies": 9,
+  "successful_replies": 9,
   "failed_replies": 0,
-  "average_response_time": 1.5,
+  "average_response_time": 1.11,
   "history": [
     {
       "sender": "杨圣洲",
@@ -13,16 +13,6 @@
       "timestamp": "2025-09-08T23:24:20.838039",
       "id": "bcdec57c-0933-4170-a814-a7d9a5211a44",
       "time": "2025-09-08 23:24:20"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "你好",
-      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
-      "status": "replied",
-      "responseTime": 5.01,
-      "timestamp": "2025-09-08T23:25:30.959463",
-      "id": "1b8e9b09-8de4-44f7-b22d-31f117027a96",
-      "time": "2025-09-08 23:25:30"
     },
     {
       "sender": "杨圣洲",

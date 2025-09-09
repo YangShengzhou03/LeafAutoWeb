@@ -5,7 +5,7 @@
     "minReplyInterval": 0,
     "contactPerson": "杨圣洲",
     "aiPersona": "你是一个友好、专业的AI助手，致力于为用户提供准确、及时的帮助。",
-    "aiModel": "moonshot",
+    "aiModel": "disabled",
     "customRules": [
       {
         "id": 1757239007794,
@@ -36,10 +36,16 @@
         "keyword": "你好",
         "matchType": "contains",
         "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？"
+      },
+      {
+        "id": 1757431115007,
+        "keyword": "123",
+        "matchType": "contains",
+        "reply": "123123"
       }
     ],
     "onlyAt": false,
     "onlyAtTrigger": true,
-    "updatedAt": "2025-09-09T20:40:05.139601"
+    "updatedAt": "2025-09-09T23:25:45.397181"
   }
 }

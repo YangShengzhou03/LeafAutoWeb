@@ -336,7 +336,7 @@ const handleSwitchChange = async (newStatus) => {
       if (result.success) {
         // 使用API返回的状态确保同步
         formData.aiStatus = Boolean(result.aiStatus ?? true)
-        ElMessage.success('AI已成功开始接管消息回复')
+        ElMessage.success('开始监听并自动进行回复')
       } else {
         // 操作失败时恢复开关状态
         formData.aiStatus = false
@@ -360,7 +360,7 @@ const handleSwitchChange = async (newStatus) => {
       if (result.success) {
         // 使用API返回的状态确保同步
         formData.aiStatus = Boolean(result.aiStatus ?? false)
-        ElMessage.success('AI已成功停止接管消息回复')
+        ElMessage.warning('已停止消息监听与回复')
       } else {
         // 操作失败时恢复开关状态
         formData.aiStatus = true
@@ -576,9 +576,6 @@ const submitForm = async () => {
       minReplyInterval: Number(formData.minReplyInterval),
       customRules: Array.isArray(formData.customRules) ? formData.customRules : []
     }
-
-
-
 
     const response = await fetch('http://localhost:5000/api/ai-settings', {
       method: 'POST',
