@@ -1,8 +1,8 @@
 {
-  "total_replies": 12,
-  "successful_replies": 12,
+  "total_replies": 10,
+  "successful_replies": 10,
   "failed_replies": 0,
-  "average_response_time": 2.09,
+  "average_response_time": 1.5,
   "history": [
     {
       "sender": "杨圣洲",
@@ -16,16 +16,6 @@
     },
     {
       "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 5.0,
-      "timestamp": "2025-09-08T23:25:08.239973",
-      "id": "60352386-2cbb-4d62-8b35-c7fe390860fa",
-      "time": "2025-09-08 23:25:08"
-    },
-    {
-      "sender": "杨圣洲",
       "message": "你好",
       "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
       "status": "replied",
@@ -33,16 +23,6 @@
       "timestamp": "2025-09-08T23:25:30.959463",
       "id": "1b8e9b09-8de4-44f7-b22d-31f117027a96",
       "time": "2025-09-08 23:25:30"
-    },
-    {
-      "sender": "杨圣洲",
-      "message": "测试",
-      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
-      "status": "replied",
-      "responseTime": 5.01,
-      "timestamp": "2025-09-08T23:25:40.087547",
-      "id": "1a28fe99-99d5-429d-ba74-9aed2356f309",
-      "time": "2025-09-08 23:25:40"
     },
     {
       "sender": "杨圣洲",

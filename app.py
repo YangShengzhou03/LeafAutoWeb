@@ -21,7 +21,7 @@ from ai_worker import AiWorkerManager, WorkerConfig
 from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
                           get_ai_stats, import_tasks, load_ai_data,
                           load_home_data, load_reply_history, load_tasks,
-                          save_ai_settings, update_task_status)
+                          save_ai_settings, save_reply_history, update_task_status)
 from logging_config import get_logger
 from task_scheduler import (start_task_scheduler, stop_task_scheduler,
                             task_scheduler)
@@ -43,9 +43,6 @@ load_reply_history()
 # 启动微信状态监控
 start_status_monitor()
 logger.info("微信状态监控已启动")
-
-# 全局变量
-reply_history = []
 
 # 添加静态文件服务配置
 def is_frozen():
@@ -306,7 +303,6 @@ def get_ai_settings():
 
 
 @app.route("/api/ai-settings", methods=["POST"])
-@handle_api_errors
 def save_ai_settings_route():
     """
     保存AI设置信息
@@ -319,6 +315,9 @@ def save_ai_settings_route():
     """
     settings_data = request.json
     saved_settings = save_ai_settings(settings_data)
+    
+    # 初始状态，假设保存成功
+    operation_success = True
 
     # 根据AI接管状态启动或停止监听
     if settings_data.get("aiStatus"):
@@ -339,20 +338,28 @@ def save_ai_settings_route():
                 reply_delay=settings_data.get("replyDelay", 0),
                 min_reply_interval=settings_data.get("minReplyInterval", 0),
             )
-            success = ai_manager.start_worker(config)
-            if success:
-                logger.info(f"[AI接管] 已启动监听: {contact_person}, 模型: {ai_model}")
-            else:
-                # 检查是否是因为监听器已存在而失败
-                workers = ai_manager.get_all_workers()
-                worker_key = f"{contact_person}_{ai_model}"
-                if worker_key in workers:
-                    logger.info(f"[AI接管] 监听器已存在: {contact_person}, 模型: {ai_model}")
+            try:
+                success = ai_manager.start_worker(config)
+                if success:
+                    logger.info(f"[AI接管] 已启动监听: {contact_person}, 模型: {ai_model}")
                 else:
-                    logger.error(f"[AI接管] 启动监听失败: {contact_person}, 模型: {ai_model}")
-                    # 如果启动失败，回滚AI状态
-                    settings_data["aiStatus"] = False
-                    saved_settings = save_ai_settings(settings_data)
+                    # 检查是否是因为监听器已存在而失败
+                    workers = ai_manager.get_all_workers()
+                    worker_key = f"{contact_person}_{ai_model}"
+                    if worker_key in workers:
+                        logger.info(f"[AI接管] 监听器已存在: {contact_person}, 模型: {ai_model}")
+                    else:
+                        logger.error(f"[AI接管] 启动监听失败: {contact_person}, 模型: {ai_model}")
+                        # 如果启动失败，回滚AI状态
+                        settings_data["aiStatus"] = False
+                        saved_settings = save_ai_settings(settings_data)
+                        operation_success = False
+            except Exception as e:
+                logger.error(f"[AI接管] 启动监听异常: {contact_person}, 模型: {ai_model}, 错误: {str(e)}")
+                # 如果启动异常，回滚AI状态
+                settings_data["aiStatus"] = False
+                saved_settings = save_ai_settings(settings_data)
+                operation_success = False
     else:
         # 停止AI接管
         contact_person = settings_data.get("contactPerson", "")
@@ -360,13 +367,39 @@ def save_ai_settings_route():
             ai_manager = AiWorkerManager()
             # 获取AI模型设置，默认为禁用
             ai_model = settings_data.get("aiModel", "disabled")
-            ai_manager.stop_worker(contact_person, ai_model)
-            logger.info(f"[AI接管] 已停止监听: {contact_person}, 模型: {ai_model}")
+            try:
+                success = ai_manager.stop_worker(contact_person, ai_model)
+                if success:
+                    logger.info(f"[AI接管] 已停止监听: {contact_person}, 模型: {ai_model}")
+                else:
+                    logger.error(f"[AI接管] 停止监听失败: {contact_person}, 模型: {ai_model}")
+                    # 如果停止失败，回滚AI状态为false
+                    settings_data["aiStatus"] = False
+                    saved_settings = save_ai_settings(settings_data)
+                    operation_success = False
+            except Exception as e:
+                logger.error(f"[AI接管] 停止监听异常: {contact_person}, 模型: {ai_model}, 错误: {str(e)}")
+                # 如果停止异常，回滚AI状态为false
+                settings_data["aiStatus"] = False
+                saved_settings = save_ai_settings(settings_data)
+                operation_success = False
     
     # 通知所有AI工作线程更新规则
-    ai_manager = AiWorkerManager()
-    ai_manager.update_all_workers_rules()
-
+    try:
+        ai_manager = AiWorkerManager()
+        ai_manager.update_all_workers_rules()
+    except Exception as e:
+        logger.error(f"更新AI工作线程规则失败: {str(e)}")
+        # 如果更新规则失败，回滚AI状态为false
+        if operation_success:
+            settings_data["aiStatus"] = False
+            saved_settings = save_ai_settings(settings_data)
+            operation_success = False
+    
+    # 如果操作失败，返回错误响应
+    if not operation_success:
+        return jsonify({"success": False, "error": "操作失败", "aiStatus": False}), 500
+    
     return jsonify(saved_settings), 200
 
 
@@ -384,6 +417,42 @@ def get_ai_history():
     except Exception as e:
         logger.error(f"获取AI历史记录失败: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/ai-history/delete", methods=["POST"])
+@handle_api_errors
+def delete_ai_history():
+    """
+    删除AI回复历史记录
+
+    Request Body:
+        JSON对象包含time和message字段
+
+    Returns:
+        Response: 删除结果信息
+    """
+    data = request.json
+    if not data or 'time' not in data or 'message' not in data:
+        return jsonify({'error': '缺少必要参数'}), 400
+        
+    time = data['time']
+    message = data['message']
+    
+    # 加载历史记录
+    history = load_reply_history()
+    
+    # 查找并删除匹配的记录
+    original_length = len(history)
+    history = [h for h in history if not (h.get('time') == time and h.get('message') == message)]
+    
+    if len(history) == original_length:
+        return jsonify({'error': '未找到匹配的历史记录'}), 404
+        
+    # 更新全局变量并保存历史记录
+    from data_manager import reply_history as dm_reply_history
+    dm_reply_history[:] = history  # 更新data_manager中的全局变量
+    save_reply_history()  # 不传递参数，使用全局变量
+    
+    return jsonify({'success': True, 'message': '历史记录删除成功'})
 
 
 @app.route("/api/ai-history", methods=["POST"])
@@ -471,11 +540,11 @@ def start_ai_takeover():
     only_at = data.get("onlyAt", False)
 
     if not contact_person:
-        return jsonify({"success": False, "error": "联系人不能为空"}), 400
+        return jsonify({"success": False, "error": "联系人不能为空", "aiStatus": False}), 400
 
     # 检查微信是否在线
     if not is_wechat_online():
-        return jsonify({"success": False, "error": "微信未登录或不可用"}), 400
+        return jsonify({"success": False, "error": "微信未登录或不可用", "aiStatus": False}), 400
 
     wx = get_wechat_instance()
     ai_manager = AiWorkerManager()
@@ -494,7 +563,7 @@ def start_ai_takeover():
 
     if success:
         logger.info(f"[AI接管] 已启动监听: {contact_person}")
-        # 更新AI设置状态为启动
+        # 仅在接管操作成功完成后，才将JSON文件中的状态值更新为true
         ai_data = load_ai_data()
         ai_data["aiStatus"] = True
         save_ai_settings(ai_data)
@@ -516,10 +585,11 @@ def start_ai_takeover():
         worker_key = f"{contact_person}_{ai_model}"
         if worker_key in workers:
             logger.info(f"[AI接管] 监听器已存在: {contact_person}, 模型: {ai_model}")
-            return jsonify({"success": False, "error": "监听器已存在"}), 400
+            return jsonify({"success": False, "error": "监听器已存在", "aiStatus": False}), 400
         else:
             logger.error(f"[AI接管] 启动监听失败: {contact_person}, 模型: {ai_model}")
-            return jsonify({"success": False, "error": "启动监听失败，请检查联系人是否正确"}), 500
+            # 若接管失败，则保持原状态不变，不更新JSON文件中的状态值
+            return jsonify({"success": False, "error": "启动监听失败，请检查联系人是否正确", "aiStatus": False}), 500
 
 
 @app.route("/api/ai-takeover/stop", methods=["POST"])
@@ -530,7 +600,7 @@ def stop_ai_takeover():
     contact_person = data.get("contactPerson", "")
 
     if not contact_person:
-        return jsonify({"success": False, "error": "联系人不能为空"}), 400
+        return jsonify({"success": False, "error": "联系人不能为空", "aiStatus": False}), 400
 
     ai_manager = AiWorkerManager()
     # 获取AI模型设置，默认为禁用
@@ -539,7 +609,7 @@ def stop_ai_takeover():
 
     if success:
         logger.info(f"[AI接管] 已停止监听: {contact_person}, 模型: {ai_model}")
-        # 更新AI设置状态为停止
+        # 仅在停止操作成功完成后，才将JSON文件中的状态值更新为false
         ai_data = load_ai_data()
         ai_data["aiStatus"] = False
         save_ai_settings(ai_data)
@@ -554,18 +624,17 @@ def stop_ai_takeover():
             200,
         )
     else:
-        ai_data = load_ai_data()
-        ai_data["aiStatus"] = False
-        save_ai_settings(ai_data)
+        # 若停止失败，则保持原状态不变，不更新JSON文件中的状态值
         return (
             jsonify(
                 {
-                    "success": True,
-                    "message": f"已停止监听 {contact_person}",
-                    "aiStatus": False,
+                    "success": False,
+                    "message": f"停止监听失败: {contact_person}, 模型: {ai_model}",
+                    "error": "停止监听失败，请检查联系人是否正确",
+                    "aiStatus": False
                 }
             ),
-            200,
+            400,
         )
 
 

@@ -240,10 +240,10 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="originalMessage" label="原始消息" width="180">
+          <el-table-column prop="message" label="原始消息" width="180">
             <template #default="{ row }">
-              <el-tooltip :content="row.originalMessage" placement="top">
-                <span class="message-content">{{ truncateText(row.originalMessage, 20) }}</span>
+              <el-tooltip :content="row.message" placement="top">
+                <span class="message-content">{{ truncateText(row.message, 20) }}</span>
               </el-tooltip>
             </template>
           </el-table-column>
@@ -264,8 +264,8 @@
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <div class="operation-buttons">
-                <el-button type="primary" size="small" @click="viewDetails(row)" :icon="View">
-                  查看
+                <el-button type="danger" size="small" @click="deleteHistory(row)">
+                  删除
                 </el-button>
               </div>
             </template>
@@ -288,7 +288,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { View, Search, Loading } from '@element-plus/icons-vue'
+import { Search, Loading } from '@element-plus/icons-vue'
 
 
 const aiForm = ref(null)
@@ -312,6 +312,9 @@ const handleSwitchChange = async (newStatus) => {
 
   try {
     if (newStatus) {
+      // 先保存设置，确保传递到后端的是最新的设置数据
+      await submitForm()
+      
       // 发送开始接管请求
       const response = await fetch('http://localhost:5000/api/ai-takeover/start', {
         method: 'POST',
@@ -470,7 +473,7 @@ const fetchReplyHistory = async () => {
       // 转换数据格式以匹配前端表格
       replyHistory.value = data.map(item => ({
         time: item.time || item.timestamp, // 使用time字段或timestamp字段
-        originalMessage: item.message,
+        message: item.message,
         aiReply: item.reply,
         status: item.status
       }))
@@ -532,7 +535,7 @@ const stats = reactive({
 const filteredHistory = computed(() => {
   return replyHistory.value
     .filter(item => {
-      const matchesSearch = item.originalMessage.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      const matchesSearch = item.message.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         item.aiReply.toLowerCase().includes(searchQuery.value.toLowerCase())
       const matchesStatus = filterStatus.value === 'all' || item.status === filterStatus.value
       return matchesSearch && matchesStatus
@@ -625,60 +628,42 @@ const resetForm = async () => {
 }
 
 
-const viewDetails = (row) => {
-  ElMessageBox({
-    title: '消息详情',
-    message: `
-      <div class="message-detail-container">
-        <div class="detail-header">
-          <div class="time-badge">
-            <el-icon><Clock /></el-icon>
-            ${row.time}
-          </div>
-          <div class="status-badge ${row.status === 'replied' ? 'status-replied' : 'status-pending'}">
-            ${row.status === 'replied' ? '✅ 已回复' : '⏳ 未回复'}
-          </div>
-        </div>
-        
-        <div class="message-content">
-          <div class="message-section">
-            <div class="message-label">
-              <el-icon><ChatDotRound /></el-icon>
-              原始消息
-            </div>
-            <div class="message-bubble user-message">
-              ${row.originalMessage}
-            </div>
-          </div>
-          
-          <div class="message-section">
-            <div class="message-label">
-              <el-icon><Robot /></el-icon>
-              AI回复
-            </div>
-            <div class="message-bubble ai-message">
-              ${row.aiReply || '<span class="no-reply">暂无回复</span>'}
-            </div>
-          </div>
-        </div>
-        
-        <div class="detail-footer">
-          <div class="info-item">
-            <el-icon><Calendar /></el-icon>
-            <span>消息时间: ${formatDate(row.time)} ${formatTime(row.time)}</span>
-          </div>
-          ${row.matchType ? `<div class="info-item">
-            <el-icon><Connection /></el-icon>
-            <span>匹配类型: ${row.matchType}</span>
-          </div>` : ''}
-        </div>
-      </div>
-    `,
-    dangerouslyUseHTMLString: true,
-    customClass: 'message-detail-dialog',
-    confirmButtonText: '关闭',
-    width: '500px'
-  })
+const deleteHistory = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这条历史记录吗？此操作不可恢复。',
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    
+    const response = await fetch('http://localhost:5000/api/ai-history/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        time: row.time,
+        message: row.message
+      })
+    });
+    
+    if (response.ok) {
+      ElMessage.success('历史记录删除成功');
+      await fetchReplyHistory(); // 重新加载历史记录
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      ElMessage.error(`删除失败: ${errorData.error || '未知错误'}`);
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除历史记录失败:', error);
+      ElMessage.error(`删除失败: ${error.message || '网络错误'}`);
+    }
+  }
 }
 
 // 图表相关数据
