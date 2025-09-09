@@ -18,7 +18,7 @@
               <router-link to="/ai_takeover">AI 运营</router-link>
             </li>
             <li class="menu-item" :class="{ active: currentRoute === '/other_box' }">
-              <router-link to="/other_box">数据导出</router-link>
+              <router-link to="/other_box">更多功能</router-link>
             </li>
           </ul>
         </nav>
@@ -73,7 +73,7 @@ const upgradeButtonText = computed(() => {
   const level = quotaInfo.value.account_level;
   if (level === 'free') return '升级基础版';
   if (level === 'basic') return '升级企业版';
-  return '获取帮助';
+  return '联系我们';
 });
 
 // 处理升级按钮点击
