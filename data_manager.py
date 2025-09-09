@@ -75,7 +75,12 @@ def create_default_home_data():
                 "name": "基础版",
                 "price": 299,
                 "period": "/年",
-                "features": ["基础消息发送功能", "每日1000条发送限额", "无数据分析功能", "邮件支持"],
+                "features": [
+                    "社区支持",
+                    "基础数据看板",
+                    "基础消息发送功能",
+                    "每日100条发送限额"
+                ],
                 "isPopular": False,
             },
             {
@@ -83,7 +88,13 @@ def create_default_home_data():
                 "name": "企业版",
                 "price": 899,
                 "period": "/年",
-                "features": ["无限制消息发送", "高级数据分析与报表", "客户画像分析", "优先技术支持", "API访问权限"],
+                "features": [
+                    "聊天舆情监控",
+                    "无限制消息发送",
+                    "尊享VIP技术支持",
+                    "高级数据分析与报表",
+                    "消息分析与自定义统计"
+                ],
                 "isPopular": True,
             },
             {
@@ -91,7 +102,12 @@ def create_default_home_data():
                 "name": "定制版",
                 "price": "联系我们",
                 "period": "获取报价",
-                "features": ["完全定制化功能", "专属客户经理", "私有部署选项", "24/7技术支持"],
+                "features": [
+                    "24*7技术支持",
+                    "专属客户经理",
+                    "完全定制化功能",
+                    "私有化部署选项"
+                ],
                 "isPopular": False,
             },
         ],
@@ -136,25 +152,25 @@ def create_default_home_data():
         ],
         "testimonials": [
             {
-            "id": 1,
-            "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了80%以上。",
-            "customerName": "陈明远",
-            "customerCompany": "明远科技集团数字营销总监",
-            "customerAvatar": "@/assets/images/user-avatar.svg"
+                "id": 1,
+                "quote": "LeafAuto帮助我们公司节省了大量的人力成本，消息发送效率提升了80%以上。",
+                "customerName": "陈明远",
+                "customerCompany": "明远科技集团数字营销总监",
+                "customerAvatar": "@/assets/images/user-avatar.svg"
             },
             {
-            "id": 2,
-            "quote": "Ai托管功能非常强大，好似一个智能助手，能够帮助我们自动回答客户问题，提升客户满意度。",
-            "customerName": "林晓薇",
-            "customerCompany": "优品电商平台客户运营总监",
-            "customerAvatar": "@/assets/images/user-avatar.svg"
+                "id": 2,
+                "quote": "Ai托管功能非常强大，好似一个智能助手，能够帮助我们自动回答客户问题，提升客户满意度。",
+                "customerName": "林晓薇",
+                "customerCompany": "优品电商平台客户运营总监",
+                "customerAvatar": "@/assets/images/user-avatar.svg"
             },
             {
-            "id": 3,
-            "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
-            "customerName": "郑浩然",
-            "customerCompany": "星海金融科技公司技术总监",
-            "customerAvatar": "@/assets/images/user-avatar.svg"
+                "id": 3,
+                "quote": "系统稳定性非常好，从未出现过 downtime，客服响应也非常及时。",
+                "customerName": "郑浩然",
+                "customerCompany": "星海金融科技公司技术总监",
+                "customerAvatar": "@/assets/images/user-avatar.svg"
             }
         ]
     }
@@ -598,7 +614,7 @@ def import_tasks(imported_tasks):
     for task_data in imported_tasks:
         # 检查必要字段
         if not all(
-            key in task_data for key in ["recipient", "sendTime", "messageContent"]
+                key in task_data for key in ["recipient", "sendTime", "messageContent"]
         ):
             continue
 
@@ -814,13 +830,13 @@ def update_account_level(level):
         if level not in ["free", "basic", "enterprise"]:
             logger.error(f"无效的账户级别: {level}")
             return False
-        
+
         # 加载当前配额数据
         quota_data = load_message_quota()
-        
+
         # 更新账户级别
         quota_data["account_level"] = level
-        
+
         # 根据新的账户级别更新每日限额
         if level == "enterprise":
             quota_data["daily_limit"] = "unlimited"
@@ -835,10 +851,10 @@ def update_account_level(level):
             # 如果当前使用量超过新限额，则设置为限额
             if quota_data.get("used_today", 0) > 30:
                 quota_data["used_today"] = 30
-        
+
         # 保存更新后的配额数据
         save_message_quota(quota_data)
-        
+
         logger.info(f"账户级别已更新为: {level}")
         return True
     except Exception as e:

@@ -40,8 +40,8 @@ UninstallDisplayIcon={app}\backend\_internal\resources\icon.ico
 
 [UninstallDelete]
 Type: files; Name: "{app}\*.*"
-Type: files; Name: "{app}\frontend"
-Type: files; Name: "{app}\backend"
+Type: files; Name: "{app}\frontend\*.*"
+Type: files; Name: "{app}\backend\*.*"
 Type: dirifempty; Name: "{app}"
 
 [Languages]
