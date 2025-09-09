@@ -322,7 +322,7 @@ const editTask = async (taskId) => {
 
       if (response.ok) {
         tasks.value = tasks.value.filter(t => t.id !== taskId)
-        ElMessage({ message: '请修改任务信息', type: 'info' })
+        ElMessage({ message: '请修改任务信息', type: 'warning' })
       } else {
         ElMessage.error('删除原任务失败，请稍后重试')
       }
