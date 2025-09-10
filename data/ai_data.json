@@ -22,22 +22,22 @@
         "reply": "SendEmotion:1"
       },
       {
-        "id": 1757240988298,
-        "keyword": "帮助",
+        "id": 1757239385483,
+        "keyword": "随机表情",
         "matchType": "contains",
-        "reply": "有什么我可以帮助您的吗？请告诉我您需要什么帮助，我会尽力为您解答。"
-      },
-      {
-        "id": 1757240988300,
-        "keyword": "谢谢",
-        "matchType": "contains",
-        "reply": "不客气！很高兴能帮助到您。如果还有其他问题，随时可以找我。"
+        "reply": "SendEmotion:1,2,3"
       },
       {
         "id": 1757240988301,
         "keyword": "你好",
         "matchType": "contains",
         "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？"
+      },
+      {
+        "id": 1757240988300,
+        "keyword": "谢谢",
+        "matchType": "contains",
+        "reply": "不客气！很高兴能帮助到您。如果还有其他问题，随时可以找我。"
       }
     ],
     "onlyAt": false,
