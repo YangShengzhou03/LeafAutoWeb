@@ -926,8 +926,8 @@ class AiWorkerThread:
             # 获取聊天信息
             chat_info = self._get_chat_info(chat)
             is_group = chat_info["type"] == "group"
-            group_name = chat_info["name"]
-            
+            group_name = chat.who
+
             # 记录消息接收时间戳
             receive_time = time.time()
 
