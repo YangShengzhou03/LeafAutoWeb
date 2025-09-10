@@ -14,7 +14,7 @@ datas = [
     ('server_manager.py', '.')
 ]
 
-hiddenimports=['comtypes.stream']
+hiddenimports=['comtypes.stream','httpx']
 
 a = Analysis(
     ['start_backend.py'],
