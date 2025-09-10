@@ -5,6 +5,7 @@ import re
 import threading
 import time
 import uuid
+import httpx
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -658,6 +659,28 @@ class AiWorkerThread:
         else:
             logger.warning("未知的AI模型: %s", model)
             return ""
+
+    def _query_api(self, url, payload=None, headers=None, params=None, method='POST'):
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.request(
+                    method=method,
+                    url=url,
+                    json=payload,
+                    headers=headers,
+                    params=params
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.RequestError as e:
+            logger.error("请求错误: %s", e)
+            return None
+        except httpx.HTTPStatusError as e:
+            logger.error("HTTP状态错误: %s", e)
+            return None
+        except Exception as e:
+            logger.error("未知错误: %s", e)
+            return None
     
     def _query_wenxin(self, message: str) -> str:
         """
@@ -669,14 +692,26 @@ class AiWorkerThread:
         Returns:
             str: AI回复内容
         """
-        try:
-            # 这里应该调用文心一言的API
-            # 由于没有实际的API密钥，这里返回一个模拟回复
-            logger.info("调用文心一言模型处理消息: %s", message)
-            return f"文心一言回复: {message}"
-        except Exception as e:
-            logger.error("文心一言模型调用失败: %s", e)
-            return ""
+
+        def _get_access_token():
+            response = self._query_api(
+                "https://aip.baidubce.com/oauth/2.0/token",
+                params={'grant_type': 'client_credentials',
+                        'client_id': 'eCB39lMiTbHXV0mTt1d6bBw7',
+                        'client_secret': 'WUbEO3XdMNJLTJKNQfFbMSQvtBVzRhvu'}
+            )
+            return response.get("access_token") if response else None
+        access_token = _get_access_token()
+        if not access_token:
+            return "无法获取百度API访问令牌"
+
+        payload = {"messages": [{"role": "user", "content": message}]}
+        response = self._query_api(
+            f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/ernie-speed-128k?access_token={access_token}",
+            payload=payload,
+            headers={'Content-Type': 'application/json'}
+        )
+        return response.get('result', "无法解析响应") if response else "请求失败"
     
     def _query_moonshot(self, message: str) -> str:
         """
@@ -688,14 +723,20 @@ class AiWorkerThread:
         Returns:
             str: AI回复内容
         """
-        try:
-            # 这里应该调用月之暗面的API
-            # 由于没有实际的API密钥，这里返回一个模拟回复
-            logger.info("调用月之暗面模型处理消息: %s", message)
-            return f"月之暗面回复: {message}"
-        except Exception as e:
-            logger.error("月之暗面模型调用失败: %s", e)
-            return ""
+        headers = {
+            "Authorization": "Bearer sk-dx1RuweBS0LU0bCR5HizbWjXLuBL6HrS8BT21NEEGwbeyuo6",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "moonshot-v1-8k",
+            "messages": [
+                {"role": "system", "content": self.config.role},
+                {"role": "user", "content": message}
+            ],
+            "temperature": 0.9
+        }
+        response = self._query_api("https://api.moonshot.cn/v1/chat/completions", payload, headers)
+        return response['choices'][0]['message']['content'] if response else "无法解析响应"
     
     def _query_spark(self, message: str) -> str:
         """
@@ -707,14 +748,22 @@ class AiWorkerThread:
         Returns:
             str: AI回复内容
         """
-        try:
-            # 这里应该调用星火讯飞的API
-            # 由于没有实际的API密钥，这里返回一个模拟回复
-            logger.info("调用星火讯飞模型处理消息: %s", message)
-            return f"星火讯飞回复: {message}"
-        except Exception as e:
-            logger.error("星火讯飞模型调用失败: %s", e)
-            return ""
+        data = {
+            "max_tokens": 64,
+            "top_k": 4,
+            "temperature": 0.9,
+            "messages": [
+                {"role": "system", "content": self.config.role},
+                {"role": "user", "content": message}
+            ],
+            "model": "4.0Ultra"
+        }
+        header = {
+            "Authorization": "Bearer xCPWitJxfzhLaZNOAdtl:PgJXiEyvKjUaoGzKwgIi",
+            "Content-Type": "application/json"
+        }
+        response = self._query_api("https://spark-api-open.xf-yun.com/v1/chat/completions", data, header)
+        return response['choices'][0]['message']['content'] if response else "无法解析响应"
     
     def _get_chat_info_from_message(self) -> Dict[str, Any]:
         """

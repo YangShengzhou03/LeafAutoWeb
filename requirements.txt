@@ -9,3 +9,4 @@ coverage>=7.3.2
 pytest-cov>=4.1.0
 axios~=0.1.0
 pywin32>=305
+httpx>=0.24.0
