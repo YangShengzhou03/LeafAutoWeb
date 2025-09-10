@@ -17,7 +17,7 @@
 
             <el-form ref="aiForm" :model="formData" :rules="rules" class="custom-input">
               <div class="controls-row">
-                <el-form-item label="AI接管状态" prop="aiStatus" class="inline-form-item">
+                <el-form-item label="接管状态" prop="aiStatus" class="inline-form-item">
                   <div class="status-toggle inline-status">
                     <el-switch v-model="formData.aiStatus" active-color="#3b82f6" inactive-color="#d1d5db"
                       @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
@@ -31,7 +31,14 @@
                   </div>
                 </el-form-item>
 
-                <el-form-item label="AI大模型" prop="aiModel" class="inline-form-item">
+                <el-form-item label="回复时@对方" prop="groupAtReply" class="inline-form-item">
+                  <div class="status-toggle">
+                    <el-switch v-model="formData.groupAtReply" active-color="#3b82f6" inactive-color="#d1d5db"
+                      @change="handleGroupAtChange" :loading="isTakeoverLoading"></el-switch>
+                  </div>
+                </el-form-item>
+
+                <el-form-item label="模型" prop="aiModel" class="inline-form-item">
                   <el-select v-model="formData.aiModel" placeholder="请选择" :loading="isTakeoverLoading">
                     <el-option label="禁用模型" value="disabled"></el-option>
                     <el-option label="文心一言" value="wenxin"></el-option>
@@ -297,10 +304,12 @@ const rulesForm = ref(null)
 
 const formData = reactive({
   aiStatus: false,
+  onlyAtTrigger: false,
+  groupAtReply: false,
   replyDelay: 0,
   minReplyInterval: 0,
   contactPerson: '文件传输助手',
-  aiPersona: '你是一个微信好友，全程隐藏 AI 身份，能类似真人般自然回应，具体按以下要求执行：对话风格：完全口语化，不用长句和书面词，带日常语气词（如“卧槽”等）或网络热梗。话题应对：懂的话题别 “掉书袋”，聊日常细节就行。应对 “AI 质疑”：如果用户说 “你怎么像机器人” “你是 AI 吧”，别辩解，不能掉入“自证陷阱”，要嘲讽对方。总之，你就是一个普通人，聊得随意、有烟火气，别让人觉得 “说话没温度、不像真人”。',
+  aiPersona: '你是一个微信好友，全程隐藏 AI 身份，能类似真人般自然回应，具体按以下要求执行：对话风格：完全口语化，不用长句和书面词，带日常语气词（如"卧槽"等）或网络热梗。话题应对：懂的话题别 "掉书袋"，聊日常细节就行。应对 "AI 质疑"：如果用户说 "你怎么像机器人" "你是 AI 吧"，别辩解，不能掉入"自证陷阱"，要嘲讽对方。总之，你就是一个普通人，聊得随意、有烟火气，别让人觉得 "说话没温度、不像真人"。',
   aiModel: 'disabled',
   customRules: []
 })
@@ -325,6 +334,7 @@ const handleSwitchChange = async (newStatus) => {
           contactPerson: formData.contactPerson,
           aiPersona: formData.aiPersona,
           onlyAt: formData.onlyAtTrigger,
+          groupAtReply: formData.groupAtReply,
           aiModel: formData.aiModel,
           replyDelay: formData.replyDelay,
           minReplyInterval: formData.minReplyInterval
@@ -785,6 +795,22 @@ const truncateText = (text, length) => {
 
 const tableRowClassName = ({ row }) => {
   return row.status === 'pending' ? 'task-pending' : 'task-completed';
+}
+
+// 处理群回复时@对方开关变化
+const handleGroupAtChange = async () => {
+  isTakeoverLoading.value = true
+  
+  try {
+    // 仅保存设置，不改变接管状态
+    await submitForm()
+    ElMessage.success('群回复时@对方设置已更新')
+  } catch (error) {
+    console.error('更新群回复时@对方设置失败:', error)
+    ElMessage.error(`更新设置失败: ${error.message || '网络错误'}`)
+  } finally {
+    isTakeoverLoading.value = false
+  }
 }
 
 // 处理仅被@时触发开关变化

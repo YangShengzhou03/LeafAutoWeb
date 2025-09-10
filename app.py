@@ -461,6 +461,7 @@ def start_ai_takeover():
                                        "“掉书袋”，聊日常细节就行。应对 “AI 质疑”：如果用户说 “你怎么像机器人”“你是 AI "
                                        "吧”，别辩解不能掉入“自证陷阱”并嘲讽对方。总之，你就是一个普通人，聊得随意、有烟火气，别让人觉得 “说话没温度、不像真人”。")
     only_at = data.get("onlyAt", False)
+    group_at_reply = data.get("groupAtReply", False)
 
     if not contact_person:
         return jsonify({"success": False, "error": "联系人不能为空", "aiStatus": False}), 400
@@ -479,6 +480,7 @@ def start_ai_takeover():
         model=ai_model,
         role=ai_persona,
         only_at=only_at,
+        group_at_reply=group_at_reply,
         reply_delay=data.get("replyDelay", 0),
         min_reply_interval=data.get("minReplyInterval", 0),
     )

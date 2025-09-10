@@ -363,6 +363,7 @@ class WorkerConfig:
         model: str = DEFAULT_MODEL,
         role: str = DEFAULT_ROLE,
         only_at: bool = False,
+        group_at_reply: bool = False,
         reply_delay: int = DEFAULT_REPLY_DELAY,
         min_reply_interval: int = DEFAULT_MIN_REPLY_INTERVAL,
     ):
@@ -371,6 +372,7 @@ class WorkerConfig:
         self.model = model
         self.role = role
         self.only_at = only_at
+        self.group_at_reply = group_at_reply
         self.reply_delay = reply_delay
         self.min_reply_interval = min_reply_interval
 
@@ -495,8 +497,14 @@ class AiWorkerThread:
         self.reply_handler = ReplyHandler(self.config.wx_instance)
 
         logger.info(
-            "AI worker thread initialized: receiver=%s, delay=%ss, min_interval=%ss",
-            self.config.receiver, self.config.reply_delay, self.config.min_reply_interval
+            "AI worker thread initialized: receiver=%s, model=%s, role=%s, only_at=%s, group_at_reply=%s, delay=%ss, min_interval=%ss",
+            self.config.receiver,
+            self.config.model,
+            self.config.role,
+            self.config.only_at,
+            self.config.group_at_reply,
+            self.config.reply_delay,
+            self.config.min_reply_interval,
         )
 
     def update_rules(self) -> bool:
@@ -609,7 +617,9 @@ class AiWorkerThread:
                 
                 # 发送AI回复
                 if is_group:
-                    self.reply_handler.send_reply(group_name, reply, at_user=sender)
+                    # 根据group_at_reply设置决定是否@对方
+                    at_user = sender if self.config.group_at_reply else ""
+                    self.reply_handler.send_reply(group_name, reply, at_user=at_user)
                 else:
                     self.reply_handler.send_reply(sender, reply)
                     
@@ -899,7 +909,9 @@ class AiWorkerThread:
 
                 # 发送自定义回复
                 if is_group:
-                    self.reply_handler.send_reply(group_name, custom_reply, at_user=sender)
+                    # 根据group_at_reply设置决定是否@对方
+                    at_user = sender if self.config.group_at_reply else ""
+                    self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
                 else:
                     self.reply_handler.send_reply(sender, custom_reply)
                     
@@ -1013,6 +1025,7 @@ class AiWorkerThread:
 
         try:
             if not self.init_listeners():
+                self._cleanup()
                 self.state.set_running(False)
                 logger.error("AI worker thread initialization failed")
                 return
@@ -1138,12 +1151,42 @@ class AiWorkerManager:
                 thread = threading.Thread(target=worker.run, daemon=True)
                 thread.start()
 
+                # 等待线程启动
                 time.sleep(0.1)
                 if not worker.is_running():
                     del self.workers[worker_key]
                     return False
 
-                return True
+                # 等待初始化完成，最多等待5秒
+                max_wait_time = 5
+                wait_interval = 0.1
+                total_wait_time = 0
+                
+                while total_wait_time < max_wait_time:
+                    # 检查线程是否仍在运行且初始化是否完成
+                    if not worker.is_running():
+                        # 线程已经停止，说明初始化失败
+                        del self.workers[worker_key]
+                        return False
+                    
+                    # 检查监听器是否已成功添加
+                    if hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
+                        # 监听器已添加，初始化成功
+                        return True
+                    
+                    # 继续等待
+                    time.sleep(wait_interval)
+                    total_wait_time += wait_interval
+                
+                # 超时后，检查线程状态
+                if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
+                    return True
+                else:
+                    # 初始化超时，停止线程并清理
+                    worker.stop()
+                    del self.workers[worker_key]
+                    return False
+
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 if worker_key in self.workers:
                     del self.workers[worker_key]

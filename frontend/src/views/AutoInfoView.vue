@@ -58,13 +58,23 @@
               </el-form-item>
             </el-col>
 
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
+              <el-form-item label="过期任务" prop="importExpiredTask">
+                <el-radio-group v-model="formData.importExpiredTask">
+                  <el-radio label="1">依然导入</el-radio>
+                  <el-radio label="2">阻止导入</el-radio>
+                  <el-radio label="3">智能顺延</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+
             <el-col :span="24">
               <el-form-item label="信息内容" prop="messageContent">
                 <el-input v-model="formData.messageContent" type="textarea" placeholder="输入要发送的消息内容或文件路径" :rows="4"
                   show-word-limit maxlength="500" />
                 <div class="el-form-item__tip">
-                  <p>发送文件时，请直接输入完整的文件路径，示例格式为 <strong>D:\杨圣洲作品\软件需求文档.pdf</strong>。应避免发送桌面的文件，路径过长可能导致发送失败。</p>
-                  <p>发送表情包，请输入 <strong>SendEmotion:1</strong> ，其中 1 为次序， <strong>SendEmotion:2,3,4</strong> 表示随机从第2、3、4个表情中选取一个进行发送。</p>
+                  <p>发送文件：直接输入完整文件路径，如 <strong>D:\文档\报告.pdf</strong></p>
+                  <p>发送表情：输入 <strong>SendEmotion:1</strong>，1为表情序号；多个表情用逗号分隔，如 <strong>SendEmotion:2,3,4</strong></p>
                 </div>
               </el-form-item>
 
@@ -105,7 +115,8 @@
                 <el-button :disabled="tasks.length === 0" @click="clearAllTasks" type="danger">
                   清空
                 </el-button>
-                <el-button :disabled="tasks.length === 0" @click="toggleTaskScheduler" :type="isSchedulerRunning ? 'danger' : 'primary'">
+                <el-button :disabled="tasks.length === 0" @click="toggleTaskScheduler"
+                  :type="isSchedulerRunning ? 'danger' : 'primary'">
                   {{ isSchedulerRunning ? '停止执行' : '开始执行' }}
                 </el-button>
               </el-button-group>
@@ -138,7 +149,8 @@
           </el-table-column>
           <el-table-column label="状态" min-width="10px" fixed="right">
             <template #default="{ row }">
-              <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'completed' ? 'success' : 'danger'" size="small">
+              <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'completed' ? 'success' : 'danger'"
+                size="small">
                 {{ row.status === 'pending' ? '待执行' : row.status === 'completed' ? '已完成' : '失败' }}
               </el-tag>
             </template>
@@ -147,7 +159,9 @@
             <template #default="{ row }">
               <el-tooltip v-if="row.errorMessage" :content="row.errorMessage" placement="top">
                 <el-tag type="danger" size="small">
-                  <el-icon><Warning /></el-icon>
+                  <el-icon>
+                    <Warning />
+                  </el-icon>
                   查看错误
                 </el-tag>
               </el-tooltip>
@@ -182,7 +196,8 @@ const formData = reactive({
   sendTime: '',
   repeatType: 'none',
   repeatDays: [],
-  messageContent: ''
+  messageContent: '',
+  importExpiredTask: '1'
 })
 
 const rules = {
@@ -203,16 +218,19 @@ const rules = {
     { required: true, message: '请选择发送时间', trigger: 'change' }
   ],
   messageContent: [
-    { 
+    {
       validator: (_, value, callback) => {
         // 不再要求必须填写消息内容或文件，因为现在可以同时创建两个任务
         callback()
-      }, 
-      trigger: 'blur' 
+      },
+      trigger: 'blur'
     }
   ],
   repeatType: [
     { required: true, message: '请选择重复类型', trigger: 'change' }
+  ],
+  importExpiredTask: [
+    { required: true, message: '请选择过期任务处理方式', trigger: 'change' }
   ]
 }
 
@@ -249,12 +267,14 @@ const sortedTasks = computed(() => {
 
 const resetForm = () => {
   taskForm.value?.resetFields()
+  // 重置后保持importExpiredTask的默认值为"1"
+  formData.importExpiredTask = '1'
 }
 
 const submitForm = async () => {
   try {
     await taskForm.value.validate()
-    
+
     // 自定义验证：确保填写了消息内容
     if (!formData.messageContent) {
       ElMessage.error('请填写消息内容')
@@ -267,7 +287,7 @@ const submitForm = async () => {
       status: 'pending',
       createdAt: new Date().toISOString()
     }]
-    
+
     // 批量创建任务
     let successCount = 0
     for (const taskData of tasksToCreate) {
@@ -278,17 +298,19 @@ const submitForm = async () => {
         },
         body: JSON.stringify(taskData)
       })
-      
+
       if (response.ok) {
         const newTask = await response.json()
         tasks.value.push(newTask)
         successCount++
       }
     }
-    
+
     if (successCount === tasksToCreate.length) {
       ElMessage.success(`成功创建 ${successCount} 个任务`)
       resetForm()
+      // 重置后保持importExpiredTask的默认值为"1"
+      formData.importExpiredTask = '1'
     } else {
       ElMessage.error(`部分任务创建失败，成功创建 ${successCount}/${tasksToCreate.length} 个任务`)
     }
@@ -312,7 +334,7 @@ const editTask = async (taskId) => {
     formData.repeatType = task.repeatType
     formData.repeatDays = task.repeatDays
     formData.messageContent = task.messageContent
-
+    // 保持默认的importExpiredTask值不变，因为这是导入时的设置，不是任务本身的属性
 
     // 删除原任务
     try {
@@ -358,7 +380,7 @@ const deleteTask = async (taskId) => {
 }
 
 const clearAllTasks = async () => {
-  ElMessageBox.confirm('确定要清空所有任务吗？此操作将删除所有任务（包括已完成和未完成的任务），且不可恢复！', '警告', {
+  ElMessageBox.confirm('确定要清空所有任务吗？此操作不可恢复！', '提示', {
     confirmButtonText: '确定清空',
     cancelButtonText: '取消',
     type: 'warning',
@@ -400,7 +422,7 @@ const refreshTasks = async () => {
     if (response.ok) {
       const data = await response.json()
       tasks.value = data
-      
+
       // 检查是否有待执行的任务，如果没有则自动停止调度器
       const pendingTasks = data.filter(task => task.status === 'pending')
       if (pendingTasks.length === 0 && isSchedulerRunning.value) {
@@ -436,14 +458,14 @@ const exportTasks = () => {
   const ws = XLSX.utils.json_to_sheet(exportData)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, '任务列表')
-  
+
   // 设置所有单元格为文本格式
   const range = XLSX.utils.decode_range(ws['!ref'])
   for (let row = range.s.r; row <= range.e.r; row++) {
     for (let col = range.s.c; col <= range.e.c; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
       if (!ws[cellAddress]) continue
-      
+
       // 设置单元格格式为文本
       if (!ws[cellAddress].z) {
         ws[cellAddress].z = '@' // @ 表示文本格式
@@ -485,6 +507,7 @@ const handleFileImport = async (event) => {
         }
 
         // 转换Excel数据为任务格式
+        const now = new Date()
         const validTasks = importedData.map(item => {
           // 处理重复类型
           let repeatType = 'none'
@@ -511,16 +534,34 @@ const handleFileImport = async (event) => {
             })
           }
 
+          // 解析发送时间
+          let sendTime = item['发送时间'] ? new Date(item['发送时间']).toISOString() : ''
+          
+          // 处理过期任务
+          if (sendTime && new Date(sendTime) < now) {
+            // 根据选择的处理方式处理过期任务
+            if (formData.importExpiredTask === '2') {
+              // 阻止导入 - 返回null，后续会被过滤掉
+              return null
+            } else if (formData.importExpiredTask === '3') {
+              // 智能顺延 - 将时间顺延到明天同一时间
+              const taskDate = new Date(sendTime)
+              taskDate.setDate(taskDate.getDate() + 1)
+              sendTime = taskDate.toISOString()
+            }
+            // 选项 '1' 是依然导入，不需要特殊处理
+          }
+
           return {
             recipient: item['接收者'] || '',
-            sendTime: item['发送时间'] ? new Date(item['发送时间']).toISOString() : '',
+            sendTime,
             messageContent: item['内容'] || '',
             repeatType,
             repeatDays
           }
         }).filter(task => {
-          // 检查必要字段
-          return task.recipient && task.sendTime && (task.messageContent || task.filePath)
+          // 过滤掉null值（被阻止导入的过期任务）和缺少必要字段的任务
+          return task && task.recipient && task.sendTime && (task.messageContent || task.filePath)
         })
 
         // 上传到服务器
@@ -579,7 +620,7 @@ const toggleTaskScheduler = async () => {
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (response.ok) {
         isSchedulerRunning.value = false
         ElMessage.success('任务调度器已停止')
@@ -588,6 +629,30 @@ const toggleTaskScheduler = async () => {
         ElMessage.error(`停止失败: ${errorData.error || '未知错误'}`)
       }
     } else {
+      // 检查是否有过时任务
+      const now = new Date()
+      const hasExpiredTasks = tasks.value.some(task => 
+        task.status === 'pending' && new Date(task.sendTime) < now
+      )
+
+      if (hasExpiredTasks) {
+        // 有过时任务，弹出确认对话框
+        try {
+          await ElMessageBox.confirm(
+            '检测到有过期任务，这些任务会立即发送，确定继续吗？',
+            '提示',
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }
+          )
+        } catch {
+          // 用户点击了取消，不执行后续操作
+          return
+        }
+      }
+
       // 启动调度器
       const response = await fetch('http://localhost:5000/api/task-scheduler/start', {
         method: 'POST',
@@ -595,7 +660,7 @@ const toggleTaskScheduler = async () => {
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (response.ok) {
         isSchedulerRunning.value = true
         ElMessage.success('任务调度器已启动')
@@ -623,15 +688,18 @@ const checkSchedulerStatus = async () => {
 }
 
 onMounted(() => {
+  // 确保importExpiredTask的默认值为"1"
+  formData.importExpiredTask = '1'
+  
   refreshTasks()
   checkSchedulerStatus()
-  
+
   // 定时检查调度器状态和刷新任务列表，确保界面同步
   const schedulerStatusInterval = setInterval(() => {
     checkSchedulerStatus()
     refreshTasks() // 无论调度器状态如何都刷新任务列表，确保状态实时更新
   }, 3000) // 每3秒检查一次，进一步提高刷新频率
-  
+
   // 组件卸载时清除定时器
   onUnmounted(() => {
     clearInterval(schedulerStatusInterval)
@@ -848,4 +916,3 @@ onMounted(() => {
   }
 }
 </style>
-

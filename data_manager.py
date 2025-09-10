@@ -660,6 +660,7 @@ def save_ai_settings(settings_data):
         "aiPersona",
         "customRules",
         "onlyAt",
+        "groupAtReply",
     ]
     for field in required_fields:
         if field not in settings_data:
@@ -676,6 +677,8 @@ def save_ai_settings(settings_data):
             elif field == "customRules":
                 settings_data[field] = []
             elif field == "onlyAt":
+                settings_data[field] = False
+            elif field == "groupAtReply":
                 settings_data[field] = False
 
     ai_settings = settings_data

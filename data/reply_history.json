@@ -1,8 +1,8 @@
 {
-  "total_replies": 9,
-  "successful_replies": 9,
+  "total_replies": 23,
+  "successful_replies": 23,
   "failed_replies": 0,
-  "average_response_time": 1.11,
+  "average_response_time": 3.28,
   "history": [
     {
       "sender": "杨圣洲",
@@ -93,6 +93,146 @@
       "timestamp": "2025-09-09T00:23:22.852497",
       "id": "4f9252ee-f01e-4917-8214-2ff477562cab",
       "time": "2025-09-09 00:23:22"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
+      "status": "replied",
+      "responseTime": 2.22,
+      "timestamp": "2025-09-10T16:18:53.223181",
+      "id": "018d489a-8330-482a-9a96-9f65f731424f",
+      "time": "2025-09-10 16:18:53"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 1.88,
+      "timestamp": "2025-09-10T16:19:02.036556",
+      "id": "6324a4b0-deaf-486c-8918-0fbbf9643457",
+      "time": "2025-09-10 16:19:02"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "帮助",
+      "reply": "有什么我可以帮助您的吗？请告诉我您需要什么帮助，我会尽力为您解答。",
+      "status": "replied",
+      "responseTime": 1.88,
+      "timestamp": "2025-09-10T16:19:11.202611",
+      "id": "717d0a37-3afa-47af-9751-bbf614e45bfb",
+      "time": "2025-09-10 16:19:11"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "表情",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 2.81,
+      "timestamp": "2025-09-10T16:19:25.838583",
+      "id": "a56442c2-e558-4990-a39d-97e317c37943",
+      "time": "2025-09-10 16:19:25"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "自己体会测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 1.46,
+      "timestamp": "2025-09-10T16:19:53.488029",
+      "id": "cd79f6b1-dae9-4cff-98f7-c94d0a568fda",
+      "time": "2025-09-10 16:19:53"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 1.87,
+      "timestamp": "2025-09-10T16:20:04.972051",
+      "id": "79fdffd5-5f74-4d28-8546-9bb8092d6fb3",
+      "time": "2025-09-10 16:20:04"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 2.44,
+      "timestamp": "2025-09-10T16:35:35.965263",
+      "id": "8b6e0c17-7dc1-4f0a-af1e-0726c5cc7a95",
+      "time": "2025-09-10 16:35:35"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 1.88,
+      "timestamp": "2025-09-10T16:37:31.366890",
+      "id": "1ced02e1-776d-4ffe-9439-3fce932b6c48",
+      "time": "2025-09-10 16:37:31"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 2.58,
+      "timestamp": "2025-09-10T16:43:15.637665",
+      "id": "1916be4c-0ba7-4316-862b-c8cf581322a0",
+      "time": "2025-09-10 16:43:15"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
+      "status": "replied",
+      "responseTime": 2.19,
+      "timestamp": "2025-09-10T16:43:24.810690",
+      "id": "b572d7ad-2394-45cc-8fc1-13ee1b15a98f",
+      "time": "2025-09-10 16:43:24"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "123",
+      "reply": "123123",
+      "status": "replied",
+      "responseTime": 2.01,
+      "timestamp": "2025-09-10T16:43:34.764284",
+      "id": "6e80d6df-e6b3-42b3-a420-0a648c57a110",
+      "time": "2025-09-10 16:43:34"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 14.01,
+      "timestamp": "2025-09-10T17:19:36.358432",
+      "id": "9ad56fc3-c37b-4932-a0f4-b9d672f1fb3d",
+      "time": "2025-09-10 17:19:36"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "霸气测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 14.02,
+      "timestamp": "2025-09-10T17:19:54.286215",
+      "id": "813cf9fb-515c-4234-ae38-8912ceb93240",
+      "time": "2025-09-10 17:19:54"
+    },
+    {
+      "sender": "杨圣洲",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 14.11,
+      "timestamp": "2025-09-10T17:20:08.400616",
+      "id": "2d17727e-2d24-40d7-854c-d278a29d7702",
+      "time": "2025-09-10 17:20:08"
     }
   ]
 }

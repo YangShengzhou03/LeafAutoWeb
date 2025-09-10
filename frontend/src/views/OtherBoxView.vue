@@ -198,7 +198,7 @@
                 <div class="card-icon">
                   <i class="el-icon-warning"></i>
                 </div>
-                <div class="card-title">增强不当言论识别预警</div>
+                <div class="card-title">舆情监控识别预警</div>
               </div>
             </div>
           </el-card>
