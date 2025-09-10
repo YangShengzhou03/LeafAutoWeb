@@ -13,7 +13,7 @@
             </svg>
           </div>
           <div class="header-text">
-            <h3>激活码兑换</h3>
+            <h4>激活码兑换</h4>
             <p class="header-subtitle">输入激活码，解锁专属服务</p>
           </div>
         </div>
@@ -34,24 +34,17 @@
             
             <div class="qr-container">
               <div class="qr-wrapper">
-                <div class="qr-placeholder">
-                  <div class="qr-pattern">
-                    <div class="qr-dot" v-for="i in 64" :key="i" :style="getRandomStyle(i)"></div>
-                  </div>
-                  <div class="qr-logo">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
+                <img 
+                  :src="qqGroupQrcode" 
+                  alt="QQ群二维码" 
+                  class="real-qrcode" 
+                />
               </div>
             </div>
             
             <div class="qr-info">
               <h3>{{random_code}}</h3>
-              <p>扫描上方二维码，访问官方网站获取专属激活码</p>
+              <p>扫描上方二维码，进入QQ群获取专属激活码</p>
               <div class="qr-steps">
                 <div class="step-item">
                   <div class="step-number">1</div>
@@ -147,6 +140,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import qqGroupQrcode from '@/assets/images/qq_group_qrcode.png';
 
 import { defineProps } from 'vue';
 defineProps({
@@ -234,20 +228,7 @@ const formatActivationCode = (event) => {
   activationCode.value = value;
 };
 
-const getRandomStyle = (index) => {
-  const colors = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  const size = Math.random() * 4 + 2;
-  const opacity = Math.random() * 0.5 + 0.3;
-  
-  return {
-    backgroundColor: color,
-    width: `${size}px`,
-    height: `${size}px`,
-    opacity: opacity,
-    animationDelay: `${index * 0.1}s`
-  };
-};
+
 </script>
 
 <style scoped>
@@ -382,48 +363,12 @@ const getRandomStyle = (index) => {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
-.qr-placeholder {
+.real-qrcode {
   width: 160px;
   height: 160px;
-  position: relative;
-  background: linear-gradient(45deg, #f8fafc 25%, #ffffff 25%, #ffffff 50%, #f8fafc 50%, #f8fafc 75%, #ffffff 75%, #ffffff);
-  background-size: 20px 20px;
   border-radius: 10px;
-  overflow: hidden;
-}
-
-.qr-pattern {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  gap: 2px;
-  padding: 10px;
-}
-
-.qr-dot {
-  border-radius: 2px;
-  animation: qrPulse 3s infinite;
-}
-
-.qr-logo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  background: white;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: cover;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  color: #3b82f6;
 }
 
 .qr-info h4 {
@@ -703,16 +648,7 @@ const getRandomStyle = (index) => {
   }
 }
 
-@keyframes qrPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.8;
-  }
-}
+
 
 @keyframes bounce {
   0%, 100% {
