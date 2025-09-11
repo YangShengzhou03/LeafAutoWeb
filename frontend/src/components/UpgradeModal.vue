@@ -189,7 +189,7 @@ const handleActivation = async () => {
     paddedCode = paddedCode.padStart(16, '0');
     
     try {
-      const response = await fetch('/api/verify-activation', {
+      const response = await fetch('http://localhost:5000/api/verify-activation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
