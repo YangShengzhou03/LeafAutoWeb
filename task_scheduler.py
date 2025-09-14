@@ -353,23 +353,55 @@ class TaskScheduler:
                     microsecond=0,
                 )
             elif repeat_type == "custom":
-                repeat_days = task.get("repeatDays", 1)
-                # 处理repeatDays可能是列表的情况
-                if isinstance(repeat_days, list):
-                    # 如果是列表，取第一个元素或者默认值1
-                    repeat_days = int(repeat_days[0]) if repeat_days else 1
-                else:
-                    try:
-                        repeat_days = int(repeat_days)
-                    except (ValueError, TypeError):
-                        repeat_days = 1
+                repeat_days = task.get("repeatDays", [])
                 
-                new_send_time = send_time.replace(
-                    hour=send_time.hour,
-                    minute=send_time.minute,
-                    second=send_time.second,
-                    microsecond=0,
-                ) + timedelta(days=repeat_days)
+                # 处理自定义重复日期（星期几）
+                if isinstance(repeat_days, list) and repeat_days:
+                    # 将字符串转换为整数（星期几，0=周日，1=周一，...6=周六）
+                    target_days = [int(day) for day in repeat_days]
+                    
+                    # 找到下一个匹配的星期几
+                    current_day = send_time.weekday()  # 0=周一，6=周日，需要调整
+                    # 转换为0=周日，1=周一，...6=周六的格式
+                    current_day_adjusted = (current_day + 1) % 7
+                    
+                    # 找到下一个匹配的日期
+                    next_day = send_time
+                    found_next = False
+                    
+                    # 从明天开始查找
+                    for i in range(1, 8):  # 最多查找7天
+                        candidate = send_time + timedelta(days=i)
+                        candidate_day = (candidate.weekday() + 1) % 7  # 转换为0=周日格式
+                        
+                        if candidate_day in target_days:
+                            next_day = candidate
+                            found_next = True
+                            break
+                    
+                    if found_next:
+                        new_send_time = next_day.replace(
+                            hour=send_time.hour,
+                            minute=send_time.minute,
+                            second=send_time.second,
+                            microsecond=0,
+                        )
+                    else:
+                        # 如果没有找到匹配的日期（理论上不应该发生），默认加7天
+                        new_send_time = send_time.replace(
+                            hour=send_time.hour,
+                            minute=send_time.minute,
+                            second=send_time.second,
+                            microsecond=0,
+                        ) + timedelta(days=7)
+                else:
+                    # 如果没有指定重复日期，默认加1天
+                    new_send_time = send_time.replace(
+                        hour=send_time.hour,
+                        minute=send_time.minute,
+                        second=send_time.second,
+                        microsecond=0,
+                    ) + timedelta(days=1)
             else:
                 return
 
