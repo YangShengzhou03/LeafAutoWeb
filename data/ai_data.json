@@ -22,12 +22,6 @@
         "reply": "SendEmotion:1"
       },
       {
-        "id": 1757239385483,
-        "keyword": "随机表情",
-        "matchType": "contains",
-        "reply": "SendEmotion:1,2,3"
-      },
-      {
         "id": 1757240988301,
         "keyword": "你好",
         "matchType": "contains",
@@ -38,9 +32,15 @@
         "keyword": "谢谢",
         "matchType": "contains",
         "reply": "不客气！很高兴能帮助到您。如果还有其他问题，随时可以找我。"
+      },
+      {
+        "id": 1757830521940,
+        "matchType": "contains",
+        "keyword": "随机",
+        "reply": "SendEmotion:1,2,3"
       }
     ],
     "onlyAt": false,
-    "updatedAt": "2025-09-10T22:46:36.229025"
+    "updatedAt": "2025-09-14T14:15:22.265143"
   }
 }

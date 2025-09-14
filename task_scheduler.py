@@ -60,9 +60,31 @@ def send_msg(who, msg):
         if (msg.startswith('"') and msg.endswith('"')) or (msg.startswith("'") and msg.endswith("'")):
             file_path = msg[1:-1]  # 去除首尾的引号
         
+        # 检查是否是疑似文件路径（例如 C\D\E:/xxx/XXX 这种格式）
+        # 使用正则表达式匹配常见的文件路径格式，包括混合使用斜杠和反斜杠的情况
+        is_suspected_file_path = False
+        # 检查是否包含驱动器号（如 C: D: 等）后跟路径分隔符
+        if re.match(r'^[a-zA-Z]:[\\/]', file_path):
+            is_suspected_file_path = True
+        # 检查是否包含多个连续的路径分隔符（可能是错误的路径格式）
+        elif re.search(r'[\\/]{2,}', file_path):
+            is_suspected_file_path = True
+        # 检查是否是绝对路径格式，如 /xxx 或 \xxx
+        elif file_path.startswith('/') or file_path.startswith('\\'):
+            is_suspected_file_path = True
+        # 检查是否包含常见的文件扩展名
+        elif re.search(r'\.[a-zA-Z0-9]{2,4}$', file_path):
+            is_suspected_file_path = True
+        
+        # 发送文件的逻辑：遵循"可以不发，不能错发"原则
         if os.path.exists(file_path):
             result = wx.SendFiles(file_path, who)
             success_msg = "文件发送成功"
+        elif is_suspected_file_path:
+            # 疑似文件路径但实际不存在，不发送消息，返回失败
+            # 严格遵循"可以不发，不能错发"原则
+            logger.warning(f"疑似文件路径但实际不存在，拒绝发送: {file_path}")
+            return {"status": "failed", "message": f"疑似文件路径但实际不存在，拒绝发送: {file_path}"}
         elif msg.startswith("SendEmotion:"):
             # 发送表情包
             match = re.search(r'SendEmotion:([\d,，]+)', msg)
