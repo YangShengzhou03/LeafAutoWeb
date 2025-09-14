@@ -352,9 +352,18 @@ class TaskScheduler:
                     second=send_time.second,
                     microsecond=0,
                 )
-            elif repeat_type == "custom" and task.get("repeatDays"):
-                # 自定义重复天数
-                repeat_days = int(task.get("repeatDays", 1))
+            elif repeat_type == "custom":
+                repeat_days = task.get("repeatDays", 1)
+                # 处理repeatDays可能是列表的情况
+                if isinstance(repeat_days, list):
+                    # 如果是列表，取第一个元素或者默认值1
+                    repeat_days = int(repeat_days[0]) if repeat_days else 1
+                else:
+                    try:
+                        repeat_days = int(repeat_days)
+                    except (ValueError, TypeError):
+                        repeat_days = 1
+                
                 new_send_time = send_time.replace(
                     hour=send_time.hour,
                     minute=send_time.minute,
