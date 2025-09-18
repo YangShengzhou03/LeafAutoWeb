@@ -1,8 +1,98 @@
 {
-  "total_replies": 0,
-  "successful_replies": 0,
-  "failed_replies": 0,
-  "average_response_time": 0.34,
+  "total_replies": 9,
+  "successful_replies": 7,
+  "failed_replies": 2,
+  "average_response_time": 17.24,
   "history": [
+    {
+      "sender": "小羊",
+      "message": "测试",
+      "reply": "你好！这是一个自动回复测试。系统运行正常，感谢您的测试！",
+      "status": "replied",
+      "responseTime": 6.78,
+      "timestamp": "2025-09-18T20:07:32.047651",
+      "id": "1557f6f9-ae3e-4a74-af7f-425c568a3e0f",
+      "time": "2025-09-18 20:07:32"
+    },
+    {
+      "sender": "小羊",
+      "message": "谢谢",
+      "reply": "不客气！很高兴能帮助到您。如果还有其他问题，随时可以找我。",
+      "status": "replied",
+      "responseTime": 7.61,
+      "timestamp": "2025-09-18T20:07:57.425257",
+      "id": "4b3420bb-3dbd-4baa-bd9e-147c716f43b1",
+      "time": "2025-09-18 20:07:57"
+    },
+    {
+      "sender": "小羊",
+      "message": "表情",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 28.2,
+      "timestamp": "2025-09-18T20:13:45.128684",
+      "id": "221162c8-0b6a-4a87-9c6b-0e4c87266c33",
+      "time": "2025-09-18 20:13:45"
+    },
+    {
+      "sender": "小羊",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
+      "status": "replied",
+      "responseTime": 13.77,
+      "timestamp": "2025-09-18T20:13:58.913245",
+      "id": "db250be8-59c9-4746-afb6-b5fcc9bd014d",
+      "time": "2025-09-18 20:13:58"
+    },
+    {
+      "sender": "小羊",
+      "message": "你好",
+      "reply": "",
+      "status": "blocked",
+      "responseTime": 0,
+      "timestamp": "2025-09-18T20:13:58.928249",
+      "id": "d4623c9d-9367-4040-bbdb-300084a9dd20",
+      "time": "2025-09-18 20:13:58"
+    },
+    {
+      "sender": "小羊",
+      "message": "你好",
+      "reply": "",
+      "status": "blocked",
+      "responseTime": 0,
+      "timestamp": "2025-09-18T20:13:58.943245",
+      "id": "7fbc7110-7a5f-4e6d-b393-733a0a7b460d",
+      "time": "2025-09-18 20:13:58"
+    },
+    {
+      "sender": "小羊",
+      "message": "随机",
+      "reply": "SendEmotion:1,2,3",
+      "status": "replied",
+      "responseTime": 25.61,
+      "timestamp": "2025-09-18T20:14:24.571697",
+      "id": "ca8bbad5-b0f3-400d-8e3c-d92f991931a6",
+      "time": "2025-09-18 20:14:24"
+    },
+    {
+      "sender": "小羊",
+      "message": "表情",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 24.65,
+      "timestamp": "2025-09-18T20:14:49.230840",
+      "id": "c87156b6-e6fb-450f-ac06-2ae8c8934c69",
+      "time": "2025-09-18 20:14:49"
+    },
+    {
+      "sender": "小羊",
+      "message": "你好",
+      "reply": "你好！很高兴见到你，有什么我可以帮助你的吗？",
+      "status": "replied",
+      "responseTime": 14.07,
+      "timestamp": "2025-09-18T20:15:03.312294",
+      "id": "11452301-9c66-42fc-83f3-82e47d8d720c",
+      "time": "2025-09-18 20:15:03"
+    }
   ]
 }

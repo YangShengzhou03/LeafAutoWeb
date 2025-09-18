@@ -189,8 +189,9 @@
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ $index }">
                 <div class="operation-buttons">
-                  <el-button type="danger" size="small" @click="removeRule($index)" class="delete-btn"
-                    :disabled="isTakeoverLoading">删除</el-button>
+                  <el-button type="danger" size="small" @click="removeRule($index)" :disabled="isTakeoverLoading">
+                    删除
+                  </el-button>
                 </div>
               </template>
             </el-table-column>
@@ -1297,6 +1298,56 @@ onMounted(async () => {
   color: var(--success-color);
   border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 6px;
+}
+
+/* 优化状态标签样式 */
+.status-tag {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+}
+
+/* 已回复状态 - 绿色系 */
+.el-tag--success.status-tag {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  color: var(--success-color);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.el-tag--success.status-tag:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 未回复状态 - 红色系 */
+.el-tag--danger.status-tag {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+  color: var(--danger-color);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.el-tag--danger.status-tag:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 被阻止状态 - 橙色系 */
+.el-tag--warning.status-tag {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+  color: var(--warning-color);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.el-tag--warning.status-tag:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+  transform: translateY(-1px);
 }
 
 
