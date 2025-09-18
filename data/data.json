@@ -1,1 +1,14 @@
-{}
+{
+  "79300f68-d81f-455d-b9b6-6a5e7411a9b8": {
+    "recipient": "快乐群",
+    "sendTime": "2025-09-18T20:20:00",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "快乐群",
+    "importExpiredTask": "1",
+    "status": "completed",
+    "createdAt": "2025-09-18T20:30:58.177651",
+    "id": "79300f68-d81f-455d-b9b6-6a5e7411a9b8",
+    "updatedAt": "2025-09-18T20:31:03.436605"
+  }
+}
