@@ -5,7 +5,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 
-from data_manager import (increment_message_count, load_tasks,
+from data_manager import (check_message_quota, load_tasks,
                           update_task_status, add_task)
 from logging_config import get_logger, handle_errors
 from wechat_instance import get_wechat_instance, is_wechat_online
@@ -28,8 +28,14 @@ def send_msg(who, msg):
             and processed_msg.count(processed_msg[0]) == 2):  # 确保仅首尾有1对引号
             processed_msg = processed_msg[1:-1]  # 去除引号后的路径
 
+
+
         # 步骤1：先检查是否为存在的文件路径（使用处理后的路径）
         if os.path.exists(processed_msg):
+            # 在发送前检查消息配额是否足够
+            if not check_message_quota():
+                return {"status": "failed", "message": "消息配额已用完，无法发送"}
+            
             # 如果是存在的文件路径，直接发送文件
             result = wx.SendFiles(processed_msg, who)
             success_msg = "文件发送成功"
@@ -48,11 +54,18 @@ def send_msg(who, msg):
                 logger.warning(f"疑似目录结构但文件不存在：{processed_msg}")
                 return {"status": "failed", "message": f"疑似目录结构但文件不存在：{processed_msg}"}  
             else:
+                # 在发送前检查消息配额是否足够
+                if not check_message_quota():
+                    return {"status": "failed", "message": "消息配额已用完，无法发送"}
                 # 步骤3：检查是否为表情包
                 if msg.startswith("SendEmotion:"):
                     # 表情包逻辑
                     match = re.search(r'SendEmotion:([\d,，]+)', msg)
                     if match:
+                        # 在发送前检查消息配额是否足够
+                        if not check_message_quota():
+                            return {"status": "failed", "message": "消息配额已用完，无法发送"}
+                        
                         emotion_str = match.group(1).replace('，', ',')
                         emotion_indices = [int(idx) for idx in emotion_str.split(',')]
                         emotion_index = random.choice(emotion_indices)
@@ -65,8 +78,10 @@ def send_msg(who, msg):
                     result = wx.SendMsg(msg, who)
                     success_msg = "消息发送成功"
 
-        # 后续配额计数、返回结果等逻辑
+        # 后续返回结果逻辑
         if result["status"] == "成功":
+            # 消息发送成功后，增加消息配额计数
+            from data_manager import increment_message_count
             increment_message_count()
             return {"status": "success", "message": success_msg}
         else:

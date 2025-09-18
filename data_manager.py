@@ -534,6 +534,33 @@ def add_task(task_data):
     Returns:
         dict: 添加的任务数据，包含生成的ID和创建时间
     """
+    # 处理时间格式，确保精确到秒
+    if "sendTime" in task_data:
+        try:
+            # 解析时间字符串
+            send_time_str = task_data["sendTime"]
+            
+            # 处理不同的时间格式
+            if "Z" in send_time_str:
+                dt = datetime.datetime.fromisoformat(send_time_str.replace("Z", "+00:00"))
+            elif "+" in send_time_str or "-" in send_time_str:
+                dt = datetime.datetime.fromisoformat(send_time_str)
+            else:
+                # 如果没有时区信息，假设为本地时间
+                dt = datetime.datetime.fromisoformat(send_time_str)
+            
+            # 确保秒数为00（如果只有分钟）
+            if dt.second != 0:
+                dt = dt.replace(second=0, microsecond=0)
+            
+            # 重新格式化为ISO格式，包含时区信息
+            task_data["sendTime"] = dt.isoformat()
+            
+        except (ValueError, TypeError) as e:
+            logger.warning(f"任务时间格式错误: {send_time_str}, 错误: {e}")
+            # 如果时间格式错误，使用当前时间
+            task_data["sendTime"] = datetime.datetime.now().replace(second=0, microsecond=0).isoformat()
+    
     task_id = str(uuid.uuid4())
     task_data["id"] = task_id
     task_data["createdAt"] = datetime.datetime.now().isoformat()
@@ -617,6 +644,33 @@ def import_tasks(imported_tasks):
                 key in task_data for key in ["recipient", "sendTime", "messageContent"]
         ):
             continue
+
+        # 处理时间格式，确保精确到秒
+        if "sendTime" in task_data:
+            try:
+                # 解析时间字符串
+                send_time_str = task_data["sendTime"]
+                
+                # 处理不同的时间格式
+                if "Z" in send_time_str:
+                    dt = datetime.datetime.fromisoformat(send_time_str.replace("Z", "+00:00"))
+                elif "+" in send_time_str or "-" in send_time_str:
+                    dt = datetime.datetime.fromisoformat(send_time_str)
+                else:
+                    # 如果没有时区信息，假设为本地时间
+                    dt = datetime.datetime.fromisoformat(send_time_str)
+                
+                # 确保秒数为00（如果只有分钟）
+                if dt.second != 0:
+                    dt = dt.replace(second=0, microsecond=0)
+                
+                # 重新格式化为ISO格式，包含时区信息
+                task_data["sendTime"] = dt.isoformat()
+                
+            except (ValueError, TypeError) as e:
+                logger.warning(f"任务时间格式错误: {send_time_str}, 错误: {e}")
+                # 如果时间格式错误，跳过这个任务
+                continue
 
         # 如果任务没有ID，生成一个新的
         if "id" not in task_data or not task_data["id"]:
@@ -791,6 +845,21 @@ def get_quota_info():
         "blocked": quota_data.get("blocked", False),
         "is_unlimited": account_level == "enterprise",
     }
+
+
+def check_message_quota():
+    """检查消息配额是否足够，不增加计数"""
+    quota_data = load_message_quota()
+
+    # 检查配额是否已耗尽（企业版除外）
+    account_level = quota_data.get("account_level", "free")
+    if account_level != "enterprise":
+        daily_limit = 100 if account_level == "basic" else 30
+        if quota_data.get("used_today", 0) >= daily_limit:
+            # 配额已耗尽
+            return False
+
+    return True
 
 
 def increment_message_count():

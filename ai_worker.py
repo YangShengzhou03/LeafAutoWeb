@@ -123,6 +123,11 @@ class ReplyHandler:
             quota_data = load_message_quota()
             account_level = quota_data.get("account_level", "free")
             
+            # 检查账户是否被阻止
+            if quota_data.get("blocked", False):
+                logger.warning("[AI接管] 账户已被阻止，无法发送回复给 %s", sender)
+                return False
+            
             if account_level != "enterprise":
                 daily_limit = ACCOUNT_LEVELS.get(account_level, 100)
                 if quota_data.get("used_today", 0) >= daily_limit:
@@ -617,24 +622,36 @@ class AiWorkerThread:
                     receive_time = time.time()
                 
                 # 发送AI回复
+                reply_sent = False
                 if is_group:
                     # 根据group_at_reply设置决定是否@对方
                     at_user = sender if self.config.group_at_reply else ""
-                    self.reply_handler.send_reply(group_name, reply, at_user=at_user)
+                    reply_sent = self.reply_handler.send_reply(group_name, reply, at_user=at_user)
                 else:
-                    self.reply_handler.send_reply(sender, reply)
-                    
-                self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                    reply_sent = self.reply_handler.send_reply(sender, reply)
                 
-                # 记录回复历史
-                history = MessageHistory(
-                    sender, 
-                    message_content, 
-                    reply, 
-                    "replied", 
-                    round(time.time() - receive_time, 2)
-                )
-                self._record_history(history)
+                # 根据发送结果记录历史记录
+                if reply_sent:
+                    self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                    # 记录回复历史
+                    history = MessageHistory(
+                        sender, 
+                        message_content, 
+                        reply, 
+                        "replied", 
+                        round(time.time() - receive_time, 2)
+                    )
+                    self._record_history(history)
+                else:
+                    # 发送失败（配额不足或被阻止），记录未回复状态
+                    history = MessageHistory(
+                        sender, 
+                        message_content, 
+                        reply, 
+                        "not_replied", 
+                        0
+                    )
+                    self._record_history(history)
         except Exception as e:
             logger.error("生成AI回复失败: %s", e)
     
@@ -946,6 +963,9 @@ class AiWorkerThread:
             # 检查最小回复间隔（仅对相同内容的消息）
             if self._should_ignore_due_to_interval(message_content):
                 logger.info("[AI接管] 相同内容未达到最小回复间隔，忽略消息: %s", message_content)
+                # 记录被阻止的历史记录
+                history = MessageHistory(sender, message_content, "", "blocked", 0)
+                self._record_history(history)
                 return
 
             # 应用回复延迟
@@ -957,21 +977,26 @@ class AiWorkerThread:
             if custom_reply:
 
                 # 发送自定义回复
+                reply_sent = False
                 if is_group:
                     # 根据group_at_reply设置决定是否@对方
                     at_user = sender if self.config.group_at_reply else ""
-                    self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
+                    reply_sent = self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
                 else:
-                    self.reply_handler.send_reply(sender, custom_reply)
-                    
-                self.state.last_reply_info = {"content": message_content, "time": time.time()}
-
-                # 计算实际响应时间
-                actual_response_time = round(time.time() - receive_time, 2)
-
-                # 记录回复历史（使用实际响应时间）
-                history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
-                self._record_history(history)
+                    reply_sent = self.reply_handler.send_reply(sender, custom_reply)
+                
+                # 根据发送结果记录历史记录
+                if reply_sent:
+                    self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                    # 计算实际响应时间
+                    actual_response_time = round(time.time() - receive_time, 2)
+                    # 记录回复历史（使用实际响应时间）
+                    history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
+                    self._record_history(history)
+                else:
+                    # 发送失败（配额不足或被阻止），记录未回复状态
+                    history = MessageHistory(sender, message_content, custom_reply, "not_replied", 0)
+                    self._record_history(history)
                 return
 
             # 如果没有匹配的自定义规则，则使用AI模型生成回复

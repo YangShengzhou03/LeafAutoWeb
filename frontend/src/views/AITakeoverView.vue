@@ -263,8 +263,11 @@
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
-              <el-tag :type="row.status === 'replied' ? 'success' : 'warning'" size="small" class="status-tag">
-                {{ row.status === 'replied' ? '已回复' : '未回复' }}
+              <el-tag 
+                :type="row.status === 'replied' ? 'success' : row.status === 'blocked' ? 'warning' : 'danger'" 
+                size="small" 
+                class="status-tag">
+                {{ row.status === 'replied' ? '已回复' : row.status === 'blocked' ? '被阻止' : '未回复' }}
               </el-tag>
             </template>
           </el-table-column>

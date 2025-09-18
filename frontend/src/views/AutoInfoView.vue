@@ -26,8 +26,8 @@
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
               <el-form-item label="发送时间" prop="sendTime">
                 <el-date-picker v-model="formData.sendTime" type="datetime" placeholder="选择发送时间"
-                  value-format="YYYY-MM-DDTHH:mm" :default-value="defaultDateTime" style="width: 100%" />
-                <div class="el-form-item__tip">选择发送时间，到点就会发送</div>
+                  value-format="YYYY-MM-DDTHH:mm:ss" format="YYYY-MM-DD HH:mm:ss" :default-value="defaultDateTime" style="width: 100%" />
+                <div class="el-form-item__tip">选择发送时间，精确到秒</div>
               </el-form-item>
             </el-col>
 
@@ -409,7 +409,7 @@ const formatDateTime = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return dateString
-  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}`
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`
 }
 
 const padZero = (num) => {
@@ -534,8 +534,41 @@ const handleFileImport = async (event) => {
             })
           }
 
-          // 解析发送时间
-          let sendTime = item['发送时间'] ? new Date(item['发送时间']).toISOString() : ''
+          // 解析发送时间，处理只有分钟的情况
+          let sendTime = ''
+          if (item['发送时间']) {
+            const timeString = String(item['发送时间'])
+            // 尝试解析时间字符串
+            let dateObj = new Date(timeString)
+            
+            if (isNaN(dateObj.getTime())) {
+              // 如果标准解析失败，尝试手动解析常见格式
+              const timeMatch = timeString.match(/(\d{4})[\-/](\d{1,2})[\-/](\d{1,2})[\sT](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/)
+              if (timeMatch) {
+                const year = parseInt(timeMatch[1])
+                const month = parseInt(timeMatch[2]) - 1
+                const day = parseInt(timeMatch[3])
+                const hours = parseInt(timeMatch[4])
+                const minutes = parseInt(timeMatch[5])
+                const seconds = timeMatch[6] ? parseInt(timeMatch[6]) : 0 // 如果没有秒，设置为0
+                
+                dateObj = new Date(year, month, day, hours, minutes, seconds)
+              } else {
+                // 如果还是无法解析，使用当前时间
+                dateObj = new Date()
+              }
+            }
+            
+            // 确保秒数为00（如果只有分钟）
+            if (dateObj.getSeconds() === 0) {
+              // 已经是整分，不需要修改
+            } else {
+              // 如果不是整分，设置为整分00秒
+              dateObj.setSeconds(0)
+            }
+            
+            sendTime = dateObj.toISOString()
+          }
           
           // 处理过期任务
           if (sendTime && new Date(sendTime) < now) {
