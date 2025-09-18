@@ -21,63 +21,51 @@ def send_msg(who, msg):
         if wx is None or not is_wechat_online():
             return {"status": "failed", "message": "微信未登录，无法发送消息"}
 
-        # -------------------------- 核心优化：严格识别本地文件路径 --------------------------
-        # 步骤1：先处理可能的引号（仅去除首尾成对的引号，内部有引号则不处理）
+        # -------------------------- 核心优化：简化本地路径识别逻辑 --------------------------
+        # 处理可能的引号（仅去除首尾成对的引号，内部有引号则不处理）
         processed_msg = msg.strip()
-        if (processed_msg.startswith(('"', "'")) and processed_msg.endswith(('"', "'"))
+        if (processed_msg.startswith(("'", '"')) and processed_msg.endswith(("'", '"'))
             and processed_msg.count(processed_msg[0]) == 2):  # 确保仅首尾有1对引号
-            file_path_candidate = processed_msg[1:-1]  # 去除引号后的候选路径
-        else:
-            file_path_candidate = processed_msg  # 无引号则直接作为候选
+            processed_msg = processed_msg[1:-1]  # 去除引号后的路径
 
-        # 步骤2：定义“纯本地绝对路径”的正则（严格匹配格式+字符）
-        # 规则：以【单个字母+冒号+斜杠（\或/）】开头，后续仅含路径合法字符
-        local_path_pattern = re.compile(
-            r'^[a-zA-Z]:[\\/]'  # 开头：单个字母+冒号+斜杠（如C:\、D:/）
-            r'([a-zA-Z0-9_.-]+[\\/]?)*'  # 中间：合法字符（字母/数字/_/./-）+ 可选斜杠（文件夹/文件分隔）
-            r'([a-zA-Z0-9_.-]+)?$'  # 结尾：可选文件名（如Installer.xml）或空（文件夹路径）
-        )
-
-        # 步骤3：排除URL（避免将https://xxx.cn等误判）
-        is_url = re.match(r'^https?://|^ftp://', file_path_candidate, re.I)  # 忽略大小写匹配协议
-
-        # 步骤4：最终判定是否为“本地文件路径”
-        is_valid_local_path = False
-        if not is_url:  # 先排除URL
-            # 正则完全匹配（确保无任何无关字符，如“文件在C:\xxx”会匹配失败）
-            if local_path_pattern.fullmatch(file_path_candidate):
-                # 额外校验：路径中无连续斜杠（如C:\\xxx、D:/../xxx是非法格式）
-                if not re.search(r'[\\/]{2,}', file_path_candidate):
-                    is_valid_local_path = True
-
-        # -------------------------- 原有发送逻辑（基于新判定结果调整） --------------------------
-        if is_valid_local_path and os.path.exists(file_path_candidate):
-            # 仅当“是纯本地路径+文件实际存在”时，才发送文件
-            result = wx.SendFiles(file_path_candidate, who)
+        # 步骤1：先检查是否为存在的文件路径（使用处理后的路径）
+        if os.path.exists(processed_msg):
+            # 如果是存在的文件路径，直接发送文件
+            result = wx.SendFiles(processed_msg, who)
             success_msg = "文件发送成功"
-        elif is_valid_local_path and not os.path.exists(file_path_candidate):
-            # 是纯路径格式，但文件不存在（遵循“可以不发，不能错发”）
-            logger.warning(f"本地路径格式正确，但文件不存在：{file_path_candidate}")
-            return {"status": "failed", "message": f"本地路径格式正确，但文件不存在：{file_path_candidate}"}
-        elif not is_valid_local_path:
-            # 不是纯本地路径：按普通消息/表情包处理
-            if msg.startswith("SendEmotion:"):
-                # 表情包逻辑（保持不变）
-                match = re.search(r'SendEmotion:([\d,，]+)', msg)
-                if match:
-                    emotion_str = match.group(1).replace('，', ',')
-                    emotion_indices = [int(idx) for idx in emotion_str.split(',')]
-                    emotion_index = random.choice(emotion_indices)
-                    result = wx.SendEmotion(emotion_index-1, who)
-                    success_msg = f"表情包发送成功（选择第{emotion_index}个表情）"
-                else:
-                    return {"status": "failed", "message": "表情包格式错误，应为SendEmotion:数字或多个数字用逗号（中文或英文）分隔"}
+        else:
+            # 步骤2：检查是否符合Windows本地路径结构
+            # 定义Windows本地路径的正则（支持中文等Unicode字符）
+            windows_path_pattern = re.compile(
+                r'^[a-zA-Z]:[\\/]'  # 开头：单个字母+冒号+斜杠（如C:\、D:/）
+                r'([\\/\w\-\.\u4e00-\u9fa5]+)'  # 中间：支持中文、字母、数字、下划线、点、连字符、斜杠
+                r'$'
+            )
+            
+            # 检查是否符合Windows本地路径结构（使用处理后的路径）
+            if windows_path_pattern.fullmatch(processed_msg):
+                # 符合路径结构但文件不存在
+                logger.warning(f"疑似目录结构但文件不存在：{processed_msg}")
+                return {"status": "failed", "message": f"疑似目录结构但文件不存在：{processed_msg}"}  
             else:
-                # 普通消息（如URL、带描述的路径文本等）
-                result = wx.SendMsg(msg, who)
-                success_msg = "消息发送成功"
+                # 步骤3：检查是否为表情包
+                if msg.startswith("SendEmotion:"):
+                    # 表情包逻辑
+                    match = re.search(r'SendEmotion:([\d,，]+)', msg)
+                    if match:
+                        emotion_str = match.group(1).replace('，', ',')
+                        emotion_indices = [int(idx) for idx in emotion_str.split(',')]
+                        emotion_index = random.choice(emotion_indices)
+                        result = wx.SendEmotion(emotion_index-1, who)
+                        success_msg = f"表情包发送成功（选择第{emotion_index}个表情）"
+                    else:
+                        return {"status": "failed", "message": "表情包格式错误，应为SendEmotion:数字或多个数字用逗号（中文或英文）分隔"}
+                else:
+                    # 不是文件路径，不是符合Windows路径结构，也不是表情包，作为普通消息发送
+                    result = wx.SendMsg(msg, who)
+                    success_msg = "消息发送成功"
 
-        # 后续配额计数、返回结果等逻辑（保持不变）
+        # 后续配额计数、返回结果等逻辑
         if result["status"] == "成功":
             increment_message_count()
             return {"status": "success", "message": success_msg}
