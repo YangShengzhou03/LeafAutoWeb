@@ -208,8 +208,8 @@ const checkVersionStatus = async () => {
 
 const homeData = ref({
   pricingPlans: [
-    { id: 1, name: '基础版', price: '--', period: '/月', features: ['--', '--', '--'], isPopular: false },
-    { id: 2, name: '企业版', price: '--', period: '/月', features: ['--', '--', '--'], isPopular: true },
+    { id: 1, name: '基础版', price: '--', period: '/年', features: ['--', '--', '--'], isPopular: false },
+    { id: 2, name: '企业版', price: '--', period: '/年', features: ['--', '--', '--'], isPopular: true },
     { id: 3, name: '定制版', price: '--', period: '联系我们', features: ['--', '--', '--'], isPopular: false }
   ],
   keyMetrics: [

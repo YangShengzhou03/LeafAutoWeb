@@ -461,77 +461,11 @@ const dataCollectionEnabled = ref(false)
 const aiStatus = ref(false) // 管理状态
 const isTakeoverLoading = ref(false) // 接管加载状态
 const contactPerson = ref('文件传输助手') // 接管联系人，设置默认值
-const regexRules = ref([
-  { 
-    originalMessage: '我叫张三，电话13800138000，住在北京市朝阳区', 
-    pattern: '姓名[:：]?\\s*([^\\s，,]+)\\s*[，,]?\\s*电话[:：]?\\s*(1[3-9]\\d{9})', 
-    extractedContent: '张三, 13800138000' 
-  },
-  { 
-    originalMessage: '地址：北京市朝阳区建国门外大街1号', 
-    pattern: '地址[:：]?\\s*([^\\s，,]+(?:省|市|区|县|镇|村|街道|路|号|室|单元))', 
-    extractedContent: '北京市朝阳区建国门外大街1号' 
-  },
-  { 
-    originalMessage: '会议：产品发布会 时间：2023-06-15 14:00', 
-    pattern: '会议[:：]?\\s*([^\\s，,]+)\\s*时间[:：]?\\s*([^\\s，,]+)', 
-    extractedContent: '产品发布会, 2023-06-15 14:00' 
-  }
-])
-const collectedData = ref([
-  { 
-    time: '2023-06-01 10:30:25', 
-    sender: '张三', 
-    content: '大家好，今天天气不错，适合户外活动', 
-    type: '文本',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhangsan'
-  },
-  { 
-    time: '2023-06-01 10:32:15', 
-    sender: '李四', 
-    content: '风景照片.jpg', 
-    type: '图片', 
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisi'
-  },
-  { 
-    time: '2023-06-01 10:35:42', 
-    sender: '王五', 
-    content: '明天上午9点有重要会议，请大家准时参加', 
-    type: '文本',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangwu'
-  },
-  { 
-    time: '2023-06-01 11:15:30', 
-    sender: '赵六', 
-    content: '收到，我会准时参加并准备好相关资料', 
-    type: '文本',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhaoliu'
-  },
-  { 
-    time: '2023-06-01 11:20:45', 
-    sender: '钱七', 
-    content: '会议议程.docx', 
-    type: '文件',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qianqi'
-  },
-  { 
-    time: '2023-06-01 11:30:00', 
-    sender: '小米', 
-    content: '你好，我叫小米，我12岁。', 
-    type: '文本',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaomi'
-  },
-  { 
-    time: '2023-06-01 11:35:00', 
-    sender: '小红', 
-    content: '大家好，我叫小红，今年8岁了。', 
-    type: '文本',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaohong'
-  }
-])
+const regexRules = ref([])
+const collectedData = ref([])
 const dataLoading = ref(false)
 const newSensitiveWord = ref('')
-const sensitiveWordsList = ref(['会议', '机密', '内部', '紧急', '重要'])
+const sensitiveWordsList = ref([])
 const monitoringEnabled = ref(false)
 const templateDialogVisible = ref(false)
 const collectionTemplate = ref('')
@@ -547,7 +481,7 @@ const pageSize = ref(10)
 // 筛选相关变量
 const selectedGroupFilter = ref('')
 const dateRangeFilter = ref([])
-const availableGroups = ref(['技术交流群', '产品讨论组', '运营团队', '客服中心', '测试群组'])
+const availableGroups = ref([])
 
 // 计算属性
 const filteredData = computed(() => {
@@ -744,11 +678,19 @@ const removeSensitiveWord = (index) => {
 // 其他方法保持不变
 const refreshData = () => {
   dataLoading.value = true
-  // 模拟数据刷新
-  setTimeout(() => {
-    dataLoading.value = false
-    ElMessage.success('数据已刷新')
-  }, 1000)
+  
+  // 调用API获取最新数据
+  getCollectedDataAPI(selectedGroupFilter.value, dateRangeFilter.value)
+    .then(data => {
+      collectedData.value = data
+      ElMessage.success('数据已刷新')
+    })
+    .catch(error => {
+      ElMessage.error(`刷新数据失败：${error}`)
+    })
+    .finally(() => {
+      dataLoading.value = false
+    })
 }
 
 const handleSizeChange = (size) => {
@@ -878,17 +820,35 @@ const saveCollectionTemplate = () => {
 onMounted(() => {
   console.log('数据收集配置视图已加载')
   
-  // 确保所有响应式数据都是正确的类型
-  if (!Array.isArray(regexRules.value)) {
-    regexRules.value = []
-  }
-  if (!Array.isArray(collectedData.value)) {
-    collectedData.value = []
-  }
-  if (!Array.isArray(sensitiveWordsList.value)) {
-    sensitiveWordsList.value = []
-  }
+  // 从API加载初始数据
+  loadInitialData()
 })
+
+// 加载初始数据
+const loadInitialData = async () => {
+  try {
+    dataLoading.value = true
+    
+    // 并行加载各项数据
+    const [rulesData, groupsData, sensitiveWordsData, collectedDataResponse] = await Promise.all([
+      getRegexRulesAPI(),
+      getAvailableGroupsAPI(),
+      getSensitiveWordsAPI(),
+      getCollectedDataAPI()
+    ])
+    
+    regexRules.value = rulesData
+    availableGroups.value = groupsData
+    sensitiveWordsList.value = sensitiveWordsData
+    collectedData.value = collectedDataResponse
+    
+  } catch (error) {
+    console.error('加载初始数据失败:', error)
+    ElMessage.error('加载数据失败，请稍后重试')
+  } finally {
+    dataLoading.value = false
+  }
+}
 
 // 监听数据变化
 watch(aiStatus, (newVal) => {

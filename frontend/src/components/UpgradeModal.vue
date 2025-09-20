@@ -44,7 +44,7 @@
             
             <div class="qr-info">
               <h3>{{random_code}}</h3>
-              <p>扫描上方二维码，进入QQ群获取专属激活码</p>
+              <p>扫描上方二维码，购买软件激活码</p>
               <div class="qr-steps">
                 <div class="step-item">
                   <div class="step-number">1</div>
@@ -57,7 +57,7 @@
                 </div>
                 <div class="step-item">
                   <div class="step-number">2</div>
-                  <span>获取激活码</span>
+                  <span>购买激活码</span>
                 </div>
                 <div class="step-arrow">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
