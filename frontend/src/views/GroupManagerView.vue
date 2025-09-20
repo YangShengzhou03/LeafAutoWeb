@@ -103,61 +103,81 @@
 
             <el-form label-position="top" class="monitoring-form">
               <!-- 敏感词管理区域 -->
-              <el-form-item label="敏感词管理">
-                <div class="sensitive-word-header">
-                  <span>敏感词列表</span>
-                  <el-tooltip content="添加需要监控的敏感词汇" placement="top">
-                    <el-icon><InfoFilled /></el-icon>
-                  </el-tooltip>
-                </div>
+              <el-form-item label="敏感词管理" class="monitoring-form-item">
                 
-                <el-row :gutter="12" class="sensitive-word-input-row">
-                  <el-col :span="18">
-                    <el-input
-                      v-model="newSensitiveWord"
-                      placeholder="输入敏感词"
-                      clearable
-                      @keyup.enter="addSensitiveWord"
-                      size="mid">
-                      <template #prefix>
+                <!-- 添加敏感词区域 - 优化布局 -->
+                <div class="sensitive-word-input-container">
+                  <el-input
+                    v-model="newSensitiveWord"
+                    placeholder="输入敏感词"
+                    clearable
+                    @keyup.enter="addSensitiveWord"
+                    size="mid"
+                    class="sensitive-word-input">
+                    <template #prefix>
+                      <el-icon><Key /></el-icon>
+                    </template>
+                  </el-input>
+                  <el-button 
+                    type="primary" 
+                    @click="addSensitiveWord" 
+                    :disabled="!newSensitiveWord.trim()"
+                    class="add-word-btn"
+                    size="mid">
+                    <el-icon><Plus /></el-icon>
+                    添加
+                  </el-button>
+                </div>
+
+                <!-- 敏感词列表区域 - 优化展示 -->
+                <div class="sensitive-words-wrapper">
+                  <div class="sensitive-words-header">
+                    <span class="words-count">已添加 {{ sensitiveWordsList.length }} 个敏感词</span>
+                    <div class="words-actions">
+                      <el-button 
+                        type="text" 
+                        @click="clearAllSensitiveWords" 
+                        :disabled="sensitiveWordsList.length === 0"
+                        class="clear-all-btn"
+                        size="small">
+                        <el-icon><Delete /></el-icon>
+                        清空全部
+                      </el-button>
+                    </div>
+                  </div>
+                  
+                  <div class="sensitive-words-list">
+                    <transition-group name="fade-in" tag="div">
+                      <el-tag
+                        v-for="(word, index) in sensitiveWordsList"
+                        :key="index"
+                        closable
+                        @close="removeSensitiveWord(index)"
+                        type="danger"
+                        effect="plain"
+                        size="mid"
+                        class="sensitive-word-tag">
+                        <el-icon><Key /></el-icon>
+                        {{ word }}
+                      </el-tag>
+                    </transition-group>
+                    <el-empty 
+                      v-if="sensitiveWordsList.length === 0" 
+                      description="暂无敏感词"
+                      :image-size="60" 
+                      class="empty-state">
+                      <template #image>
                         <el-icon><Key /></el-icon>
                       </template>
-                    </el-input>
-                  </el-col>
-                  <el-col :span="6">
-                    <el-button 
-                      type="primary" 
-                      @click="addSensitiveWord" 
-                      :disabled="!newSensitiveWord.trim()" 
-                      class="add-word-btn"
-                      size="mid">
-                      <el-icon><Plus /></el-icon>
-                      添加
-                    </el-button>
-                  </el-col>
-                </el-row>
-
-                <div class="sensitive-words-list">
-                  <el-tag
-                    v-for="(word, index) in sensitiveWordsList"
-                    :key="index"
-                    closable
-                    @close="removeSensitiveWord(index)"
-                    type="danger"
-                    effect="plain"
-                    size="mid"
-                    class="sensitive-word-tag">
-                    {{ word }}
-                  </el-tag>
-                  <el-empty 
-                    v-if="sensitiveWordsList.length === 0" 
-                    description="暂无敏感词" 
-                    :image-size="60" 
-                    class="empty-state" />
-                </div>
-                
-                <div class="word-count" v-if="sensitiveWordsList.length > 0">
-                  已添加 {{ sensitiveWordsList.length }} 个敏感词
+                      <el-button 
+                        type="text" 
+                        @click="importSensitiveWords"
+                        class="import-btn">
+                        <el-icon><Document /></el-icon>
+                        导入敏感词
+                      </el-button>
+                    </el-empty>
+                  </div>
                 </div>
               </el-form-item>
             </el-form>
@@ -681,6 +701,35 @@ const deleteRegexRule = (index) => {
   })
 }
 
+// 添加敏感词相关方法
+const clearAllSensitiveWords = () => {
+  if (sensitiveWordsList.value.length === 0) {
+    return
+  }
+  
+  ElMessageBox.confirm(
+    '确定要清空所有敏感词吗？此操作不可撤销。',
+    '确认清空',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+      center: true
+    }
+  ).then(() => {
+    sensitiveWordsList.value = []
+    ElMessage.success('所有敏感词已清空')
+  }).catch(() => {
+    ElMessage.info('操作已取消')
+  })
+}
+
+const importSensitiveWords = () => {
+  ElMessage.info('敏感词导入功能开发中')
+  // 这里可以实现文件上传功能，读取文件中的敏感词并添加到列表中
+}
+
+// 已有的添加敏感词方法
 const addSensitiveWord = () => {
   const word = newSensitiveWord.value.trim()
   
@@ -703,6 +752,7 @@ const addSensitiveWord = () => {
   ElMessage.success('敏感词添加成功')
 }
 
+// 已有的删除敏感词方法
 const removeSensitiveWord = (index) => {
   if (!Array.isArray(sensitiveWordsList.value)) {
     console.warn('sensitiveWordsList不是数组')
@@ -714,43 +764,11 @@ const removeSensitiveWord = (index) => {
     return
   }
   
-  sensitiveWordsList.value.splice(index, 1)
-  ElMessage.info('敏感词已删除')
+  const removedWord = sensitiveWordsList.value.splice(index, 1)
+  ElMessage.info(`敏感词 "${removedWord}" 已删除`)
 }
 
-// 删除收集的数据
-const deleteRule = (row) => {
-  if (!row) {
-    ElMessage.error('无效的数据')
-    return
-  }
-  
-  ElMessageBox.confirm(
-    `确定要删除这条数据吗？\n时间: ${row.time}\n发送者: ${row.sender}\n内容: ${row.content ? row.content.substring(0, 30) + (row.content.length > 30 ? '...' : '') : ''}`,
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    const index = collectedData.value.findIndex(item => 
-      item.time === row.time && 
-      item.sender === row.sender && 
-      item.content === row.content
-    )
-    
-    if (index !== -1) {
-      collectedData.value.splice(index, 1)
-      ElMessage.success('数据已成功删除')
-    } else {
-      ElMessage.error('未找到要删除的数据')
-    }
-  }).catch(() => {
-    ElMessage.info('操作已取消')
-  })
-}
-
+// 其他方法保持不变
 const refreshData = () => {
   dataLoading.value = true
   // 模拟数据刷新
@@ -1080,6 +1098,19 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 .el-button--primary:hover {
   background-color: #1e3a8a;
   border-color: #1e3a8a;
+}
+
+/* 敏感词输入容器样式 - 确保文本框和按钮在一行显示 */
+.sensitive-word-input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sensitive-word-input {
+  flex: 1;
+  min-width: 0;
 }
 
 /* 其他样式保持整齐一致 */
