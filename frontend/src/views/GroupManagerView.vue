@@ -1,54 +1,6 @@
 <template>
   <div class="app-container">
     <div class="main-content">
-      <!-- 群聊选择区域 -->
-      <el-row :gutter="20">
-        <el-col :span="24">
-          <el-card shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <div class="header-title">
-                  <el-icon class="header-icon"><Setting /></el-icon>
-                  <span>群聊选择</span>
-                </div>
-                <el-tooltip content="选择需要管理的群聊以启用相关功能" placement="top">
-                  <el-icon><QuestionFilled /></el-icon>
-                </el-tooltip>
-              </div>
-            </template>
-
-            <el-form label-position="top">
-              <el-form-item label="选择要管理的群聊">
-                <el-row :gutter="16" align="middle">
-                  <el-col :span="20">
-                    <el-input
-                      v-model="selectedGroup"
-                      placeholder="输入群聊名称或选择已有群聊"
-                      clearable
-                      @clear="handleClearGroup"
-                      size="large">
-                      <template #prefix>
-                        <el-icon><View /></el-icon>
-                      </template>
-                    </el-input>
-                  </el-col>
-                  <el-col :span="4">
-                    <el-switch
-                      v-model="managementEnabled"
-                      @change="handleManagementChange"
-                      :disabled="!selectedGroup"
-                      :loading="managementLoading"
-                      active-color="var(--success-color)"
-                      style="width: 100%"
-                    />
-                  </el-col>
-                </el-row>
-              </el-form-item>
-            </el-form>
-          </el-card>
-        </el-col>
-      </el-row>
-
       <!-- 数据收集配置 -->
       <el-row :gutter="20" style="margin-top: 20px">
         <el-col :span="24">
@@ -62,18 +14,30 @@
               </div>
             </template>
 
-            <el-form label-position="top">
-              <el-form-item>
-                <el-row justify="space-between" align="middle">
-                  <span class="switch-label">启用数据收集</span>
-                  <el-switch
-                    v-model="dataCollectionEnabled"
-                    @change="handleDataCollectionChange"
-                    active-color="var(--success-color)"
-                  />
-                </el-row>
-              </el-form-item>
+            <el-form label-position="top" class="data-collection-form">
+              <el-row :gutter="20">
+                <el-col :span="24">
+                  <el-form-item label="数据收集配置">
+                    <div class="controls-row">
+                      <el-input v-model="contactPerson" placeholder="输入接管联系人姓名"
+                        :disabled="isTakeoverLoading || !aiStatus" style="width: 200px; margin-right: 16px;"></el-input>
+                      <div class="status-control">
+                        <el-switch v-model="aiStatus" active-color="#3b82f6" inactive-color="#d1d5db"
+                          @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
+                        <span class="status-text">{{ aiStatus ? '管理已启用' : '管理已禁用' }}</span>
+                      </div>
+                      <div class="status-control" style="margin-left: 16px;">
+                        <el-switch v-model="dataCollectionEnabled" active-color="#3b82f6" inactive-color="#d1d5db"
+                          @change="handleDataCollectionChange" :disabled="!aiStatus"></el-switch>
+                        <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集已禁用' }}</span>
+                      </div>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </el-form>
 
+            <el-form label-position="top" class="rules-form">
               <el-form-item label="收集规则">
                 <div class="rule-actions">
                   <el-button type="primary" size="small" @click="showAddRuleDialog">
@@ -87,7 +51,7 @@
                 </div>
                 
                 <!-- 正则规则表格 -->
-                <el-table :data="regexRules" class="rules-table" empty-text="暂无规则，请添加">
+                <el-table :data="regexRules" class="rules-table" empty-text="暂无规则，请添加" stripe>
                   <el-table-column prop="originalMessage" label="原始消息" width="250" />
                   <el-table-column prop="pattern" label="正则表达式" />
                   <el-table-column prop="extractedContent" label="提取内容" width="200" />
@@ -124,7 +88,7 @@
               </div>
             </template>
 
-            <el-form label-position="top">
+            <el-form label-position="top" class="monitoring-form">
               <el-form-item>
                 <el-row justify="space-between" align="middle">
                   <span class="switch-label">启用舆情监控</span>
@@ -136,7 +100,7 @@
                 </el-row>
               </el-form-item>
 
-              <el-form-item label="敏感词管理">
+              <el-form-item v-if="monitoringEnabled" label="敏感词管理">
                 <div class="sensitive-word-header">
                   <span>敏感词列表</span>
                   <el-tooltip content="添加需要监控的敏感词汇" placement="top">
@@ -144,7 +108,7 @@
                   </el-tooltip>
                 </div>
                 
-                <el-row :gutter="12" style="margin-bottom: 15px;">
+                <el-row :gutter="12" style="margin-bottom: 16px;">
                   <el-col :span="18">
                     <el-input
                       v-model="newSensitiveWord"
@@ -209,41 +173,41 @@
                   <span>收集数据展示</span>
                 </div>
                 <div class="header-actions">
-                  <el-select 
-                    v-model="selectedGroupFilter" 
-                    placeholder="筛选群聊" 
-                    size="small" 
-                    style="width: 120px; margin-right: 8px"
-                    clearable>
-                    <el-option label="所有群聊" value="" />
-                    <el-option 
-                      v-for="group in availableGroups" 
-                      :key="group" 
-                      :label="group" 
-                      :value="group" />
-                  </el-select>
-                  <el-date-picker
-                    v-model="dateRangeFilter"
-                    type="daterange"
-                    range-separator="至"
-                    start-placeholder="开始日期"
-                    end-placeholder="结束日期"
-                    size="small"
-                    style="width: 240px; margin-right: 8px"
-                    format="YYYY-MM-DD"
-                    value-format="YYYY-MM-DD"
-                    clearable
-                  />
-                  <el-button 
-                    type="primary" 
-                    link 
-                    @click="refreshData" 
-                    :loading="dataLoading"
-                    class="refresh-btn">
-                    <el-icon><Refresh /></el-icon>
-                    刷新
-                  </el-button>
-                </div>
+              <el-select 
+                v-model="selectedGroupFilter" 
+                placeholder="筛选群聊" 
+                size="small" 
+                style="width: 140px; margin-right: 12px"
+                clearable>
+                <el-option label="所有群聊" value="" />
+                <el-option 
+                  v-for="group in availableGroups" 
+                  :key="group" 
+                  :label="group" 
+                  :value="group" />
+              </el-select>
+              <el-date-picker
+                v-model="dateRangeFilter"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                size="small"
+                style="width: 260px; margin-right: 12px"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                clearable
+              />
+              <el-button 
+                type="primary" 
+                link 
+                @click="refreshData" 
+                :loading="dataLoading"
+                class="refresh-btn">
+                <el-icon><Refresh /></el-icon>
+                刷新
+              </el-button>
+            </div>
               </div>
             </template>
 
@@ -255,7 +219,8 @@
               stripe 
               max-height="400"
               class="data-table"
-              @row-click="viewMessageDetail">
+              @row-click="viewMessageDetail"
+              :header-cell-style="{ backgroundColor: '#f5f7fa', color: '#606266', fontWeight: '600' }">
               <el-table-column prop="time" label="时间" width="160" sortable>
                 <template #default="{ row }">
                   <div class="time-cell">
@@ -288,7 +253,7 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="120">
+              <el-table-column label="操作" width="120" fixed="right">
                 <template #default="{ row }">
                   <el-button 
                     type="primary" 
@@ -475,7 +440,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, computed, onMounted, watch } from 'vue'
 import { 
-  View, Setting, Plus, Key, Refresh, Clock,
+  Plus, Key, Refresh, Clock,
   Collection, Monitor, DataAnalysis, Document,
   QuestionFilled, InfoFilled, MagicStick, Picture, 
   Message, Microphone, VideoCamera, Delete
@@ -484,8 +449,10 @@ import {
 // ===== 响应式数据 =====
 const selectedGroup = ref('')
 const managementEnabled = ref(false)
-const managementLoading = ref(false)
 const dataCollectionEnabled = ref(false)
+const aiStatus = ref(false) // 新增：管理状态
+const isTakeoverLoading = ref(false) // 新增：接管加载状态
+const contactPerson = ref('') // 新增：接管联系人
 const regexRules = ref([
   { 
     originalMessage: '我叫张三，电话13800138000，住在北京市朝阳区', 
@@ -540,14 +507,10 @@ const collectedData = ref([
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qianqi'
   }
 ])
-const hasCollectedData = ref(true)
 const dataLoading = ref(false)
 const newSensitiveWord = ref('')
 const sensitiveWordsList = ref(['会议', '机密', '内部', '紧急', '重要'])
 const monitoringEnabled = ref(false)
-const monitoringResults = ref([
-  { time: '2023-06-01 10:35:42', sender: '王五', content: '明天有会议吗？', matchedWords: '会议' }
-])
 const templateDialogVisible = ref(false)
 const collectionTemplate = ref('')
 const originalMessage = ref('')
@@ -575,7 +538,7 @@ const filteredData = computed(() => {
   let filtered = [...collectedData.value]
   
   // 群聊筛选
-  if (selectedGroupFilter.value) {
+  if (selectedGroupFilter.value && selectedGroupFilter.value.trim()) {
     filtered = filtered.filter(item => {
       if (!item || !item.sender) return false
       return item.sender.includes(selectedGroupFilter.value)
@@ -617,295 +580,79 @@ const totalDataCount = computed(() => {
   return filteredData.value.length
 })
 
-// ===== 事件处理函数 =====
-const handleClearGroup = () => {
-  selectedGroup.value = ''
-  managementEnabled.value = false
-  dataCollectionEnabled.value = false
-  monitoringEnabled.value = false
-  hasCollectedData.value = false
-  ElMessage.info('已清除群聊选择')
-}
+const hasCollectedData = computed(() => {
+  return Array.isArray(collectedData.value) && collectedData.value.length > 0
+})
 
-const handleManagementChange = async (value) => {
-  if (!selectedGroup.value) {
-    ElMessage.warning('请先选择群聊')
-    managementEnabled.value = false
-    return
-  }
-  
-  managementLoading.value = true
-  
-  try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    if (value) {
-      ElMessage.success(`开始管理群聊 ${selectedGroup.value}`)
-      await refreshData()
-    } else {
-      ElMessage.info(`停止管理群聊 ${selectedGroup.value}`)
-      dataCollectionEnabled.value = false
-      monitoringEnabled.value = false
-    }
-  } catch (error) {
-    console.error('群聊管理操作失败:', error)
-    ElMessage.error('群聊管理操作失败，请重试')
-    managementEnabled.value = !value // 恢复原始状态
-  } finally {
-    managementLoading.value = false
-  }
-}
 
-const handleDataCollectionChange = async (value) => {
-  if (value && !managementEnabled.value) {
-    ElMessage.warning('请先启用群聊管理')
+const handleDataCollectionChange = (enabled) => {
+  if (enabled && !managementEnabled.value) {
+    ElMessage.warning('请先选择并启用群聊管理')
     dataCollectionEnabled.value = false
     return
   }
   
-  ElMessage.success(`数据收集已${value ? '开启' : '关闭'}`)
-  
-  if (value) {
-    await refreshData()
+  if (enabled) {
+    ElMessage.success('数据收集功能已启用')
+  } else {
+    ElMessage.info('数据收集功能已禁用')
   }
 }
 
-const handleMonitoringChange = (value) => {
-  if (value && sensitiveWordsList.value.length === 0) {
-    ElMessage.warning('请先添加敏感词')
+const handleMonitoringChange = (enabled) => {
+  if (enabled && !managementEnabled.value) {
+    ElMessage.warning('请先选择并启用群聊管理')
     monitoringEnabled.value = false
     return
   }
   
-  ElMessage.success(`舆情监控已${value ? '开启' : '关闭'}`)
-  
-  if (value) {
-    monitoringResults.value = []
-    startMonitoring()
+  if (enabled) {
+    ElMessage.success('舆情监控功能已启用')
+  } else {
+    ElMessage.info('舆情监控功能已禁用')
   }
 }
 
-const refreshData = async () => {
-  dataLoading.value = true
-  
-  try {
-    // 模拟数据加载
-    await new Promise(resolve => setTimeout(resolve, 1200))
-    
-    // 确保collectedData是数组
-    if (!Array.isArray(collectedData.value)) {
-      collectedData.value = []
-    }
-    
-    hasCollectedData.value = collectedData.value.length > 0
-    ElMessage.success('数据已刷新完成')
-  } catch (error) {
-    console.error('数据刷新失败:', error)
-    ElMessage.error('数据刷新失败，请检查网络连接后重试')
-  } finally {
-    dataLoading.value = false
-  }
-}
-
-const viewMessageDetail = (message) => {
-  if (!message) {
-    ElMessage.error('无效的消息数据')
+const showAddRuleDialog = () => {
+  if (!dataCollectionEnabled.value) {
+    ElMessage.warning('请先启用数据收集功能')
     return
   }
   
-  selectedMessage.value = message
-  messageDetailVisible.value = true
-}
-
-const analyzeMessage = (message) => {
-  if (!message || !message.content) {
-    ElMessage.error('无效的消息数据')
-    return
-  }
-  
-  ElMessage.info(`正在分析消息: ${message.content.substring(0, 30)}${message.content.length > 30 ? '...' : ''}`)
-  // 这里可以添加消息深度分析的逻辑
-}
-
-const saveCollectionTemplate = () => {
-  if (!collectionTemplate.value.trim()) {
-    ElMessage.warning('请输入收集模板')
-    return
-  }
-  
-  if (!generatedRegex.value.trim()) {
-    ElMessage.warning('请先生成正则表达式')
-    return
-  }
-  
-  // 确保regexRules是数组
-  if (!Array.isArray(regexRules.value)) {
-    regexRules.value = []
-  }
-  
-  // 添加新规则到表格
-  const newRule = {
-    originalMessage: originalMessage.value.trim(),
-    pattern: generatedRegex.value.trim(),
-    extractedContent: Object.values(extractedValues.value).join(', ')
-  }
-  
-  regexRules.value.push(newRule)
-  ElMessage.success('模板保存成功')
-  templateDialogVisible.value = false
-  
-  // 清空对话框内容
+  templateDialogVisible.value = true
+  // 重置对话框数据
   originalMessage.value = ''
   collectionTemplate.value = ''
   generatedRegex.value = ''
   extractedValues.value = {}
 }
 
-const autoLearnPattern = async () => {
-  if (!originalMessage.value || !originalMessage.value.trim()) {
-    ElMessage.warning('请输入原始消息示例')
-    return
-  }
-  
-  if (!collectionTemplate.value || !collectionTemplate.value.trim()) {
-    ElMessage.warning('请输入要收集的数据')
-    return
-  }
-  
-  patternLearning.value = true
-  
-  try {
-    // 模拟AI学习过程
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    const fields = collectionTemplate.value.split(',').map(field => field.trim()).filter(field => field)
-    const message = originalMessage.value.trim()
-    const extracted = {}
-    
-    // 智能提取逻辑
-    if (fields.includes('姓名') || fields.includes('名字')) {
-      const nameMatch = message.match(/我叫([^\s，,]+)/) || message.match(/姓名[:：]?\s*([^\s，,]+)/)
-      if (nameMatch) extracted['姓名'] = nameMatch[1]
-    }
-    
-    if (fields.includes('电话') || fields.includes('手机')) {
-      const phoneMatch = message.match(/(1[3-9]\d{9})/) || message.match(/电话[:：]?\s*(\d+)/)
-      if (phoneMatch) extracted['电话'] = phoneMatch[1]
-    }
-    
-    if (fields.includes('地址')) {
-      const addressMatch = message.match(/住在([^\s，,]+)/) || message.match(/地址[:：]?\s*([^\s，,]+)/)
-      if (addressMatch) extracted['地址'] = addressMatch[1]
-    }
-    
-    // 通用提取逻辑
-    if (Object.keys(extracted).length === 0) {
-      const parts = message.split(/[，,]/).map(part => part.trim()).filter(part => part)
-      fields.forEach((field, index) => {
-        if (index < parts.length) {
-          extracted[field] = parts[index].replace(new RegExp(`^${field}[：: ]*`), '')
-        }
-      })
-    }
-    
-    // 生成正则表达式
-    let regexPattern = ''
-    if (Object.keys(extracted).length > 0) {
-      const patterns = []
-      
-      Object.keys(extracted).forEach(field => {
-        const value = extracted[field]
-        if (/^\d+$/.test(value)) {
-          patterns.push(`${field}[:：]?\\s*(\\d+)`)
-        } else if (/^[\u4e00-\u9fa5]+$/.test(value)) {
-          patterns.push(`${field}[:：]?\\s*([\\u4e00-\\u9fa5]+)`)
-        } else {
-          patterns.push(`${field}[:：]?\\s*([^\\s，,]+)`)
-        }
-      })
-      
-      regexPattern = patterns.join('\\s*[，,]\\s*')
-    } else {
-      regexPattern = '(.+)'
-    }
-    
-    generatedRegex.value = regexPattern
-    extractedValues.value = extracted
-    ElMessage.success('正则表达式生成成功')
-  } catch (error) {
-    console.error('智能学习过程中出现错误:', error)
-    ElMessage.error('智能学习过程中出现错误')
-  } finally {
-    patternLearning.value = false
-  }
-}
-
-const showPatternHelp = () => {
-  ElMessage.info({
-    message: '智能学习模式使用说明：\n1. 输入原始消息示例\n2. 输入需要提取的字段（用逗号分隔）\n3. 系统会自动学习并生成匹配规则',
-    duration: 8000
-  })
-}
-
-const handleSizeChange = (val) => {
-  pageSize.value = val
-  refreshData()
-}
-
-const handleCurrentChange = (val) => {
-  currentPage.value = val
-}
-
-// 正则规则管理
-const showAddRuleDialog = () => {
-  // 确保regexRules是数组
-  if (!Array.isArray(regexRules.value)) {
-    regexRules.value = []
-  }
-  
-  ElMessageBox.prompt('请输入正则表达式规则', '添加规则', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    inputPlaceholder: '例如：姓名[:：]?\\s*([^\\s，,]+)',
-    inputType: 'textarea',
-    inputValidator: (value) => {
-      if (!value || !value.trim()) {
-        return '请输入正则表达式'
-      }
-      return true
-    }
-  }).then(({ value }) => {
-    // 添加新规则
-    const newRule = {
-      originalMessage: '用户自定义规则',
-      pattern: value.trim(),
-      extractedContent: '自定义提取内容'
-    }
-    regexRules.value.push(newRule)
-    ElMessage.success('正则规则已添加')
-  }).catch(() => {
-    // 用户取消
-  })
+const showRegexHelp = () => {
+  ElMessageBox.alert(
+    '正则表达式帮助：\n\n' +
+    '1. 使用 \\d+ 匹配数字\n' +
+    '2. 使用 [a-zA-Z]+ 匹配字母\n' +
+    '3. 使用 (.*?) 匹配任意内容\n' +
+    '4. 使用 ^ 匹配开头，$ 匹配结尾\n\n' +
+    '示例：姓名[:：]?\\s*([^\\s，,]+) 可以匹配"姓名：张三"中的"张三"',
+    '正则表达式帮助',
+    { confirmButtonText: '明白了' }
+  )
 }
 
 const deleteRegexRule = (index) => {
-  // 确保regexRules是数组
   if (!Array.isArray(regexRules.value)) {
-    console.warn('regexRules不是数组')
+    ElMessage.error('规则数据异常')
     return
   }
   
-  // 确保索引有效
   if (index < 0 || index >= regexRules.value.length) {
-    console.warn('无效的索引:', index)
+    ElMessage.error('无效的规则索引')
     return
   }
-  
-  const ruleContent = regexRules.value[index]?.originalMessage || '未知规则'
   
   ElMessageBox.confirm(
-    `确定要删除规则"${ruleContent.substring(0, 30)}${ruleContent.length > 30 ? '...' : ''}"吗？`,
+    `确定要删除这条规则吗？\n\n原始消息：${regexRules.value[index].originalMessage}\n正则表达式：${regexRules.value[index].pattern}`,
     '确认删除',
     {
       confirmButtonText: '确定',
@@ -914,113 +661,19 @@ const deleteRegexRule = (index) => {
     }
   ).then(() => {
     regexRules.value.splice(index, 1)
-    ElMessage.success('正则规则已删除')
+    ElMessage.success('规则已删除')
   }).catch(() => {
-    // 用户取消
+    // 用户取消删除
   })
 }
 
-const showRegexHelp = () => {
-  ElMessageBox.alert(
-    `正则表达式帮助：\n\n1. 匹配数字：\\d+\n2. 匹配中文：[\\u4e00-\\u9fa5]+\n3. 匹配邮箱：[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\n4. 匹配手机号：1[3-9]\\d\n\n示例：匹配姓名和电话 - (.*?)电话：(\\d+)`,
-    '正则表达式帮助',
-    {
-      confirmButtonText: '确定'
-    }
-  )
-}
-
-const startMonitoring = () => {
-  // 确保monitoringResults是数组
-  if (!Array.isArray(monitoringResults.value)) {
-    monitoringResults.value = []
-  }
-  
-  // 模拟实时监控
-  setInterval(() => {
-    if (monitoringEnabled.value && Math.random() > 0.7) {
-      const mockMessages = [
-        '明天有个重要会议',
-        '这是内部机密信息',
-        '紧急通知：请大家注意',
-        '这个项目很关键'
-      ]
-      const mockSenders = ['张三', '李四', '王五', '赵六']
-      
-      const newResult = {
-        time: new Date().toLocaleString(),
-        sender: mockSenders[Math.floor(Math.random() * mockSenders.length)],
-        content: mockMessages[Math.floor(Math.random() * mockMessages.length)],
-        matchedWords: '重要'
-      }
-      
-      monitoringResults.value.unshift(newResult)
-      
-      // 限制监控结果数量
-      if (monitoringResults.value.length > 50) {
-        monitoringResults.value.pop()
-      }
-    }
-  }, 5000)
-}
-
-// ===== 辅助函数 =====
-const getMessageTypeTag = (type) => {
-  const typeMap = {
-    '文本': '',
-    '图片': 'success',
-    '文件': 'warning',
-    '语音': 'info',
-    '视频': 'danger'
-  }
-  return typeMap[type] || ''
-}
-
-const getContentClass = (type) => {
-  const classMap = {
-    '文本': 'text-content',
-    '图片': 'image-content',
-    '文件': 'file-content',
-    '语音': 'audio-content',
-    '视频': 'video-content'
-  }
-  return classMap[type] || 'text-content'
-}
-
-const getMessageIcon = (type) => {
-  const iconMap = {
-    '文本': Message,
-    '图片': Picture,
-    '文件': Document,
-    '语音': Microphone,
-    '视频': VideoCamera
-  }
-  return iconMap[type] || Message
-}
-
-const getAvatarUrl = (sender) => {
-  if (!sender) {
-    return 'https://api.dicebear.com/7.x/avataaars/svg?seed=unknown'
-  }
-  
-  const avatarMap = {
-    '张三': 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhangsan',
-    '李四': 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisi',
-    '王五': 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangwu',
-    '赵六': 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhaoliu',
-    '钱七': 'https://api.dicebear.com/7.x/avataaars/svg?seed=qianqi'
-  }
-  return avatarMap[sender] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.toLowerCase()}`
-}
-
-// 敏感词管理功能
 const addSensitiveWord = () => {
-  if (!newSensitiveWord.value || !newSensitiveWord.value.trim()) {
+  const word = newSensitiveWord.value.trim()
+  
+  if (!word) {
     ElMessage.warning('请输入敏感词')
     return
   }
-  
-  const word = newSensitiveWord.value.trim()
   
   // 确保sensitiveWordsList是数组
   if (!Array.isArray(sensitiveWordsList.value)) {
@@ -1062,7 +715,7 @@ const deleteRule = (row) => {
   }
   
   ElMessageBox.confirm(
-    `确定要删除这条规则吗？\n时间: ${row.time}\n发送者: ${row.sender}\n内容: ${row.content ? row.content.substring(0, 30) + (row.content.length > 30 ? '...' : '') : ''}`,
+    `确定要删除这条数据吗？\n时间: ${row.time}\n发送者: ${row.sender}\n内容: ${row.content ? row.content.substring(0, 30) + (row.content.length > 30 ? '...' : '') : ''}`,
     '确认删除',
     {
       confirmButtonText: '确定',
@@ -1079,9 +732,9 @@ const deleteRule = (row) => {
     
     if (index !== -1) {
       collectedData.value.splice(index, 1)
-      ElMessage.success('规则已成功删除')
+      ElMessage.success('数据已成功删除')
     } else {
-      ElMessage.error('未找到要删除的规则')
+      ElMessage.error('未找到要删除的数据')
     }
   }).catch(() => {
     // 用户取消删除
@@ -1089,10 +742,133 @@ const deleteRule = (row) => {
   })
 }
 
+const refreshData = () => {
+  dataLoading.value = true
+  // 模拟数据刷新
+  setTimeout(() => {
+    dataLoading.value = false
+    ElMessage.success('数据已刷新')
+  }, 1000)
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+}
+
+const handleCurrentChange = (page) => {
+  currentPage.value = page
+}
+
+const viewMessageDetail = (row) => {
+  selectedMessage.value = row
+  messageDetailVisible.value = true
+}
+
+const analyzeMessage = () => {
+  ElMessage.info('深度分析功能开发中')
+}
+
+const getAvatarUrl = (sender) => {
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sender)}`
+}
+
+const getMessageIcon = (type) => {
+  const iconMap = {
+    '图片': Picture,
+    '文件': Document,
+    '语音': Microphone,
+    '视频': VideoCamera,
+    '文本': Message
+  }
+  return iconMap[type] || Message
+}
+
+const getMessageTypeTag = (type) => {
+  const typeMap = {
+    '图片': 'success',
+    '文件': 'warning',
+    '语音': 'info',
+    '视频': 'danger',
+    '文本': ''
+  }
+  return typeMap[type] || ''
+}
+
+const getContentClass = (type) => {
+  return `content-${type.toLowerCase()}`
+}
+
+const autoLearnPattern = () => {
+  patternLearning.value = true
+  // 模拟智能学习过程
+  setTimeout(() => {
+    patternLearning.value = false
+    // 这里应该根据原始消息和提取内容生成正则表达式
+    // 简化示例：生成一个基础的正则表达式
+    generatedRegex.value = '姓名[:：]?\\s*([^\\s，,]+)\\s*[，,]?\\s*电话[:：]?\\s*(1[3-9]\\d{9})'
+    extractedValues.value = {
+      '姓名': '张三',
+      '电话': '13800138000'
+    }
+    ElMessage.success('模式学习完成')
+  }, 1500)
+}
+
+const showPatternHelp = () => {
+  ElMessageBox.alert(
+    '智能模板使用说明：\n\n' +
+    '1. 在"原始消息内容"中输入完整的消息示例\n' +
+    '2. 在"需要提取的内容"中输入您想提取的信息，用逗号分隔\n' +
+    '3. 点击"智能学习模式"让系统自动生成匹配规则\n' +
+    '4. 检查生成的规则并进行必要的调整\n' +
+    '5. 保存模板后即可用于数据收集',
+    '使用说明',
+    { confirmButtonText: '明白了' }
+  )
+}
+
+const saveCollectionTemplate = () => {
+  if (!generatedRegex.value.trim()) {
+    ElMessage.warning('请先生成正则表达式')
+    return
+  }
+  
+  if (!originalMessage.value.trim()) {
+    ElMessage.warning('请输入原始消息内容')
+    return
+  }
+  
+  // 确保regexRules是数组
+  if (!Array.isArray(regexRules.value)) {
+    regexRules.value = []
+  }
+  
+  regexRules.value.push({
+    originalMessage: originalMessage.value,
+    pattern: generatedRegex.value,
+    extractedContent: Object.values(extractedValues.value).join(', ')
+  })
+  
+  templateDialogVisible.value = false
+  ElMessage.success('模板保存成功')
+}
+
 // ===== 生命周期钩子 =====
 onMounted(() => {
   // 初始化操作
   console.log('群组管理视图已加载')
+  
+  // 确保所有响应式数据都是正确的类型
+  if (!Array.isArray(regexRules.value)) {
+    regexRules.value = []
+  }
+  if (!Array.isArray(collectedData.value)) {
+    collectedData.value = []
+  }
+  if (!Array.isArray(sensitiveWordsList.value)) {
+    sensitiveWordsList.value = []
+  }
 })
 
 // 监听数据变化
@@ -1110,51 +886,312 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 </script>
 
 <style scoped>
+:root {
+  --primary-color: #1e40af;
+  --secondary-color: #3b82f6;
+  --accent-color: #2563eb;
+  --light-color: #f8fafc;
+  --dark-color: #1e293b;
+  --text-primary: #0f172a;
+  --text-secondary: #3b82f6;
+  --success-color: #8b5cf6;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --border-color: #e2e8f0;
+}
+
+/* 主容器优化 */
 .app-container {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 24px;
+  background-color: var(--el-bg-color-page);
+  min-height: 100vh;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding-right: 10px;
+  padding-right: 12px;
 }
 
-/* 自定义滚动条样式 */
-.main-content::-webkit-scrollbar {
-  width: 6px;
+/* 卡片样式优化 */
+.el-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
 }
 
-.main-content::-webkit-scrollbar-thumb {
-  background-color: var(--el-border-color-darker);
-  border-radius: 3px;
+.el-card:hover {
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-.main-content::-webkit-scrollbar-track {
-  background-color: var(--el-fill-color-blank);
-}
-
+/* 卡片头部优化 */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: white;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
 }
 
-.header-icon {
-  color: var(--el-color-primary);
+.header-status {
+  display: flex;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 20px;
+}
+
+/* 表单样式优化 */
+.data-collection-form,
+.rules-form,
+.monitoring-form {
+  padding: 20px 24px;
+}
+
+.el-form-item {
+  margin-bottom: 24px;
+  padding: 0 20px;
+}
+
+.el-form-item:last-child {
+  margin-bottom: 0;
+}
+
+.el-form-item__label {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+/* 状态控件优化 */
+.status-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.status-text {
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+}
+
+.status-toggle {
+  display: flex;
+  align-items: center;
+}
+
+/* 输入框和控件间距优化 */
+.el-input,
+.el-select,
+.el-date-picker {
+  margin-bottom: 16px;
+}
+
+.el-input__prefix {
+  padding-right: 8px;
+  color: var(--el-text-color-secondary);
+}
+
+/* 按钮组和操作区域优化 */
+.rule-actions {
+  margin-bottom: 20px;
+  padding: 0 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sensitive-word-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  padding: 0 20px;
+}
+
+/* 敏感词列表优化 */
+.sensitive-words-list {
+  min-height: 80px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background-color: var(--el-fill-color-lighter);
+  border-radius: 8px;
+  margin: 0 20px 16px 20px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+.sensitive-word-tag {
+  margin: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.sensitive-word-tag:hover {
+  transform: scale(1.05);
+  box-shadow: var(--el-box-shadow-light);
+}
+
+/* 表格区域优化 */
+.data-table {
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+.data-table .el-table__cell {
+  padding: 16px 20px;
+  font-size: 14px;
+}
+
+/* 表格单元格优化 */
+.time-cell,
+.sender-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.content-cell {
+  line-height: 1.6;
+  word-break: break-word;
+  font-size: 14px;
+  padding: 8px 0;
+  color: var(--el-text-color-primary);
+}
+
+.content-icon {
+  margin-right: 8px;
+  font-size: 16px;
+  color: var(--el-text-color-secondary);
+}
+
+/* 按钮样式优化 */
+.detail-btn,
+.delete-btn {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 0 4px;
+  transition: all 0.2s ease;
+}
+
+.detail-btn:hover,
+.delete-btn:hover {
+  transform: translateY(-1px);
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* 页脚和分页优化 */
+.table-footer {
+  padding: 24px 20px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  margin-top: 20px;
+  background-color: var(--el-fill-color-lighter);
+}
+
+.pagination {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 空状态优化 */
+.empty-state {
+  padding: 60px 0;
+  margin: 20px 0;
+  color: var(--el-text-color-secondary);
+}
+
+/* 对话框优化 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 24px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.regex-tips {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+}
+
+/* 详情展示优化 */
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+}
+
+.detail-content {
+  line-height: 1.7;
+  word-break: break-word;
+  font-size: 14px;
+  padding: 16px;
+  background-color: var(--el-fill-color-lighter);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+/* 特殊状态优化 */
+.word-count {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  text-align: right;
+  padding: 0 20px;
+  margin-top: 8px;
 }
 
 .feature-icon {
-  margin-right: 8px;
+  margin-right: 10px;
+  font-size: 20px;
+  transition: all 0.3s ease;
 }
 
 .feature-icon.data-collection {
@@ -1167,224 +1204,173 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 .switch-label {
   font-weight: 500;
+  font-size: 14px;
+  color: var(--el-text-color-primary);
 }
 
-.rule-actions {
-  margin-bottom: 16px;
-}
-
-.sensitive-word-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-weight: 500;
-}
-
-.sensitive-words-list {
-  min-height: 60px;
-  max-height: 120px;
-  overflow-y: auto;
-  padding: 12px;
-  background-color: var(--el-fill-color-light);
-  border-radius: var(--el-border-radius-base);
-  margin-bottom: 12px;
-}
-
-/* 敏感词列表滚动条样式 */
-.sensitive-words-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sensitive-words-list::-webkit-scrollbar-thumb {
-  background-color: var(--el-border-color-darker);
-  border-radius: 2px;
-}
-
-.sensitive-word-tag {
+/* 确保所有元素都有合适的间距 */
+.el-button {
   margin: 4px;
+  transition: all 0.2s ease;
 }
 
-.word-count {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  text-align: right;
+.el-button:hover {
+  transform: translateY(-1px);
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+.el-tag {
+  margin: 6px;
+  transition: all 0.2s ease;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+.el-tag:hover {
+  transform: scale(1.05);
 }
 
-.data-badge {
-  margin-right: 8px;
+/* 表格操作按钮间距 */
+.el-table__cell .el-button {
+  margin: 0 4px;
 }
 
-.refresh-btn {
-  padding: 6px 12px;
+/* 对话框内表单间距 */
+.el-dialog .el-form-item {
+  padding: 0;
+  margin-bottom: 24px;
 }
 
-.time-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.el-dialog .el-form-item:last-child {
+  margin-bottom: 0;
 }
 
-.sender-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* 滚动条统一优化 */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.content-cell {
-  line-height: 1.5;
-  word-break: break-word;
+::-webkit-scrollbar-thumb {
+  background-color: var(--el-border-color);
+  border-radius: 4px;
 }
 
-.content-icon {
-  margin-right: 6px;
-}
-
-.detail-btn {
-  font-size: 13px;
-  padding: 4px 8px;
-}
-
-.table-footer {
-  padding: 16px 0;
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-
-.pagination {
-  justify-content: flex-end;
-}
-
-.empty-state {
-  padding: 40px 0;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.detail-content {
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-.regex-tips {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+::-webkit-scrollbar-track {
+  background-color: var(--el-fill-color-blank);
 }
 
 /* 响应式布局调整 */
 @media (max-width: 768px) {
   .app-container {
-    padding: 10px;
-    height: calc(100vh - 20px);
+    padding: 16px;
+    height: calc(100vh - 32px);
   }
   
   .header-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: stretch;
+    gap: 12px;
   }
   
-  .el-date-picker {
-    width: 100% !important;
-    margin-right: 0 !important;
-    margin-bottom: 8px;
-  }
-  
+  .el-date-picker,
   .el-select {
     width: 100% !important;
     margin-right: 0 !important;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .rule-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .el-form-item {
+    padding: 0 16px;
+  }
+  
+  .sensitive-words-list {
+    margin: 0 16px 16px 16px;
+  }
+  
+  .card-header {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .header-title {
+    font-size: 16px;
+  }
+  
+  .data-collection-form,
+  .rules-form,
+  .monitoring-form {
+    padding: 16px 20px;
+  }
+  
+  .data-table .el-table__cell {
+    padding: 12px 16px;
+  }
+  
+  .table-footer {
+    padding: 20px 16px;
+  }
+  
+  .dialog-footer {
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .el-button {
+    width: 100%;
+    margin: 4px 0;
   }
 }
 
-/* 卡片间距优化 */
-.el-row {
-  margin-bottom: 16px;
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-.el-card {
-  margin-bottom: 16px;
-  transition: all 0.3s ease;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
-.el-card:hover {
-  box-shadow: var(--el-box-shadow-light);
+/* 加载状态优化 */
+:deep(.el-loading-mask) {
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
-/* 表格区域优化 */
-.data-display-section {
-  background-color: #fff;
-  border-radius: var(--el-border-radius-base);
-  padding: 16px;
-  box-shadow: var(--el-box-shadow-lighter);
+:deep(.el-loading-spinner .circular) {
+  width: 42px;
+  height: 42px;
 }
 
-.data-table {
-  margin-top: 16px;
+/* 表单验证状态 */
+:deep(.el-form-item.is-error .el-input__inner) {
+  border-color: var(--el-color-error);
 }
 
-/* 规则表格优化 */
-.rules-table {
-  margin-top: 12px;
-  max-height: 300px;
-  overflow-y: auto;
+:deep(.el-form-item.is-success .el-input__inner) {
+  border-color: var(--el-color-success);
 }
 
-/* 表单元素间距优化 */
-.el-form-item {
-  margin-bottom: 18px;
+/* 表格行悬停效果 */
+:deep(.el-table__body tr:hover>td) {
+  background-color: var(--el-color-primary-light-9) !important;
 }
 
-/* 按钮组样式优化 */
-.rule-actions, .sensitive-word-header {
-  margin-bottom: 16px;
-}
-
-/* 标签样式优化 */
-.el-tag {
-  margin-right: 8px;
-  margin-bottom: 8px;
-}
-
-/* 对话框内容区域滚动条 */
-.el-dialog__body {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.el-dialog__body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.el-dialog__body::-webkit-scrollbar-thumb {
-  background-color: var(--el-border-color-darker);
-  border-radius: 3px;
+/* 卡片标题渐变效果 */
+.card-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, var(--el-bg-color) 100%);
+  pointer-events: none;
 }
 </style>
