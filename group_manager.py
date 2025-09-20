@@ -33,7 +33,7 @@ if not os.path.exists(RECORDING_DIR):
     os.makedirs(RECORDING_DIR)
 
 # 聊天记录目录（按天存储）
-CHAT_DATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "chat_date")
+CHAT_DATE_DIR = os.path.join(os.path.dirname(__file__), "chat_date")
 if not os.path.exists(CHAT_DATE_DIR):
     os.makedirs(CHAT_DATE_DIR)
 
