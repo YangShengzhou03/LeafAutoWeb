@@ -15,6 +15,25 @@ from logging_config import get_logger
 # Initialize logger
 logger = get_logger(__name__)
 
+# 数据存储路径
+data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+
+# 当前选择的群聊
+default_group_file = os.path.join(data_dir, "selected_group.json")
+
+# 数据收集配置
+collection_config_file = os.path.join(data_dir, "collection_config.json")
+
+# 舆情监控配置
+monitoring_config_file = os.path.join(data_dir, "monitoring_config.json")
+
+# 消息记录目录
+messages_dir = os.path.join(data_dir, "messages")
+if not os.path.exists(messages_dir):
+    os.makedirs(messages_dir)
+
 # Constants
 DATA_DIR = "data"
 MESSAGE_TYPES = ["friend", "group"]
@@ -881,3 +900,644 @@ class GroupWorkerManager:
             logger.debug("[群聊管理] 没有工作线程需要更新规则")
 
         return updated_count > 0
+
+# 全局的群聊管理器实例
+group_manager = GroupWorkerManager()
+
+# 默认的微信实例，实际使用时会被注入
+default_wx_instance = None
+
+def set_wechat_instance(wx_instance):
+    """设置微信实例"""
+    global default_wx_instance
+    default_wx_instance = wx_instance
+
+def get_wechat_instance():
+    """获取微信实例"""
+    return default_wx_instance
+
+# 群聊管理相关功能实现
+def select_group(group_name: str) -> tuple:
+    """选择要管理的群聊
+    
+    Args:
+        group_name: 群聊名称
+        
+    Returns:
+        tuple: (success, message/error)
+    """
+    try:
+        # 保存选择的群聊
+        with open(default_group_file, 'w', encoding='utf-8') as f:
+            json.dump({"group_name": group_name}, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已选择群聊: {group_name}")
+        return True, f"已选择群聊: {group_name}"
+    except Exception as e:
+        logger.error(f"选择群聊失败: {str(e)}")
+        return False, f"选择群聊失败: {str(e)}"
+
+def toggle_message_recording(group_name: str, enabled: bool) -> tuple:
+    """开启/关闭群消息记录
+    
+    Args:
+        group_name: 群聊名称
+        enabled: 是否开启
+        
+    Returns:
+        tuple: (success, message/error)
+    """
+    try:
+        # 加载配置
+        config = {}
+        if os.path.exists(collection_config_file):
+            with open(collection_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新配置
+        if group_name not in config:
+            config[group_name] = {}
+        config[group_name]["recording_enabled"] = enabled
+        
+        # 保存配置
+        with open(collection_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        status = "开启" if enabled else "关闭"
+        logger.info(f"已{status}{group_name}的消息记录功能")
+        
+        # 如果开启记录，确保对应的消息目录存在
+        if enabled:
+            group_messages_dir = os.path.join(messages_dir, group_name)
+            if not os.path.exists(group_messages_dir):
+                os.makedirs(group_messages_dir)
+        
+        return True, f"已{status}{group_name}的消息记录功能"
+    except Exception as e:
+        logger.error(f"切换消息记录状态失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def set_collection_date(group_name: str, date: str) -> tuple:
+    """设置收集日期
+    
+    Args:
+        group_name: 群聊名称
+        date: 日期字符串 (YYYY-MM-DD)
+        
+    Returns:
+        tuple: (success, result/error)
+    """
+    try:
+        # 验证日期格式
+        datetime.strptime(date, "%Y-%m-%d")
+        
+        # 加载配置
+        config = {}
+        if os.path.exists(collection_config_file):
+            with open(collection_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新配置
+        if group_name not in config:
+            config[group_name] = {}
+        config[group_name]["collection_date"] = date
+        
+        # 保存配置
+        with open(collection_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已设置{group_name}的数据收集日期为: {date}")
+        return True, {"date": date}
+    except ValueError:
+        return False, "无效的日期格式，请使用YYYY-MM-DD格式"
+    except Exception as e:
+        logger.error(f"设置收集日期失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def save_collection_template(group_name: str, template: str) -> tuple:
+    """保存收集模板
+    
+    Args:
+        group_name: 群聊名称
+        template: 模板内容
+        
+    Returns:
+        tuple: (success, message/error)
+    """
+    try:
+        # 加载配置
+        config = {}
+        if os.path.exists(collection_config_file):
+            with open(collection_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新配置
+        if group_name not in config:
+            config[group_name] = {}
+        config[group_name]["template"] = template
+        
+        # 保存配置
+        with open(collection_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已保存{group_name}的数据收集模板")
+        return True, "模板保存成功"
+    except Exception as e:
+        logger.error(f"保存收集模板失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def auto_learn_pattern(group_name: str) -> tuple:
+    """自动学习模式，建立正则表达式
+    
+    Args:
+        group_name: 群聊名称
+        
+    Returns:
+        tuple: (success, message/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录，无法学习模式"
+        
+        # 加载最近的消息文件
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        if not message_files:
+            return False, "该群聊没有消息记录，无法学习模式"
+        
+        # 取最新的消息文件
+        message_files.sort(reverse=True)
+        latest_file = message_files[0]
+        
+        with open(os.path.join(group_messages_dir, latest_file), 'r', encoding='utf-8') as f:
+            messages = json.load(f)
+        
+        # 简单的模式学习逻辑示例
+        # 提取消息内容中的关键词和模式
+        content_patterns = []
+        for msg in messages:
+            content = msg.get("content", "")
+            if content and len(content) > 10:
+                # 尝试提取简单的模式
+                if "=" in content and len(content.split("=")) > 1:
+                    content_patterns.append("\\w+=")
+                if ":" in content and len(content.split(":")) > 1:
+                    content_patterns.append("\\w+:")
+                
+        # 生成正则表达式
+        if content_patterns:
+            unique_patterns = list(set(content_patterns))
+            regex = "|".join(unique_patterns)
+            
+            # 保存生成的正则表达式
+            save_collection_template(group_name, regex)
+            return True, f"已自动学习模式，生成正则表达式: {regex}"
+        else:
+            return False, "未能从消息中学习到有效的模式"
+            
+    except Exception as e:
+        logger.error(f"自动学习模式失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def export_collected_data(group_name: str, date: str) -> tuple:
+    """导出收集的数据
+    
+    Args:
+        group_name: 群聊名称
+        date: 日期字符串 (YYYY-MM-DD)，如果为空则导出所有数据
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录"
+        
+        # 收集要导出的消息
+        exported_messages = []
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        
+        for file_name in message_files:
+            # 如果指定了日期，只导出对应日期的文件
+            if date and not file_name.startswith(date):
+                continue
+            
+            file_path = os.path.join(group_messages_dir, file_name)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                messages = json.load(f)
+                exported_messages.extend(messages)
+        
+        if not exported_messages:
+            if date:
+                return False, f"未找到{date}的消息记录"
+            else:
+                return False, "未找到消息记录"
+        
+        # 创建导出文件
+        export_dir = os.path.join(data_dir, "exports")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        export_filename = f"{group_name}_messages_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 保存导出文件
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(exported_messages, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已导出{group_name}的消息数据到: {export_path}")
+        return True, export_path
+    except Exception as e:
+        logger.error(f"导出数据失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def start_sentiment_monitoring(group_name: str, sensitive_words: str) -> tuple:
+    """开始舆情监控
+    
+    Args:
+        group_name: 群聊名称
+        sensitive_words: 敏感词列表，用逗号分隔
+        
+    Returns:
+        tuple: (success, message/error)
+    """
+    try:
+        # 加载配置
+        config = {}
+        if os.path.exists(monitoring_config_file):
+            with open(monitoring_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新配置
+        if group_name not in config:
+            config[group_name] = {}
+        
+        # 处理敏感词列表
+        sensitive_words_list = [word.strip() for word in sensitive_words.split(',') if word.strip()]
+        
+        config[group_name].update({
+            "enabled": True,
+            "sensitive_words": sensitive_words_list,
+            "start_time": datetime.now().isoformat()
+        })
+        
+        # 保存配置
+        with open(monitoring_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已开始{group_name}的舆情监控，敏感词: {', '.join(sensitive_words_list)}")
+        return True, f"已开始舆情监控，共设置{len(sensitive_words_list)}个敏感词"
+    except Exception as e:
+        logger.error(f"开始舆情监控失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def stop_sentiment_monitoring(group_name: str) -> tuple:
+    """停止舆情监控
+    
+    Args:
+        group_name: 群聊名称
+        
+    Returns:
+        tuple: (success, message/error)
+    """
+    try:
+        # 加载配置
+        if not os.path.exists(monitoring_config_file):
+            return False, "没有舆情监控配置"
+        
+        with open(monitoring_config_file, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        # 检查群聊是否在配置中
+        if group_name not in config:
+            return False, "该群聊未开启舆情监控"
+        
+        # 更新配置
+        config[group_name]["enabled"] = False
+        config[group_name]["stop_time"] = datetime.now().isoformat()
+        
+        # 保存配置
+        with open(monitoring_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已停止{group_name}的舆情监控")
+        return True, "已停止舆情监控"
+    except Exception as e:
+        logger.error(f"停止舆情监控失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def check_sentiment_monitoring_status(group_name: str) -> tuple:
+    """检查舆情监控状态
+    
+    Args:
+        group_name: 群聊名称
+        
+    Returns:
+        tuple: (success, status_info/error)
+    """
+    try:
+        # 加载配置
+        if not os.path.exists(monitoring_config_file):
+            return True, {"enabled": False}
+        
+        with open(monitoring_config_file, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        # 获取状态信息
+        if group_name not in config or not config[group_name].get("enabled", False):
+            return True, {"enabled": False}
+        
+        # 返回详细状态
+        return True, {
+            "enabled": True,
+            "sensitive_words": config[group_name].get("sensitive_words", []),
+            "start_time": config[group_name].get("start_time", ""),
+            "monitoring_duration": "监控中"
+        }
+    except Exception as e:
+        logger.error(f"检查舆情监控状态失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+# 导出各类群数据的函数
+def export_group_messages(group_name: str, date: str = "") -> tuple:
+    """导出群消息
+    
+    Args:
+        group_name: 群聊名称
+        date: 可选，日期过滤
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    # 复用export_collected_data函数的逻辑
+    return export_collected_data(group_name, date)
+
+def export_group_files(group_name: str, date: str = "") -> tuple:
+    """导出群文件
+    
+    Args:
+        group_name: 群聊名称
+        date: 可选，日期过滤
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录"
+        
+        # 收集文件消息
+        file_messages = []
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        
+        for file_name in message_files:
+            if date and not file_name.startswith(date):
+                continue
+            
+            file_path = os.path.join(group_messages_dir, file_name)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                messages = json.load(f)
+                # 过滤出文件消息
+                for msg in messages:
+                    if msg.get("type") == "file":
+                        file_messages.append(msg)
+        
+        if not file_messages:
+            return False, "未找到文件消息"
+        
+        # 创建导出文件
+        export_dir = os.path.join(data_dir, "exports")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        export_filename = f"{group_name}_files_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 保存导出文件
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(file_messages, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已导出{group_name}的文件消息到: {export_path}")
+        return True, export_path
+    except Exception as e:
+        logger.error(f"导出文件消息失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def export_group_images(group_name: str, date: str = "") -> tuple:
+    """导出群图片
+    
+    Args:
+        group_name: 群聊名称
+        date: 可选，日期过滤
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录"
+        
+        # 收集图片消息
+        image_messages = []
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        
+        for file_name in message_files:
+            if date and not file_name.startswith(date):
+                continue
+            
+            file_path = os.path.join(group_messages_dir, file_name)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                messages = json.load(f)
+                # 过滤出图片消息
+                for msg in messages:
+                    if msg.get("type") == "image":
+                        image_messages.append(msg)
+        
+        if not image_messages:
+            return False, "未找到图片消息"
+        
+        # 创建导出文件
+        export_dir = os.path.join(data_dir, "exports")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        export_filename = f"{group_name}_images_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 保存导出文件
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(image_messages, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已导出{group_name}的图片消息到: {export_path}")
+        return True, export_path
+    except Exception as e:
+        logger.error(f"导出图片消息失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def export_group_voices(group_name: str, date: str = "") -> tuple:
+    """导出群语音
+    
+    Args:
+        group_name: 群聊名称
+        date: 可选，日期过滤
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录"
+        
+        # 收集语音消息
+        voice_messages = []
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        
+        for file_name in message_files:
+            if date and not file_name.startswith(date):
+                continue
+            
+            file_path = os.path.join(group_messages_dir, file_name)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                messages = json.load(f)
+                # 过滤出语音消息
+                for msg in messages:
+                    if msg.get("type") == "voice":
+                        voice_messages.append(msg)
+        
+        if not voice_messages:
+            return False, "未找到语音消息"
+        
+        # 创建导出文件
+        export_dir = os.path.join(data_dir, "exports")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        export_filename = f"{group_name}_voices_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 保存导出文件
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(voice_messages, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已导出{group_name}的语音消息到: {export_path}")
+        return True, export_path
+    except Exception as e:
+        logger.error(f"导出语音消息失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def export_group_videos(group_name: str, date: str = "") -> tuple:
+    """导出群视频
+    
+    Args:
+        group_name: 群聊名称
+        date: 可选，日期过滤
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录"
+        
+        # 收集视频消息
+        video_messages = []
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        
+        for file_name in message_files:
+            if date and not file_name.startswith(date):
+                continue
+            
+            file_path = os.path.join(group_messages_dir, file_name)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                messages = json.load(f)
+                # 过滤出视频消息
+                for msg in messages:
+                    if msg.get("type") == "video":
+                        video_messages.append(msg)
+        
+        if not video_messages:
+            return False, "未找到视频消息"
+        
+        # 创建导出文件
+        export_dir = os.path.join(data_dir, "exports")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        export_filename = f"{group_name}_videos_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 保存导出文件
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(video_messages, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已导出{group_name}的视频消息到: {export_path}")
+        return True, export_path
+    except Exception as e:
+        logger.error(f"导出视频消息失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"
+
+def export_group_links(group_name: str, date: str = "") -> tuple:
+    """导出群链接
+    
+    Args:
+        group_name: 群聊名称
+        date: 可选，日期过滤
+        
+    Returns:
+        tuple: (success, file_path/error)
+    """
+    try:
+        # 获取群消息目录
+        group_messages_dir = os.path.join(messages_dir, group_name)
+        if not os.path.exists(group_messages_dir):
+            return False, "该群聊没有消息记录"
+        
+        # 收集链接消息
+        link_messages = []
+        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        
+        for file_name in message_files:
+            if date and not file_name.startswith(date):
+                continue
+            
+            file_path = os.path.join(group_messages_dir, file_name)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                messages = json.load(f)
+                # 过滤出链接消息
+                for msg in messages:
+                    content = msg.get("content", "")
+                    # 简单的链接检测
+                    if re.search(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', content):
+                        link_messages.append(msg)
+        
+        if not link_messages:
+            return False, "未找到链接消息"
+        
+        # 创建导出文件
+        export_dir = os.path.join(data_dir, "exports")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        
+        export_filename = f"{group_name}_links_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
+        export_path = os.path.join(export_dir, export_filename)
+        
+        # 保存导出文件
+        with open(export_path, 'w', encoding='utf-8') as f:
+            json.dump(link_messages, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"已导出{group_name}的链接消息到: {export_path}")
+        return True, export_path
+    except Exception as e:
+        logger.error(f"导出链接消息失败: {str(e)}")
+        return False, f"操作失败: {str(e)}"

@@ -352,7 +352,7 @@
             :loading="patternLearning"
             class="learn-button">
             <el-icon><MagicStick /></el-icon>
-            智能学习模式
+            智能学习
           </el-button>
           
           <el-button 
@@ -649,11 +649,6 @@ const handleMonitoringChange = (enabled) => {
 }
 
 const showAddRuleDialog = () => {
-  if (!dataCollectionEnabled.value) {
-    ElMessage.warning('请先启用数据收集功能')
-    return
-  }
-  
   templateDialogVisible.value = true
   // 重置对话框数据
   originalMessage.value = ''
@@ -837,7 +832,7 @@ const autoLearnPattern = () => {
       '姓名': '张三',
       '电话': '13800138000'
     }
-    ElMessage.success('模式学习完成')
+    ElMessage.success('学习完成')
   }, 1500)
 }
 
@@ -846,7 +841,7 @@ const showPatternHelp = () => {
     '智能模板使用说明：\n\n' +
     '1. 在"原始消息内容"中输入完整的消息示例\n' +
     '2. 在"需要提取的内容"中输入您想提取的内容，用逗号分隔\n' +
-    '3. 点击"智能学习模式"让系统自动生成匹配规则\n' +
+    '3. 点击"智能学习"让系统自动生成匹配规则\n' +
     '4. 检查生成的规则并进行必要的调整\n' +
     '5. 保存模板后即可用于数据收集',
     '使用说明',
