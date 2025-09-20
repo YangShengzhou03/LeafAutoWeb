@@ -281,19 +281,6 @@
                 class="pagination"
               />
             </div>
-
-            <el-empty 
-              v-if="!hasCollectedData && !dataLoading" 
-              description="暂无收集数据" 
-              :image-size="100"
-              class="empty-state">
-              <template #image>
-                <el-icon><Document /></el-icon>
-              </template>
-              <el-button type="primary" @click="handleDataCollectionChange(true)" v-if="aiStatus">
-                启用数据收集
-              </el-button>
-            </el-empty>
           </el-card>
         </el-col>
       </el-row>
@@ -515,10 +502,6 @@ const totalDataCount = computed(() => {
   }
   
   return filteredData.value.length
-})
-
-const hasCollectedData = computed(() => {
-  return Array.isArray(collectedData.value) && collectedData.value.length > 0
 })
 
 // 事件处理
