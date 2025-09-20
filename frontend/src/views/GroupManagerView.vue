@@ -20,7 +20,7 @@
             <el-form label-position="top">
               <el-form-item label="选择要管理的群聊">
                 <el-row :gutter="16" align="middle">
-                  <el-col :span="16">
+                  <el-col :span="20">
                     <el-input
                       v-model="selectedGroup"
                       placeholder="输入群聊名称或选择已有群聊"
@@ -32,7 +32,7 @@
                       </template>
                     </el-input>
                   </el-col>
-                  <el-col :span="8">
+                  <el-col :span="4">
                     <el-switch
                       v-model="managementEnabled"
                       @change="handleManagementChange"
@@ -88,9 +88,9 @@
                 
                 <!-- 正则规则表格 -->
                 <el-table :data="regexRules" class="rules-table" empty-text="暂无规则，请添加">
-                  <el-table-column prop="name" label="规则名称" width="180" />
+                  <el-table-column prop="originalMessage" label="原始消息" width="250" />
                   <el-table-column prop="pattern" label="正则表达式" />
-                  <el-table-column prop="description" label="描述" width="200" />
+                  <el-table-column prop="extractedContent" label="提取内容" width="200" />
                   <el-table-column label="操作" width="120" align="center">
                     <template #default="scope">
                       <el-button type="danger" size="small" @click="deleteRegexRule(scope.$index)">
@@ -209,7 +209,6 @@
                   <span>收集数据展示</span>
                 </div>
                 <div class="header-actions">
-                  <el-badge :value="collectedData.length" type="primary" class="data-badge" />
                   <el-select 
                     v-model="selectedGroupFilter" 
                     placeholder="筛选群聊" 
@@ -489,19 +488,19 @@ const managementLoading = ref(false)
 const dataCollectionEnabled = ref(false)
 const regexRules = ref([
   { 
-    name: '姓名电话提取', 
+    originalMessage: '我叫张三，电话13800138000，住在北京市朝阳区', 
     pattern: '姓名[:：]?\\s*([^\\s，,]+)\\s*[，,]?\\s*电话[:：]?\\s*(1[3-9]\\d{9})', 
-    description: '从消息中提取姓名和电话号码' 
+    extractedContent: '张三, 13800138000' 
   },
   { 
-    name: '地址提取', 
+    originalMessage: '地址：北京市朝阳区建国门外大街1号', 
     pattern: '地址[:：]?\\s*([^\\s，,]+(?:省|市|区|县|镇|村|街道|路|号|室|单元))', 
-    description: '从消息中提取地址信息' 
+    extractedContent: '北京市朝阳区建国门外大街1号' 
   },
   { 
-    name: '会议信息提取', 
+    originalMessage: '会议：产品发布会 时间：2023-06-15 14:00', 
     pattern: '会议[:：]?\\s*([^\\s，,]+)\\s*时间[:：]?\\s*([^\\s，,]+)', 
-    description: '从消息中提取会议主题和时间' 
+    extractedContent: '产品发布会, 2023-06-15 14:00' 
   }
 ])
 const collectedData = ref([
@@ -740,8 +739,27 @@ const saveCollectionTemplate = () => {
     return
   }
   
+  // 确保regexRules是数组
+  if (!Array.isArray(regexRules.value)) {
+    regexRules.value = []
+  }
+  
+  // 添加新规则到表格
+  const newRule = {
+    originalMessage: originalMessage.value.trim(),
+    pattern: generatedRegex.value.trim(),
+    extractedContent: Object.values(extractedValues.value).join(', ')
+  }
+  
+  regexRules.value.push(newRule)
   ElMessage.success('模板保存成功')
   templateDialogVisible.value = false
+  
+  // 清空对话框内容
+  originalMessage.value = ''
+  collectionTemplate.value = ''
+  generatedRegex.value = ''
+  extractedValues.value = {}
 }
 
 const autoLearnPattern = async () => {
@@ -860,9 +878,9 @@ const showAddRuleDialog = () => {
   }).then(({ value }) => {
     // 添加新规则
     const newRule = {
-      name: `规则${regexRules.value.length + 1}`,
+      originalMessage: '用户自定义规则',
       pattern: value.trim(),
-      description: '用户自定义规则'
+      extractedContent: '自定义提取内容'
     }
     regexRules.value.push(newRule)
     ElMessage.success('正则规则已添加')
@@ -884,10 +902,10 @@ const deleteRegexRule = (index) => {
     return
   }
   
-  const ruleName = regexRules.value[index]?.name || '未知规则'
+  const ruleContent = regexRules.value[index]?.originalMessage || '未知规则'
   
   ElMessageBox.confirm(
-    `确定要删除规则"${ruleName}"吗？`,
+    `确定要删除规则"${ruleContent.substring(0, 30)}${ruleContent.length > 30 ? '...' : ''}"吗？`,
     '确认删除',
     {
       confirmButtonText: '确定',
@@ -904,7 +922,7 @@ const deleteRegexRule = (index) => {
 
 const showRegexHelp = () => {
   ElMessageBox.alert(
-    `正则表达式帮助：\n\n1. 匹配数字：\\d+\n2. 匹配中文：[\\u4e00-\\u9fa5]+\n3. 匹配邮箱：[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\n4. 匹配手机号：1[3-9]\\d{9}\n\n示例：匹配姓名和电话 - (.*?)电话：(\\d+)`,
+    `正则表达式帮助：\n\n1. 匹配数字：\\d+\n2. 匹配中文：[\\u4e00-\\u9fa5]+\n3. 匹配邮箱：[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\n4. 匹配手机号：1[3-9]\\d\n\n示例：匹配姓名和电话 - (.*?)电话：(\\d+)`,
     '正则表达式帮助',
     {
       confirmButtonText: '确定'
@@ -1093,8 +1111,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 <style scoped>
 .app-container {
-  padding: 20px;
-  height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
