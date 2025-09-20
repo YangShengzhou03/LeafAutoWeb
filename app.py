@@ -118,6 +118,18 @@ load_reply_history()
 start_status_monitor()
 logger.info("微信状态监控已启动")
 
+# 设置微信实例到群聊管理器
+try:
+    from group_manager import set_wechat_instance
+    wx_instance = get_wechat_instance()
+    if wx_instance:
+        set_wechat_instance(wx_instance)
+        logger.info("已设置微信实例到群聊管理器")
+    else:
+        logger.warning("无法获取微信实例，群聊管理功能可能无法正常工作")
+except Exception as e:
+    logger.error(f"设置微信实例到群聊管理器失败: {e}")
+
 ai_data = load_ai_data()
 ai_data["aiStatus"] = False
 save_ai_settings(ai_data)
@@ -840,7 +852,7 @@ from group_manager import (
     start_sentiment_monitoring, stop_sentiment_monitoring, check_sentiment_monitoring_status,
     export_group_messages, export_group_files, export_group_images, 
     export_group_voices, export_group_videos, export_group_links,
-    start_group_management, group_manager
+    start_group_management, group_manager, data_dir
 )
 import re
 
