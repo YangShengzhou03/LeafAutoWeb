@@ -18,10 +18,12 @@
               <el-row :gutter="20" class="data-collection-row">
                 <el-col :span="24">
                   <el-form-item label="系统功能控制" class="inline-form-item">
-                    <div class="controls-row inline-controls">
+                    <div>
                       <el-input v-model="contactPerson" placeholder="输入待管理群聊"
                        class="contact-input"></el-input>
-                      
+                    </div>
+
+                    <div class="controls-row inline-controls">                      
                       <!-- 管理状态开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="aiStatus" active-color="#409eff" inactive-color="#dcdfe6"
@@ -52,11 +54,11 @@
             <el-form label-position="top" class="rules-form">
               <el-form-item label="收集规则">
                 <div class="rule-actions">
-                  <el-button type="primary" size="small" @click="showAddRuleDialog">
+                  <el-button type="primary" size="mid" @click="showAddRuleDialog">
                     <el-icon><Plus /></el-icon>
                     添加规则
                   </el-button>
-                  <el-button size="small" @click="showRegexHelp">
+                  <el-button size="mid" @click="showRegexHelp">
                     <el-icon><QuestionFilled /></el-icon>
                     正则帮助
                   </el-button>
@@ -69,7 +71,7 @@
                   <el-table-column prop="extractedContent" label="提取内容" width="200" />
                   <el-table-column label="操作" width="120" align="center">
                     <template #default="scope">
-                      <el-button type="danger" size="small" @click="deleteRegexRule(scope.$index)">
+                      <el-button type="danger" size="mid" @click="deleteRegexRule(scope.$index)">
                         <el-icon><Delete /></el-icon>
                         删除
                       </el-button>
@@ -93,7 +95,7 @@
                   <span>舆情监控配置</span>
                 </div>
                 <div class="header-status">
-                  <el-tag :type="monitoringEnabled ? 'success' : 'info'" effect="light" size="small">
+                  <el-tag :type="monitoringEnabled ? 'success' : 'info'" effect="light" size="mid">
                     {{ monitoringEnabled ? '监控中' : '未启用' }}
                   </el-tag>
                 </div>
@@ -117,7 +119,7 @@
                       placeholder="输入敏感词"
                       clearable
                       @keyup.enter="addSensitiveWord"
-                      size="small">
+                      size="mid">
                       <template #prefix>
                         <el-icon><Key /></el-icon>
                       </template>
@@ -129,7 +131,7 @@
                       @click="addSensitiveWord" 
                       :disabled="!newSensitiveWord.trim()" 
                       class="add-word-btn"
-                      size="small">
+                      size="mid">
                       <el-icon><Plus /></el-icon>
                       添加
                     </el-button>
@@ -144,7 +146,7 @@
                     @close="removeSensitiveWord(index)"
                     type="danger"
                     effect="plain"
-                    size="small"
+                    size="mid"
                     class="sensitive-word-tag">
                     {{ word }}
                   </el-tag>
@@ -178,7 +180,7 @@
               <el-select 
                 v-model="selectedGroupFilter" 
                 placeholder="筛选群聊" 
-                size="small" 
+                size="mid" 
                 class="filter-select"
                 clearable>
                 <el-option label="所有群聊" value="" />
@@ -194,7 +196,7 @@
                 range-separator="至"
                 start-placeholder="开始日期"
                 end-placeholder="结束日期"
-                size="small"
+                size="mid"
                 class="date-picker-filter"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
@@ -250,7 +252,7 @@
               </el-table-column>
               <el-table-column prop="type" label="消息类型" width="100">
                 <template #default="{ row }">
-                  <el-tag :type="getMessageTypeTag(row.type)" size="small" effect="light">
+                  <el-tag :type="getMessageTypeTag(row.type)" size="mid" effect="light">
                     {{ row.type }}
                   </el-tag>
                 </template>
@@ -284,7 +286,7 @@
                 :page-size="pageSize"
                 layout="total, sizes, prev, pager, next, jumper"
                 :total="totalDataCount"
-                small
+                mid
                 background
                 class="pagination"
               />
@@ -418,7 +420,7 @@
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="消息类型">
-          <el-tag :type="getMessageTypeTag(selectedMessage.type)" size="small">
+          <el-tag :type="getMessageTypeTag(selectedMessage.type)" size="mid">
             {{ selectedMessage.type }}
           </el-tag>
         </el-descriptions-item>
@@ -452,7 +454,7 @@ import {
 const dataCollectionEnabled = ref(false)
 const aiStatus = ref(false) // 管理状态
 const isTakeoverLoading = ref(false) // 接管加载状态
-const contactPerson = ref('') // 接管联系人
+const contactPerson = ref('文件传输助手') // 接管联系人，设置默认值
 const regexRules = ref([
   { 
     originalMessage: '我叫张三，电话13800138000，住在北京市朝阳区', 
@@ -826,7 +828,7 @@ const showPatternHelp = () => {
   ElMessageBox.alert(
     '智能模板使用说明：\n\n' +
     '1. 在"原始消息内容"中输入完整的消息示例\n' +
-    '2. 在"需要提取的内容"中输入您想提取的信息，用逗号分隔\n' +
+    '2. 在"需要提取的内容"中输入您想提取的内容，用逗号分隔\n' +
     '3. 点击"智能学习模式"让系统自动生成匹配规则\n' +
     '4. 检查生成的规则并进行必要的调整\n' +
     '5. 保存模板后即可用于数据收集',
@@ -911,6 +913,8 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   flex-direction: column;
   overflow: hidden;
   min-height: 100vh;
+  padding: 0px;
+  background-color: var(--light-color);
 }
 
 .main-content {
@@ -929,6 +933,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   overflow: hidden;
   background-color: white;
   margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .group-config-card:hover,
@@ -943,7 +948,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 16px 12px;
   border-bottom: 1px solid var(--border-color);
   background-color: white;
 }
@@ -967,19 +972,18 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 0 20px;
 }
 
 /* 表单样式优化 - 统一内边距和对齐 */
 .data-collection-form,
 .rules-form,
 .monitoring-form {
-  padding: 20px 24px;
+  padding: 0px;
 }
 
 .el-form-item {
   margin-bottom: 24px;
-  padding: 0 20px;
+  padding: 0;
 }
 
 .el-form-item:last-child {
@@ -989,7 +993,8 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 .el-form-item__label {
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  font-size: 15px;
 }
 
 /* 数据收集配置行 - 整齐排列控件 */
@@ -1002,19 +1007,33 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   width: 100%;
 }
 
-.inline-controls {
+/* 群聊管理区域样式 */
+.group-management-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 80px;
+  font-size: 14px;
+}
+
+.controls-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 32px;
   width: 100%;
   padding: 12px 0;
 }
 
 .contact-input {
   flex: 1;
-  min-width: 200px;
-  margin-bottom: 0;
+  min-width: 400px;
 }
 
 /* 状态控件优化 - 保持开关原生样式，优化文字对齐 */
@@ -1022,7 +1041,16 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 0;
+  padding: 8px 0;
+}
+
+/* 统一文本框和开关的高度 */
+.contact-input .el-input__wrapper {
+  height: 40px;
+}
+
+.status-control .el-switch {
+  align-self: center;
 }
 
 .status-text {
@@ -1031,15 +1059,18 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   white-space: nowrap;
 }
 
-/* 按钮样式优化 */
-.el-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
-}
-
+/* 按钮样式优化 - 统一按钮大小和间距 */
 .el-button {
   transition: all 0.2s ease;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
   margin: 4px;
+}
+
+.el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
 }
 
 .el-button--primary {
@@ -1056,7 +1087,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 .el-input,
 .el-select,
 .el-date-picker {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .el-input__prefix {
@@ -1065,10 +1096,9 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 .rule-actions {
-  margin-bottom: 20px;
-  padding: 0 20px;
+  margin-bottom: 24px;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
 }
 
@@ -1078,7 +1108,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   gap: 12px;
   margin-bottom: 16px;
   font-weight: 500;
-  padding: 0 20px;
 }
 
 .sensitive-words-list {
@@ -1088,15 +1117,15 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   padding: 16px 20px;
   background-color: var(--el-fill-color-lighter);
   border-radius: 8px;
-  margin: 0 20px 16px 20px;
+  margin: 0 0 16px 0;
   border: 1px solid var(--el-border-color-light);
 }
 
 .sensitive-word-tag {
   margin: 6px;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   transition: all 0.2s ease;
 }
 
@@ -1135,7 +1164,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 
@@ -1153,12 +1182,13 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   color: var(--el-text-color-secondary);
 }
 
+/* 表格操作按钮样式优化 */
 .detail-btn,
 .delete-btn {
-  font-size: 13px;
-  padding: 8px 12px;
+  font-size: 14px;
+  padding: 8px 16px;
   border-radius: 6px;
-  margin: 0 4px;
+  margin: 0 8px;
   transition: all 0.2s ease;
 }
 
@@ -1168,7 +1198,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 .refresh-btn {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 6px;
   font-weight: 500;
 }
@@ -1186,7 +1216,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 .empty-state {
-  padding: 60px 0;
+  padding: 80px 0;
   margin: 20px 0;
   color: var(--el-text-color-secondary);
 }
@@ -1206,7 +1236,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 20px;
 }
 
 .detail-item {
@@ -1231,7 +1260,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   font-size: 13px;
   color: var(--el-text-color-secondary);
   text-align: right;
-  padding: 0 20px;
   margin-top: 8px;
 }
 
@@ -1269,19 +1297,12 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   margin-bottom: 0;
 }
 
-.el-button {
-  margin: 4px;
-  transition: all 0.2s ease;
-}
-
-.el-button:hover {
-  transform: translateY(-1px);
-}
-
 /* 标签样式优化 */
 .el-tag {
   margin: 6px;
   transition: all 0.2s ease;
+  font-size: 14px;
+  padding: 4px 12px;
 }
 
 .el-tag:hover {
@@ -1301,7 +1322,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 .el-table__cell .el-button {
-  margin: 0 4px;
+  margin: 0 8px;
 }
 
 /* 表格行悬停效果 */
@@ -1320,11 +1341,17 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--el-border-color);
   border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #c0c4cc;
 }
 
 ::-webkit-scrollbar-track {
@@ -1370,7 +1397,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   .data-collection-form,
   .rules-form,
   .monitoring-form {
-    padding: 16px 20px;
+    padding: 16px;
   }
   
   .data-table .el-table__cell {
@@ -1392,7 +1419,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
     margin: 4px 0;
   }
   
-  .inline-controls {
+  .controls-row {
     flex-wrap: wrap;
     gap: 16px;
   }
@@ -1400,8 +1427,13 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   .status-control {
     margin-bottom: 8px;
   }
+  
+  .contact-input {
+    min-width: 100%;
+  }
 }
 
+/* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -1412,6 +1444,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   opacity: 0;
 }
 
+/* 加载动画样式 */
 :deep(.el-loading-mask) {
   background-color: rgba(255, 255, 255, 0.8);
 }
@@ -1421,6 +1454,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   height: 42px;
 }
 
+/* 表单验证样式 */
 :deep(.el-form-item.is-error .el-input__inner) {
   border-color: var(--el-color-error);
 }
