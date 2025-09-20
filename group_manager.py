@@ -334,16 +334,20 @@ class GroupWorkerThread:
             chat_name: 聊天名称
         """
         try:
+            print(content, chat_name)
             daily_file = get_daily_messages_file(chat_name)
+            print(daily_file)
             
             # 确保目录存在（CHAT_DATE_DIR已在文件顶部创建）
             # 检查文件是否存在，不存在则创建文件
             if not os.path.exists(daily_file):
+                print(1)
                 # 创建新文件并写入内容
                 with open(daily_file, 'w', encoding='utf-8') as f:
                     f.write(content + '\n')
                 logger.info(f"创建新的按天存储文件: {daily_file}")
             else:
+                print(2)
                 # 文件已存在，追加内容
                 with open(daily_file, 'a', encoding='utf-8') as f:
                     f.write(content + '\n')
