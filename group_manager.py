@@ -334,20 +334,16 @@ class GroupWorkerThread:
             chat_name: 聊天名称
         """
         try:
-            print(content, chat_name)
             daily_file = get_daily_messages_file(chat_name)
-            print(daily_file)
             
             # 确保目录存在（CHAT_DATE_DIR已在文件顶部创建）
             # 检查文件是否存在，不存在则创建文件
             if not os.path.exists(daily_file):
-                print(1)
                 # 创建新文件并写入内容
                 with open(daily_file, 'w', encoding='utf-8') as f:
                     f.write(content + '\n')
                 logger.info(f"创建新的按天存储文件: {daily_file}")
             else:
-                print(2)
                 # 文件已存在，追加内容
                 with open(daily_file, 'a', encoding='utf-8') as f:
                     f.write(content + '\n')
@@ -399,15 +395,11 @@ class GroupWorkerThread:
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
 
-            # 打印接收到的消息
-            print(f"[{time_str}] 收到消息 - 发送者: {sender}, 群聊: {chat_name}, 内容: {message_content}")
-
             # 1. 检查是否包含敏感词
             if self._check_sensitive_words(message_content):
                 logger.warning(f"[敏感内容检测] 检测到敏感内容: {message_content[:50]}... 发送者: {sender}")
 
             # 2. 存储消息到按天文件
-            print("存储消息到按天文件")
             message_entry = f"[{time_str}] 发送者: {sender} | 群聊: {chat_name if is_group else '私聊'} | 内容: {message_content}"
             self._append_to_daily_file(message_entry, chat_name)
             

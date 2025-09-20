@@ -25,7 +25,7 @@ try:
     sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)
     # pylint: enable=consider-using-with
 except (OSError, ValueError) as e:
-    print(f"无法设置标准输出编码: {e}")
+    logger.error(f"无法设置标准输出编码: {e}")
 
 # 配置日志
 logging.basicConfig(
