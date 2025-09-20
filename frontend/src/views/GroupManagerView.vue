@@ -131,21 +131,6 @@
 
                 <!-- 敏感词列表区域 - 优化展示 -->
                 <div class="sensitive-words-wrapper">
-                  <div class="sensitive-words-header">
-                    <span class="words-count">已添加 {{ sensitiveWordsList.length }} 个敏感词</span>
-                    <div class="words-actions">
-                      <el-button 
-                        type="text" 
-                        @click="clearAllSensitiveWords" 
-                        :disabled="sensitiveWordsList.length === 0"
-                        class="clear-all-btn"
-                        size="small">
-                        <el-icon><Delete /></el-icon>
-                        清空全部
-                      </el-button>
-                    </div>
-                  </div>
-                  
                   <div class="sensitive-words-list">
                     <transition-group name="fade-in" tag="div">
                       <el-tag
@@ -701,29 +686,6 @@ const deleteRegexRule = (index) => {
   })
 }
 
-// 添加敏感词相关方法
-const clearAllSensitiveWords = () => {
-  if (sensitiveWordsList.value.length === 0) {
-    return
-  }
-  
-  ElMessageBox.confirm(
-    '确定要清空所有敏感词吗？此操作不可撤销。',
-    '确认清空',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-      center: true
-    }
-  ).then(() => {
-    sensitiveWordsList.value = []
-    ElMessage.success('所有敏感词已清空')
-  }).catch(() => {
-    ElMessage.info('操作已取消')
-  })
-}
-
 const importSensitiveWords = () => {
   ElMessage.info('敏感词导入功能开发中')
   // 这里可以实现文件上传功能，读取文件中的敏感词并添加到列表中
@@ -1141,8 +1103,8 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 .sensitive-words-list {
-  min-height: 80px;
   max-height: 150px;
+  min-width: 75vw;
   overflow-y: auto;
   padding: 16px 20px;
   background-color: var(--el-fill-color-lighter);
