@@ -254,11 +254,12 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="type" label="消息类型" width="100">
-                <template #default="{ row }">
-                  <el-tag :type="getMessageTypeTag(row.type)" size="mid" effect="light">
-                    {{ row.type }}
-                  </el-tag>
+              <el-table-column prop="type" label="提取数据" width="100">
+                <template #default="{ }">
+                  <div class="extracted-content-status">
+                    <el-icon class="success-icon"><Check /></el-icon>
+                    <span>已提取</span>
+                  </div>
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="120" fixed="right">
@@ -451,7 +452,7 @@ import {
   Plus, Key, Refresh, Clock,
   Collection, Monitor, DataAnalysis, Document,
   QuestionFilled, InfoFilled, MagicStick, Picture, 
-  Message, Microphone, VideoCamera, Delete
+  Message, Microphone, VideoCamera, Delete, Check
 } from '@element-plus/icons-vue'
 
 // 响应式数据
@@ -1100,6 +1101,24 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   gap: 12px;
   margin-bottom: 16px;
   font-weight: 500;
+}
+
+/* 提取内容状态样式 */
+.extracted-content-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f9ff;
+  border: 1px solid #e6f7ff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: #1890ff;
+  font-size: 12px;
+}
+
+.extracted-content-status .success-icon {
+  margin-right: 4px;
+  color: #52c41a;
 }
 
 .sensitive-words-list {
