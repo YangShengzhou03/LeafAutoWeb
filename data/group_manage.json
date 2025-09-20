@@ -3,7 +3,6 @@
   "groups": {},
   "settings": {
     "default": {
-      "only_at": false,
       "record_interval": 0,
       "sensitive_words": []
     }

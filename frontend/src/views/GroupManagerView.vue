@@ -1241,7 +1241,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
   min-width: 0;
 }
 
-/* 其他样式保持整齐一致 */
 .el-input,
 .el-select,
 .el-date-picker {
@@ -1258,14 +1257,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
   display: flex;
   gap: 16px;
   align-items: center;
-}
-
-.sensitive-word-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  font-weight: 500;
 }
 
 /* 提取内容状态样式 */
@@ -1402,12 +1393,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
   gap: 8px;
 }
 
-.empty-state {
-  padding: 80px 0;
-  margin: 20px 0;
-  color: var(--el-text-color-secondary);
-}
-
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -1443,13 +1428,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
   border: 1px solid var(--el-border-color-light);
 }
 
-.word-count {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-  text-align: right;
-  margin-top: 8px;
-}
-
 .feature-icon {
   margin-right: 10px;
   font-size: 20px;
@@ -1462,12 +1440,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
 
 .feature-icon.monitoring {
   color: var(--el-color-warning);
-}
-
-.switch-label {
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--el-text-color-primary);
 }
 
 .filter-row {
@@ -1515,34 +1487,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
 /* 表格行悬停效果 */
 .el-table--enable-row-hover .el-table__body tr:hover>td {
   background-color: rgba(59, 130, 246, 0.08) !important;
-}
-
-.el-dialog .el-form-item {
-  padding: 0;
-  margin-bottom: 24px;
-}
-
-.el-dialog .el-form-item:last-child {
-  margin-bottom: 0;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--el-border-color);
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: #c0c4cc;
-}
-
-::-webkit-scrollbar-track {
-  background-color: var(--el-fill-color-blank);
 }
 
 /* 响应式优化 - 保持小屏幕上的整齐布局 */
@@ -1630,6 +1574,7 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
 .fade-leave-to {
   opacity: 0;
 }
+</style>
 
 /* 加载动画样式 */
 :deep(.el-loading-mask) {
@@ -1649,4 +1594,3 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
 :deep(.el-form-item.is-success .el-input__inner) {
   border-color: var(--el-color-success);
 }
-</style>
