@@ -2,9 +2,9 @@
   <div class="app-container">
     <div class="main-content">
       <!-- 数据收集配置 -->
-      <el-row :gutter="20" style="margin-top: 20px">
+      <el-row :gutter="24">
         <el-col :span="24">
-          <el-card shadow="hover">
+          <el-card shadow="hover" class="section-card">
             <template #header>
               <div class="card-header">
                 <div class="header-title">
@@ -15,18 +15,18 @@
             </template>
 
             <el-form label-position="top" class="data-collection-form">
-              <el-row :gutter="20">
+              <el-row :gutter="20" class="data-collection-row">
                 <el-col :span="24">
-                  <el-form-item label="数据收集配置">
-                    <div class="controls-row">
+                  <el-form-item label="数据收集配置" class="inline-form-item">
+                    <div class="controls-row inline-controls">
                       <el-input v-model="contactPerson" placeholder="输入接管联系人姓名"
-                        :disabled="isTakeoverLoading || !aiStatus" style="width: 200px; margin-right: 16px;"></el-input>
+                        :disabled="isTakeoverLoading || !aiStatus" class="contact-input"></el-input>
                       <div class="status-control">
                         <el-switch v-model="aiStatus" active-color="#3b82f6" inactive-color="#d1d5db"
                           @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
                         <span class="status-text">{{ aiStatus ? '管理已启用' : '管理已禁用' }}</span>
                       </div>
-                      <div class="status-control" style="margin-left: 16px;">
+                      <div class="status-control">
                         <el-switch v-model="dataCollectionEnabled" active-color="#3b82f6" inactive-color="#d1d5db"
                           @change="handleDataCollectionChange" :disabled="!aiStatus"></el-switch>
                         <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集已禁用' }}</span>
@@ -37,6 +37,7 @@
               </el-row>
             </el-form>
 
+            <!-- 其他内容保持不变 -->
             <el-form label-position="top" class="rules-form">
               <el-form-item label="收集规则">
                 <div class="rule-actions">
@@ -71,9 +72,9 @@
       </el-row>
 
       <!-- 舆情监控配置 -->
-      <el-row :gutter="20" style="margin-top: 20px">
+      <el-row :gutter="24">
         <el-col :span="24">
-          <el-card shadow="hover">
+          <el-card shadow="hover" class="section-card">
             <template #header>
               <div class="card-header">
                 <div class="header-title">
@@ -89,18 +90,20 @@
             </template>
 
             <el-form label-position="top" class="monitoring-form">
-              <el-form-item>
+              <el-form-item class="monitoring-switch-item">
                 <el-row justify="space-between" align="middle">
                   <span class="switch-label">启用舆情监控</span>
                   <el-switch
                     v-model="monitoringEnabled"
                     @change="handleMonitoringChange"
                     active-color="var(--success-color)"
+                    class="monitoring-switch"
                   />
                 </el-row>
               </el-form-item>
 
-              <el-form-item v-if="monitoringEnabled" label="敏感词管理">
+              <!-- 修改: 移除v-if条件，始终显示敏感词管理区域 -->
+              <el-form-item label="敏感词管理">
                 <div class="sensitive-word-header">
                   <span>敏感词列表</span>
                   <el-tooltip content="添加需要监控的敏感词汇" placement="top">
@@ -108,7 +111,7 @@
                   </el-tooltip>
                 </div>
                 
-                <el-row :gutter="12" style="margin-bottom: 16px;">
+                <el-row :gutter="12" class="sensitive-word-input-row">
                   <el-col :span="18">
                     <el-input
                       v-model="newSensitiveWord"
@@ -126,7 +129,7 @@
                       type="primary" 
                       @click="addSensitiveWord" 
                       :disabled="!newSensitiveWord.trim()" 
-                      style="width: 100%"
+                      class="add-word-btn"
                       size="small">
                       <el-icon><Plus /></el-icon>
                       添加
@@ -163,21 +166,21 @@
       </el-row>
 
       <!-- 数据展示区域 -->
-      <el-row :gutter="20" style="margin-top: 20px">
+      <el-row :gutter="24">
         <el-col :span="24">
-          <el-card shadow="hover">
+          <el-card shadow="hover" class="section-card">
             <template #header>
               <div class="card-header">
                 <div class="header-title">
                   <el-icon class="feature-icon"><DataAnalysis /></el-icon>
                   <span>收集数据展示</span>
                 </div>
-                <div class="header-actions">
+                <div class="header-actions filter-row">
               <el-select 
                 v-model="selectedGroupFilter" 
                 placeholder="筛选群聊" 
                 size="small" 
-                style="width: 140px; margin-right: 12px"
+                class="filter-select"
                 clearable>
                 <el-option label="所有群聊" value="" />
                 <el-option 
@@ -193,7 +196,7 @@
                 start-placeholder="开始日期"
                 end-placeholder="结束日期"
                 size="small"
-                style="width: 260px; margin-right: 12px"
+                class="date-picker-filter"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 clearable
@@ -211,14 +214,14 @@
               </div>
             </template>
 
+            <!-- 表格内容保持不变 -->
             <el-table 
               :data="currentPageData" 
-              style="width: 100%" 
+              class="data-table" 
               border 
               v-loading="dataLoading" 
               stripe 
               max-height="400"
-              class="data-table"
               @row-click="viewMessageDetail"
               :header-cell-style="{ backgroundColor: '#f5f7fa', color: '#606266', fontWeight: '600' }">
               <el-table-column prop="time" label="时间" width="160" sortable>
@@ -246,7 +249,7 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="type" label="提取内容" width="100">
+              <el-table-column prop="type" label="消息类型" width="100">
                 <template #default="{ row }">
                   <el-tag :type="getMessageTypeTag(row.type)" size="small" effect="light">
                     {{ row.type }}
@@ -296,7 +299,7 @@
               <template #image>
                 <el-icon><Document /></el-icon>
               </template>
-              <el-button type="primary" @click="handleDataCollectionChange(true)" v-if="managementEnabled">
+              <el-button type="primary" @click="handleDataCollectionChange(true)" v-if="aiStatus">
                 启用数据收集
               </el-button>
             </el-empty>
@@ -311,6 +314,7 @@
       title="智能模板配置"
       width="60%"
       :close-on-click-modal="false">
+      <!-- 对话框内容保持不变 -->
       <el-form label-position="top">
         <el-form-item label="原始消息内容">
           <el-input
@@ -402,6 +406,7 @@
       v-model="messageDetailVisible"
       title="消息详情"
       width="50%">
+      <!-- 对话框内容保持不变 -->
       <el-descriptions :column="1" border v-if="selectedMessage" class="message-details">
         <el-descriptions-item label="发送时间">
           <div class="detail-item">
@@ -437,6 +442,7 @@
 </template>
 
 <script setup>
+// JavaScript 代码保持不变
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, computed, onMounted, watch } from 'vue'
 import { 
@@ -446,13 +452,10 @@ import {
   Message, Microphone, VideoCamera, Delete
 } from '@element-plus/icons-vue'
 
-// ===== 响应式数据 =====
-const selectedGroup = ref('')
-const managementEnabled = ref(false)
 const dataCollectionEnabled = ref(false)
-const aiStatus = ref(false) // 新增：管理状态
-const isTakeoverLoading = ref(false) // 新增：接管加载状态
-const contactPerson = ref('') // 新增：接管联系人
+const aiStatus = ref(false) // 管理状态
+const isTakeoverLoading = ref(false) // 接管加载状态
+const contactPerson = ref('') // 接管联系人
 const regexRules = ref([
   { 
     originalMessage: '我叫张三，电话13800138000，住在北京市朝阳区', 
@@ -522,7 +525,7 @@ const selectedMessage = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-// 新增筛选相关变量
+// 筛选相关变量
 const selectedGroupFilter = ref('')
 const dateRangeFilter = ref([])
 const availableGroups = ref(['技术交流群', '产品讨论组', '运营团队', '客服中心', '测试群组'])
@@ -584,10 +587,26 @@ const hasCollectedData = computed(() => {
   return Array.isArray(collectedData.value) && collectedData.value.length > 0
 })
 
+// ===== 事件处理 =====
+const handleSwitchChange = (enabled) => {
+  isTakeoverLoading.value = true
+  
+  // 模拟API调用
+  setTimeout(() => {
+    isTakeoverLoading.value = false
+    if (enabled && !contactPerson.value.trim()) {
+      ElMessage.warning('请输入接管联系人姓名')
+      aiStatus.value = false
+      return
+    }
+    
+    ElMessage.success(enabled ? '管理已启用' : '管理已禁用')
+  }, 800)
+}
 
 const handleDataCollectionChange = (enabled) => {
-  if (enabled && !managementEnabled.value) {
-    ElMessage.warning('请先选择并启用群聊管理')
+  if (enabled && !aiStatus.value) {
+    ElMessage.warning('请先启用管理功能')
     dataCollectionEnabled.value = false
     return
   }
@@ -600,8 +619,8 @@ const handleDataCollectionChange = (enabled) => {
 }
 
 const handleMonitoringChange = (enabled) => {
-  if (enabled && !managementEnabled.value) {
-    ElMessage.warning('请先选择并启用群聊管理')
+  if (enabled && !aiStatus.value) {
+    ElMessage.warning('请先启用管理功能')
     monitoringEnabled.value = false
     return
   }
@@ -707,10 +726,10 @@ const removeSensitiveWord = (index) => {
   ElMessage.info('敏感词已删除')
 }
 
-// 删除规则
+// 删除收集的数据
 const deleteRule = (row) => {
   if (!row) {
-    ElMessage.error('无效的规则数据')
+    ElMessage.error('无效的数据')
     return
   }
   
@@ -723,7 +742,7 @@ const deleteRule = (row) => {
       type: 'warning'
     }
   ).then(() => {
-    // 这里实现实际的删除逻辑
+    // 实现实际的删除逻辑
     const index = collectedData.value.findIndex(item => 
       item.time === row.time && 
       item.sender === row.sender && 
@@ -769,6 +788,7 @@ const analyzeMessage = () => {
   ElMessage.info('深度分析功能开发中')
 }
 
+// ===== 工具函数 =====
 const getAvatarUrl = (sender) => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sender)}`
 }
@@ -857,7 +877,7 @@ const saveCollectionTemplate = () => {
 // ===== 生命周期钩子 =====
 onMounted(() => {
   // 初始化操作
-  console.log('群组管理视图已加载')
+  console.log('数据收集配置视图已加载')
   
   // 确保所有响应式数据都是正确的类型
   if (!Array.isArray(regexRules.value)) {
@@ -872,9 +892,9 @@ onMounted(() => {
 })
 
 // 监听数据变化
-watch(managementEnabled, (newVal) => {
+watch(aiStatus, (newVal) => {
   if (newVal) {
-    console.log('群聊管理已启用:', selectedGroup.value)
+    console.log('管理功能已启用')
   }
 })
 
@@ -984,6 +1004,30 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   margin-bottom: 8px;
 }
 
+/* 数据收集配置行 - 确保在同一行显示 */
+.data-collection-row .el-col {
+  display: flex;
+  align-items: center;
+}
+
+.inline-form-item {
+  width: 100%;
+}
+
+.inline-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+}
+
+.contact-input {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
 /* 状态控件优化 */
 .status-control {
   display: flex;
@@ -991,21 +1035,9 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   gap: 12px;
 }
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
 .status-text {
   font-size: 14px;
   color: var(--el-text-color-regular);
-}
-
-.status-toggle {
-  display: flex;
-  align-items: center;
 }
 
 /* 输入框和控件间距优化 */
@@ -1208,6 +1240,32 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   color: var(--el-text-color-primary);
 }
 
+/* 舆情监控开关增加间距 */
+.monitoring-switch-item {
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--el-border-color-light);
+  margin-bottom: 16px !important;
+}
+
+.monitoring-switch {
+  margin-left: 20px;
+}
+
+/* 筛选行保持在同一行 */
+.filter-row {
+  flex-wrap: nowrap;
+}
+
+.filter-select {
+  min-width: 180px;
+  margin-bottom: 0;
+}
+
+.date-picker-filter {
+  min-width: 300px;
+  margin-bottom: 0;
+}
+
 /* 确保所有元素都有合适的间距 */
 .el-button {
   margin: 4px;
@@ -1325,6 +1383,15 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
     width: 100%;
     margin: 4px 0;
   }
+  
+  /* 响应式下保持控件在一行但允许换行 */
+  .inline-controls {
+    flex-wrap: wrap;
+  }
+  
+  .status-control {
+    margin-bottom: 12px;
+  }
 }
 
 /* 动画效果 */
@@ -1360,17 +1427,5 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 /* 表格行悬停效果 */
 :deep(.el-table__body tr:hover>td) {
   background-color: var(--el-color-primary-light-9) !important;
-}
-
-/* 卡片标题渐变效果 */
-.card-header::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 60px;
-  height: 100%;
-  background: linear-gradient(90deg, transparent 0%, var(--el-bg-color) 100%);
-  pointer-events: none;
 }
 </style>
