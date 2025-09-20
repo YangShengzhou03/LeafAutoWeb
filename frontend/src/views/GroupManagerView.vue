@@ -9,7 +9,7 @@
               <div class="card-header">
                 <div class="header-title">
                   <el-icon class="feature-icon data-collection"><Collection /></el-icon>
-                  <span>数据收集配置</span>
+                  <span>系统功能配置</span>
                 </div>
               </div>
             </template>
@@ -17,19 +17,30 @@
             <el-form label-position="top" class="data-collection-form">
               <el-row :gutter="20" class="data-collection-row">
                 <el-col :span="24">
-                  <el-form-item label="数据收集配置" class="inline-form-item">
+                  <el-form-item label="系统功能控制" class="inline-form-item">
                     <div class="controls-row inline-controls">
-                      <el-input v-model="contactPerson" placeholder="输入接管联系人姓名"
-                        :disabled="isTakeoverLoading || !aiStatus" class="contact-input"></el-input>
+                      <el-input v-model="contactPerson" placeholder="输入待管理群聊"
+                       class="contact-input"></el-input>
+                      
+                      <!-- 管理状态开关 - 保持原生样式 -->
                       <div class="status-control">
-                        <el-switch v-model="aiStatus" active-color="#3b82f6" inactive-color="#d1d5db"
+                        <el-switch v-model="aiStatus" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
                         <span class="status-text">{{ aiStatus ? '管理已启用' : '管理已禁用' }}</span>
                       </div>
+                      
+                      <!-- 数据收集开关 - 保持原生样式 -->
                       <div class="status-control">
-                        <el-switch v-model="dataCollectionEnabled" active-color="#3b82f6" inactive-color="#d1d5db"
+                        <el-switch v-model="dataCollectionEnabled" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleDataCollectionChange" :disabled="!aiStatus"></el-switch>
                         <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集已禁用' }}</span>
+                      </div>
+                      
+                      <!-- 舆情监控开关 - 保持原生样式 -->
+                      <div class="status-control">
+                        <el-switch v-model="monitoringEnabled" active-color="#409eff" inactive-color="#dcdfe6"
+                          @change="handleMonitoringChange" :disabled="!aiStatus"></el-switch>
+                        <span class="status-text">{{ monitoringEnabled ? '舆情监控已启用' : '舆情监控已禁用' }}</span>
                       </div>
                     </div>
                   </el-form-item>
@@ -37,7 +48,7 @@
               </el-row>
             </el-form>
 
-            <!-- 其他内容保持不变 -->
+            <!-- 收集规则部分 -->
             <el-form label-position="top" class="rules-form">
               <el-form-item label="收集规则">
                 <div class="rule-actions">
@@ -90,19 +101,7 @@
             </template>
 
             <el-form label-position="top" class="monitoring-form">
-              <el-form-item class="monitoring-switch-item">
-                <el-row justify="space-between" align="middle">
-                  <span class="switch-label">启用舆情监控</span>
-                  <el-switch
-                    v-model="monitoringEnabled"
-                    @change="handleMonitoringChange"
-                    active-color="var(--success-color)"
-                    class="monitoring-switch"
-                  />
-                </el-row>
-              </el-form-item>
-
-              <!-- 修改: 移除v-if条件，始终显示敏感词管理区域 -->
+              <!-- 敏感词管理区域 -->
               <el-form-item label="敏感词管理">
                 <div class="sensitive-word-header">
                   <span>敏感词列表</span>
@@ -214,7 +213,7 @@
               </div>
             </template>
 
-            <!-- 表格内容保持不变 -->
+            <!-- 表格内容 -->
             <el-table 
               :data="currentPageData" 
               class="data-table" 
@@ -314,7 +313,6 @@
       title="智能模板配置"
       width="60%"
       :close-on-click-modal="false">
-      <!-- 对话框内容保持不变 -->
       <el-form label-position="top">
         <el-form-item label="原始消息内容">
           <el-input
@@ -406,7 +404,6 @@
       v-model="messageDetailVisible"
       title="消息详情"
       width="50%">
-      <!-- 对话框内容保持不变 -->
       <el-descriptions :column="1" border v-if="selectedMessage" class="message-details">
         <el-descriptions-item label="发送时间">
           <div class="detail-item">
@@ -442,7 +439,6 @@
 </template>
 
 <script setup>
-// JavaScript 代码保持不变
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, computed, onMounted, watch } from 'vue'
 import { 
@@ -452,6 +448,7 @@ import {
   Message, Microphone, VideoCamera, Delete
 } from '@element-plus/icons-vue'
 
+// 响应式数据
 const dataCollectionEnabled = ref(false)
 const aiStatus = ref(false) // 管理状态
 const isTakeoverLoading = ref(false) // 接管加载状态
@@ -530,9 +527,8 @@ const selectedGroupFilter = ref('')
 const dateRangeFilter = ref([])
 const availableGroups = ref(['技术交流群', '产品讨论组', '运营团队', '客服中心', '测试群组'])
 
-// ===== 计算属性 =====
+// 计算属性
 const filteredData = computed(() => {
-  // 确保collectedData是数组
   if (!Array.isArray(collectedData.value)) {
     console.warn('collectedData不是数组', collectedData.value)
     return []
@@ -564,7 +560,6 @@ const filteredData = computed(() => {
 })
 
 const currentPageData = computed(() => {
-  // 确保filteredData是数组
   if (!Array.isArray(filteredData.value)) {
     return []
   }
@@ -575,7 +570,6 @@ const currentPageData = computed(() => {
 })
 
 const totalDataCount = computed(() => {
-  // 确保filteredData是数组
   if (!Array.isArray(filteredData.value)) {
     return 0
   }
@@ -587,7 +581,7 @@ const hasCollectedData = computed(() => {
   return Array.isArray(collectedData.value) && collectedData.value.length > 0
 })
 
-// ===== 事件处理 =====
+// 事件处理
 const handleSwitchChange = (enabled) => {
   isTakeoverLoading.value = true
   
@@ -694,7 +688,6 @@ const addSensitiveWord = () => {
     return
   }
   
-  // 确保sensitiveWordsList是数组
   if (!Array.isArray(sensitiveWordsList.value)) {
     sensitiveWordsList.value = []
   }
@@ -710,13 +703,11 @@ const addSensitiveWord = () => {
 }
 
 const removeSensitiveWord = (index) => {
-  // 确保sensitiveWordsList是数组
   if (!Array.isArray(sensitiveWordsList.value)) {
     console.warn('sensitiveWordsList不是数组')
     return
   }
   
-  // 确保索引有效
   if (index < 0 || index >= sensitiveWordsList.value.length) {
     console.warn('无效的索引:', index)
     return
@@ -742,7 +733,6 @@ const deleteRule = (row) => {
       type: 'warning'
     }
   ).then(() => {
-    // 实现实际的删除逻辑
     const index = collectedData.value.findIndex(item => 
       item.time === row.time && 
       item.sender === row.sender && 
@@ -756,7 +746,6 @@ const deleteRule = (row) => {
       ElMessage.error('未找到要删除的数据')
     }
   }).catch(() => {
-    // 用户取消删除
     ElMessage.info('操作已取消')
   })
 }
@@ -788,7 +777,7 @@ const analyzeMessage = () => {
   ElMessage.info('深度分析功能开发中')
 }
 
-// ===== 工具函数 =====
+// 工具函数
 const getAvatarUrl = (sender) => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sender)}`
 }
@@ -824,8 +813,6 @@ const autoLearnPattern = () => {
   // 模拟智能学习过程
   setTimeout(() => {
     patternLearning.value = false
-    // 这里应该根据原始消息和提取内容生成正则表达式
-    // 简化示例：生成一个基础的正则表达式
     generatedRegex.value = '姓名[:：]?\\s*([^\\s，,]+)\\s*[，,]?\\s*电话[:：]?\\s*(1[3-9]\\d{9})'
     extractedValues.value = {
       '姓名': '张三',
@@ -859,7 +846,6 @@ const saveCollectionTemplate = () => {
     return
   }
   
-  // 确保regexRules是数组
   if (!Array.isArray(regexRules.value)) {
     regexRules.value = []
   }
@@ -874,9 +860,8 @@ const saveCollectionTemplate = () => {
   ElMessage.success('模板保存成功')
 }
 
-// ===== 生命周期钩子 =====
+// 生命周期钩子
 onMounted(() => {
-  // 初始化操作
   console.log('数据收集配置视图已加载')
   
   // 确保所有响应式数据都是正确的类型
@@ -936,7 +921,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   padding-right: 12px;
 }
 
-/* 卡片样式优化 */
+/* 卡片样式优化 - 统一间距和对齐 */
 .el-card {
   margin-bottom: 24px;
   border-radius: 12px;
@@ -950,7 +935,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   transform: translateY(-2px);
 }
 
-/* 卡片头部优化 */
+/* 卡片头部优化 - 整齐对齐 */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -982,7 +967,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   padding: 0 20px;
 }
 
-/* 表单样式优化 */
+/* 表单样式优化 - 统一内边距和对齐 */
 .data-collection-form,
 .rules-form,
 .monitoring-form {
@@ -1004,7 +989,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   margin-bottom: 8px;
 }
 
-/* 数据收集配置行 - 确保在同一行显示 */
+/* 数据收集配置行 - 整齐排列控件 */
 .data-collection-row .el-col {
   display: flex;
   align-items: center;
@@ -1018,8 +1003,9 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
+  padding: 12px 0;
 }
 
 .contact-input {
@@ -1028,19 +1014,21 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   margin-bottom: 0;
 }
 
-/* 状态控件优化 */
+/* 状态控件优化 - 保持开关原生样式，优化文字对齐 */
 .status-control {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 4px 0;
 }
 
 .status-text {
   font-size: 14px;
   color: var(--el-text-color-regular);
+  white-space: nowrap;
 }
 
-/* 输入框和控件间距优化 */
+/* 其他样式保持整齐一致 */
 .el-input,
 .el-select,
 .el-date-picker {
@@ -1052,7 +1040,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   color: var(--el-text-color-secondary);
 }
 
-/* 按钮组和操作区域优化 */
 .rule-actions {
   margin-bottom: 20px;
   padding: 0 20px;
@@ -1070,7 +1057,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   padding: 0 20px;
 }
 
-/* 敏感词列表优化 */
 .sensitive-words-list {
   min-height: 80px;
   max-height: 150px;
@@ -1095,7 +1081,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   box-shadow: var(--el-box-shadow-light);
 }
 
-/* 表格区域优化 */
 .data-table {
   margin-top: 20px;
   border-radius: 8px;
@@ -1108,7 +1093,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   font-size: 14px;
 }
 
-/* 表格单元格优化 */
 .time-cell,
 .sender-cell {
   display: flex;
@@ -1132,7 +1116,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   color: var(--el-text-color-secondary);
 }
 
-/* 按钮样式优化 */
 .detail-btn,
 .delete-btn {
   font-size: 13px;
@@ -1153,7 +1136,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   font-weight: 500;
 }
 
-/* 页脚和分页优化 */
 .table-footer {
   padding: 24px 20px;
   border-top: 1px solid var(--el-border-color-lighter);
@@ -1166,14 +1148,12 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   gap: 8px;
 }
 
-/* 空状态优化 */
 .empty-state {
   padding: 60px 0;
   margin: 20px 0;
   color: var(--el-text-color-secondary);
 }
 
-/* 对话框优化 */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -1192,7 +1172,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   padding: 0 20px;
 }
 
-/* 详情展示优化 */
 .detail-item {
   display: flex;
   align-items: center;
@@ -1211,7 +1190,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   border: 1px solid var(--el-border-color-light);
 }
 
-/* 特殊状态优化 */
 .word-count {
   font-size: 13px;
   color: var(--el-text-color-secondary);
@@ -1240,18 +1218,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   color: var(--el-text-color-primary);
 }
 
-/* 舆情监控开关增加间距 */
-.monitoring-switch-item {
-  padding-bottom: 16px;
-  border-bottom: 1px dashed var(--el-border-color-light);
-  margin-bottom: 16px !important;
-}
-
-.monitoring-switch {
-  margin-left: 20px;
-}
-
-/* 筛选行保持在同一行 */
 .filter-row {
   flex-wrap: nowrap;
 }
@@ -1266,7 +1232,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   margin-bottom: 0;
 }
 
-/* 确保所有元素都有合适的间距 */
 .el-button {
   margin: 4px;
   transition: all 0.2s ease;
@@ -1285,12 +1250,10 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   transform: scale(1.05);
 }
 
-/* 表格操作按钮间距 */
 .el-table__cell .el-button {
   margin: 0 4px;
 }
 
-/* 对话框内表单间距 */
 .el-dialog .el-form-item {
   padding: 0;
   margin-bottom: 24px;
@@ -1300,7 +1263,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   margin-bottom: 0;
 }
 
-/* 滚动条统一优化 */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -1314,7 +1276,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   background-color: var(--el-fill-color-blank);
 }
 
-/* 响应式布局调整 */
+/* 响应式优化 - 保持小屏幕上的整齐布局 */
 @media (max-width: 768px) {
   .app-container {
     padding: 16px;
@@ -1384,17 +1346,16 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
     margin: 4px 0;
   }
   
-  /* 响应式下保持控件在一行但允许换行 */
   .inline-controls {
     flex-wrap: wrap;
+    gap: 16px;
   }
   
   .status-control {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 }
 
-/* 动画效果 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -1405,7 +1366,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   opacity: 0;
 }
 
-/* 加载状态优化 */
 :deep(.el-loading-mask) {
   background-color: rgba(255, 255, 255, 0.8);
 }
@@ -1415,7 +1375,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   height: 42px;
 }
 
-/* 表单验证状态 */
 :deep(.el-form-item.is-error .el-input__inner) {
   border-color: var(--el-color-error);
 }
@@ -1424,7 +1383,6 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   border-color: var(--el-color-success);
 }
 
-/* 表格行悬停效果 */
 :deep(.el-table__body tr:hover>td) {
   background-color: var(--el-color-primary-light-9) !important;
 }
