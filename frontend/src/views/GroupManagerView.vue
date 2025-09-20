@@ -64,7 +64,7 @@
                 </div>
                 
                 <!-- 正则规则表格 -->
-                <el-table :data="regexRules" class="rules-table" empty-text="暂无规则，请添加" stripe>
+                <el-table :data="regexRules" class="rules-table" empty-text="暂无规则，快添加试试吧" stripe>
                   <el-table-column prop="originalMessage" label="原始消息" width="250" />
                   <el-table-column prop="pattern" label="正则表达式" />
                   <el-table-column prop="extractedContent" label="提取内容" width="200" />
@@ -146,22 +146,6 @@
                         {{ word }}
                       </el-tag>
                     </transition-group>
-                    <el-empty 
-                      v-if="sensitiveWordsList.length === 0" 
-                      description="暂无敏感词"
-                      :image-size="60" 
-                      class="empty-state">
-                      <template #image>
-                        <el-icon><Key /></el-icon>
-                      </template>
-                      <el-button 
-                        type="text" 
-                        @click="importSensitiveWords"
-                        class="import-btn">
-                        <el-icon><Document /></el-icon>
-                        导入敏感词
-                      </el-button>
-                    </el-empty>
                   </div>
                 </div>
               </el-form-item>
@@ -631,11 +615,6 @@ const deleteRegexRule = (index) => {
   })
 }
 
-const importSensitiveWords = () => {
-  ElMessage.info('敏感词导入功能开发中')
-  // 这里可以实现文件上传功能，读取文件中的敏感词并添加到列表中
-}
-
 // 已有的添加敏感词方法
 const addSensitiveWord = () => {
   const word = newSensitiveWord.value.trim()
@@ -765,17 +744,30 @@ const extractContent = (message) => {
 }
 
 const autoLearnPattern = () => {
+  if (!originalMessage.value.trim()) {
+    ElMessage.warning('请先输入原始消息内容')
+    return
+  }
+  
+  if (!collectionTemplate.value.trim()) {
+    ElMessage.warning('请先输入需要提取的内容')
+    return
+  }
+  
   patternLearning.value = true
-  // 模拟智能学习过程
-  setTimeout(() => {
-    patternLearning.value = false
-    generatedRegex.value = '姓名[:：]?\\s*([^\\s，,]+)\\s*[，,]?\\s*电话[:：]?\\s*(1[3-9]\\d{9})'
-    extractedValues.value = {
-      '姓名': '张三',
-      '电话': '13800138000'
-    }
-    ElMessage.success('学习完成')
-  }, 1500)
+  
+  // 使用统一的API函数调用后端Python服务进行智能学习
+  autoLearnPatternAPI(originalMessage.value, collectionTemplate.value)
+    .then(data => {
+      patternLearning.value = false
+      generatedRegex.value = data.regex || ''
+      extractedValues.value = data.extracted_values || {}
+      ElMessage.success('学习完成')
+    })
+    .catch(error => {
+      patternLearning.value = false
+      ElMessage.error(`学习失败：${error.message}`)
+    })
 }
 
 const showPatternHelp = () => {
@@ -862,6 +854,72 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
     console.log('功能状态变化 - 数据收集:', dataEnabled, '舆情监控:', monitorEnabled)
   }
 })
+
+// API调用函数
+function getCollectedDataAPI(groupId = '', dateRange = []) {
+  let url = '/api/group/get-collected-data?'
+  if (groupId) url += `group_id=${groupId}&`
+  if (dateRange && dateRange.length > 0) {
+    url += `start_date=${dateRange[0]}&end_date=${dateRange[1]}&`
+  }
+  
+  return fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('获取收集的数据失败')
+      }
+      return response.json()
+    })
+}
+
+function getRegexRulesAPI() {
+  return fetch(`/api/group/get-regex-rules`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('获取规则列表失败')
+      }
+      return response.json()
+    })
+}
+
+function getSensitiveWordsAPI() {
+  return fetch(`/api/group/get-sensitive-words`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('获取敏感词列表失败')
+      }
+      return response.json()
+    })
+}
+
+function getAvailableGroupsAPI() {
+  return fetch(`/api/group/get-available-groups`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('获取可用群组失败')
+      }
+      return response.json()
+    })
+}
+
+function autoLearnPatternAPI(originalMessage, targetContent) {
+  return fetch('/api/group/auto-learn-pattern', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      original_message: originalMessage,
+      target_content: targetContent
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('智能学习失败')
+    }
+    return response.json()
+  })
+}
 </script>
 
 <style scoped>
@@ -1125,7 +1183,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 .sensitive-words-list {
-  max-height: 150px;
+  min-height: 75px;
   min-width: 75vw;
   overflow-y: auto;
   padding: 16px 20px;

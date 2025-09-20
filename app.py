@@ -23,6 +23,80 @@ from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
                           load_home_data, load_reply_history, load_tasks,
                           save_ai_settings, save_reply_history, update_task_status)
 from logging_config import get_logger
+import re
+
+# 辅助函数：根据原始消息和目标内容生成基于结构的正则表达式
+def generate_structure_based_regex(original_message, target_items):
+    """生成能够捕获相似结构但不同内容的正则表达式"""
+    try:
+        # 找到目标内容在原始消息中的位置
+        positions = []
+        for item in target_items:
+            start_pos = original_message.find(item)
+            if start_pos != -1:
+                positions.append((item, start_pos, start_pos + len(item)))
+        
+        # 按位置排序
+        positions.sort(key=lambda x: x[1])
+        
+        if not positions:
+            return None
+        
+        # 构建正则表达式，保留目标内容前后的上下文
+        regex_parts = []
+        last_end = 0
+        
+        for i, (item, start, end) in enumerate(positions):
+            # 添加目标内容前的上下文
+            prefix = original_message[last_end:start]
+            if prefix:
+                regex_parts.append(re.escape(prefix))
+            
+            # 对于目标内容，使用捕获组并允许匹配任何内容
+            # 根据用户需求，我们需要更灵活的匹配模式
+            if item.isdigit():
+                # 数字使用\d+匹配
+                regex_parts.append("(\\d+)")
+            else:
+                # 非数字使用.*?匹配，这样可以捕获任何字符（非贪婪模式）
+                regex_parts.append("(.*?)")
+            
+            last_end = end
+        
+        # 添加最后一个目标内容后的上下文
+        suffix = original_message[last_end:]
+        if suffix:
+            regex_parts.append(re.escape(suffix))
+        
+        # 组合成完整的正则表达式
+        regex_pattern = ''.join(regex_parts)
+        
+        # 为了提高匹配的准确性，添加开始和结束标记
+        if regex_pattern:
+            regex_pattern = "^" + regex_pattern + "$"
+        
+        return regex_pattern
+    except Exception as e:
+        logger.error(f"生成结构型正则表达式失败: {e}")
+        return None
+
+# 辅助函数：使用正则表达式从消息中提取值
+def extract_values_with_regex(message, regex_pattern):
+    """使用正则表达式从消息中提取值"""
+    try:
+        extracted_values = {}
+        
+        # 使用正则表达式匹配
+        match = re.search(regex_pattern, message)
+        if match:
+            # 提取所有捕获组的值
+            for i, value in enumerate(match.groups(), 1):
+                extracted_values[f"项目{i}"] = value
+        
+        return extracted_values
+    except Exception as e:
+        logger.error(f"提取值失败: {e}")
+        return {}
 from task_scheduler import (start_task_scheduler, stop_task_scheduler,
                             task_scheduler)
 from wechat_instance import (get_status_info, get_wechat_instance,
@@ -767,6 +841,7 @@ from group_manager import (
     export_group_messages, export_group_files, export_group_images, 
     export_group_voices, export_group_videos, export_group_links
 )
+import re
 
 # 群聊管理API
 @app.route("/api/group/select", methods=["POST"])
@@ -846,6 +921,51 @@ def api_auto_learn_pattern():
         return jsonify({"success": True, "message": message}), 200
     else:
         return jsonify({"success": False, "error": message}), 400
+
+@app.route("/api/group/auto-learn-pattern", methods=["POST"])
+@handle_api_errors
+def api_auto_learn_pattern_from_content():
+    """根据提供的原始消息和目标内容自动学习模式，建立正则表达式"""
+    try:
+        data = request.json
+        original_message = data.get("original_message", "")
+        target_content = data.get("target_content", "")
+        
+        if not original_message or not target_content:
+            return jsonify({"success": False, "error": "原始消息和目标内容不能为空"}), 400
+        
+        # 解析目标内容，按逗号分隔
+        target_items = [item.strip() for item in target_content.split("，") if item.strip()]
+        
+        if not target_items:
+            return jsonify({"success": False, "error": "无法从目标内容中提取有效信息"}), 400
+        
+        # 提取目标内容在原始消息中的位置和上下文，生成能够捕获相似结构的正则表达式
+        regex_pattern = generate_structure_based_regex(original_message, target_items)
+        
+        # 如果生成了有效的正则表达式，则返回
+        if regex_pattern:
+            # 提取示例值进行预览
+            extracted_values = extract_values_with_regex(original_message, regex_pattern)
+            return jsonify({"success": True, "regex": regex_pattern, "extracted_values": extracted_values}), 200
+        else:
+            # 如果无法生成基于结构的正则表达式，则回退到简单匹配模式
+            patterns = []
+            for item in target_items:
+                # 转义正则表达式特殊字符
+                escaped_item = re.escape(item)
+                # 为每个目标项创建一个捕获组
+                patterns.append(f"({escaped_item})")
+            
+            if patterns:
+                regex_pattern = "|".join(patterns)
+                return jsonify({"success": True, "regex": regex_pattern}), 200
+            else:
+                return jsonify({"success": False, "error": "未能生成有效的正则表达式"}), 400
+            
+    except Exception as e:
+        logger.error(f"自动学习模式失败: {str(e)}")
+        return jsonify({"success": False, "error": f"操作失败: {str(e)}"}), 500
 
 
 @app.route("/api/group/export-collected-data", methods=["POST"])
