@@ -17,8 +17,8 @@
             <li class="menu-item" :class="{ active: currentRoute === '/ai_takeover' }">
               <router-link to="/ai_takeover">AI 运营</router-link>
             </li>
-            <li class="menu-item" :class="{ active: currentRoute === '/other_box' }">
-              <router-link to="/other_box">更多功能</router-link>
+            <li class="menu-item" :class="{ active: currentRoute === '/group_manager' }">
+              <router-link to="/group_manager">群聊管家</router-link>
             </li>
           </ul>
         </nav>

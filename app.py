@@ -186,6 +186,27 @@ def other_box():
         return redirect("http://localhost:8080/other_box")
 
 
+@app.route("/group_manager")
+def group_manager():
+    """
+    群聊管家页面路由
+    在开发环境中重定向到前端页面，在生产环境中提供静态文件服务
+
+    Returns:
+        Response: 重定向到前端群聊管家页面或提供静态文件
+    """
+    if is_frozen():
+        # 在打包环境中，提供静态文件服务
+        frontend_dist_path = get_resource_path('frontend/dist')
+        if frontend_dist_path.exists():
+            return send_from_directory(str(frontend_dist_path), 'index.html')
+        else:
+            return "前端文件未找到，请确保前端文件已正确打包", 500
+    else:
+        # 在开发环境中，重定向到前端开发服务器
+        return redirect("http://localhost:8080/group_manager")
+
+
 @app.route("/api/tasks", methods=["GET"])
 def get_tasks():
     """
@@ -738,35 +759,252 @@ def get_chart_data(time_range):
     )
 
 
-# 导出功能API
+# 群聊管家API
+from group_manager import (
+    select_group, toggle_message_recording, set_collection_date, 
+    save_collection_template, auto_learn_pattern, export_collected_data,
+    start_sentiment_monitoring, stop_sentiment_monitoring, check_sentiment_monitoring_status,
+    export_group_messages, export_group_files, export_group_images, 
+    export_group_voices, export_group_videos, export_group_links
+)
+
+# 群聊管理API
+@app.route("/api/group/select", methods=["POST"])
+@handle_api_errors
+def api_select_group():
+    """选择要管理的群聊"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, message = select_group(group_name)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+
+@app.route("/api/group/toggle-recording", methods=["POST"])
+@handle_api_errors
+def api_toggle_message_recording():
+    """开启/关闭群消息记录"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    enabled = data.get("enabled", False)
+    
+    success, message = toggle_message_recording(group_name, enabled)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+
+# 群消息数据收集API
+@app.route("/api/group/set-collection-date", methods=["POST"])
+@handle_api_errors
+def api_set_collection_date():
+    """设置收集日期"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    date = data.get("date", "")
+    
+    success, result = set_collection_date(group_name, date)
+    
+    if success:
+        return jsonify({"success": True, "data": result}), 200
+    else:
+        return jsonify({"success": False, "error": result}), 400
+
+
+@app.route("/api/group/save-template", methods=["POST"])
+@handle_api_errors
+def api_save_collection_template():
+    """保存收集模板"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    template = data.get("template", "")
+    
+    success, message = save_collection_template(group_name, template)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+
+@app.route("/api/group/auto-learn", methods=["POST"])
+@handle_api_errors
+def api_auto_learn_pattern():
+    """自动学习模式，建立正则表达式"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, message = auto_learn_pattern(group_name)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+
+@app.route("/api/group/export-collected-data", methods=["POST"])
+@handle_api_errors
+def api_export_collected_data():
+    """导出收集的数据"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    date = data.get("date", "")
+    
+    success, result = export_collected_data(group_name, date)
+    
+    if success:
+        return jsonify({"success": True, "file_path": result}), 200
+    else:
+        return jsonify({"success": False, "error": result}), 400
+
+
+# 舆情监控API
+@app.route("/api/group/start-monitoring", methods=["POST"])
+@handle_api_errors
+def api_start_sentiment_monitoring():
+    """开始舆情监控"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    sensitive_words = data.get("sensitive_words", "")
+    
+    success, message = start_sentiment_monitoring(group_name, sensitive_words)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+
+@app.route("/api/group/stop-monitoring", methods=["POST"])
+@handle_api_errors
+def api_stop_sentiment_monitoring():
+    """停止舆情监控"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, message = stop_sentiment_monitoring(group_name)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+
+@app.route("/api/group/check-monitoring-status", methods=["POST"])
+@handle_api_errors
+def api_check_sentiment_monitoring_status():
+    """检查舆情监控状态"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, status = check_sentiment_monitoring_status(group_name)
+    
+    if success:
+        return jsonify({"success": True, "status": status}), 200
+    else:
+        return jsonify({"success": False, "error": status}), 400
+
+
+# 更新导出功能API
 @app.route("/api/export/group-members", methods=["GET"])
 def export_group_members():
     return jsonify({"error": "群成员导出功能正在建设中"}), 501
 
 
-@app.route("/api/export/group-messages", methods=["GET"])
-def export_group_messages():
-    return jsonify({"error": "消息记录导出功能正在建设中"}), 501
+@app.route("/api/export/group-messages", methods=["POST"])
+@handle_api_errors
+def api_export_group_messages():
+    """导出群消息"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, file_path = export_group_messages(group_name)
+    
+    if success:
+        return jsonify({"success": True, "file_path": file_path}), 200
+    else:
+        return jsonify({"success": False, "error": file_path}), 400
 
 
-@app.route("/api/export/group-files", methods=["GET"])
-def export_group_files():
-    return jsonify({"error": "文件数据导出功能正在建设中"}), 501
+@app.route("/api/export/group-files", methods=["POST"])
+@handle_api_errors
+def api_export_group_files():
+    """导出群文件"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, file_path = export_group_files(group_name)
+    
+    if success:
+        return jsonify({"success": True, "file_path": file_path}), 200
+    else:
+        return jsonify({"success": False, "error": file_path}), 400
 
 
-@app.route("/api/export/group-images", methods=["GET"])
-def export_group_images():
-    return jsonify({"error": "图片数据导出功能正在建设中"}), 501
+@app.route("/api/export/group-images", methods=["POST"])
+@handle_api_errors
+def api_export_group_images():
+    """导出群图片"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, file_path = export_group_images(group_name)
+    
+    if success:
+        return jsonify({"success": True, "file_path": file_path}), 200
+    else:
+        return jsonify({"success": False, "error": file_path}), 400
 
 
-@app.route("/api/export/group-voices", methods=["GET"])
-def export_group_voices():
-    return jsonify({"error": "语音数据导出功能正在建设中"}), 501
+@app.route("/api/export/group-voices", methods=["POST"])
+@handle_api_errors
+def api_export_group_voices():
+    """导出群语音"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, file_path = export_group_voices(group_name)
+    
+    if success:
+        return jsonify({"success": True, "file_path": file_path}), 200
+    else:
+        return jsonify({"success": False, "error": file_path}), 400
 
 
-@app.route("/api/export/group-videos", methods=["GET"])
-def export_group_videos():
-    return jsonify({"error": "视频数据导出功能正在建设中"}), 501
+@app.route("/api/export/group-videos", methods=["POST"])
+@handle_api_errors
+def api_export_group_videos():
+    """导出群视频"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, file_path = export_group_videos(group_name)
+    
+    if success:
+        return jsonify({"success": True, "file_path": file_path}), 200
+    else:
+        return jsonify({"success": False, "error": file_path}), 400
+
+
+@app.route("/api/export/group-links", methods=["POST"])
+@handle_api_errors
+def api_export_group_links():
+    """导出群链接"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    success, file_path = export_group_links(group_name)
+    
+    if success:
+        return jsonify({"success": True, "file_path": file_path}), 200
+    else:
+        return jsonify({"success": False, "error": file_path}), 400
 
 
 @app.route("/api/message-quota", methods=["GET"])
