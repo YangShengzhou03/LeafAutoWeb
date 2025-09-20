@@ -55,12 +55,11 @@
               <el-form-item label="收集规则">
                 <div class="rule-actions">
                   <el-button type="primary" size="mid" @click="showAddRuleDialog">
-                    <el-icon><Plus /></el-icon>
                     添加规则
                   </el-button>
                   <el-button size="mid" @click="showRegexHelp">
                     <el-icon><QuestionFilled /></el-icon>
-                    正则帮助
+                    功能帮助
                   </el-button>
                 </div>
                 
@@ -71,7 +70,7 @@
                   <el-table-column prop="extractedContent" label="提取内容" width="200" />
                   <el-table-column label="操作" width="120" align="center">
                     <template #default="scope">
-                      <el-button type="danger" size="mid" @click="deleteRegexRule(scope.$index)">
+                      <el-button type="danger" size="small" @click="deleteRegexRule(scope.$index)">
                         <el-icon><Delete /></el-icon>
                         删除
                       </el-button>
