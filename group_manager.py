@@ -1,600 +1,883 @@
-"""
-群聊管家模块
-处理群聊管理、消息收集、舆情监控等功能
-"""
-
-import os
-import re
 import json
-import datetime
-import pandas as pd
-from flask import jsonify, request, send_file, current_app
-from werkzeug.utils import secure_filename
-import logging
-from functools import wraps
+import os
+import random
+import re
+import threading
+import time
+import uuid
+import httpx
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from data_manager import add_ai_history
+from logging_config import get_logger
 
-# 数据存储路径
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-GROUP_DATA_DIR = os.path.join(DATA_DIR, 'group_data')
-MONITORING_DIR = os.path.join(DATA_DIR, 'monitoring')
+# Initialize logger
+logger = get_logger(__name__)
 
-# 确保数据目录存在
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(GROUP_DATA_DIR, exist_ok=True)
-os.makedirs(MONITORING_DIR, exist_ok=True)
-
-# 群聊数据存储
-group_data = {}
-# 群聊消息记录状态
-message_recording_status = {}
-# 收集模板
-collection_templates = {}
-# 自动学习模式
-auto_learning_patterns = {}
-# 舆情监控状态
-sentiment_monitoring_status = {}
-# 敏感词列表
-sensitive_words_list = {}
+# Constants
+DATA_DIR = "data"
+MESSAGE_TYPES = ["friend", "group"]
+SYSTEM_MESSAGE_TYPE = "sys"
+SELF_SENDER = "Self"
+SEND_EMOTION_PREFIX = "SendEmotion:"
+STATUS_FAILED = "失败"
+ACCOUNT_LEVELS = {
+    "free": 100,
+    "basic": 1000,
+    "enterprise": float("inf")
+}
+# 存储消息的文件路径
+MESSAGES_FILE = os.path.join(DATA_DIR, "group_messages.txt")
 
 
-def handle_errors(f):
-    """错误处理装饰器"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error in {f.__name__}: {str(e)}")
-            return jsonify({"error": str(e)}), 500
-    return decorated_function
-
-
-def get_group_data_path(group_name):
-    """获取群聊数据存储路径"""
-    return os.path.join(GROUP_DATA_DIR, secure_filename(group_name))
-
-
-def get_monitoring_data_path(group_name):
-    """获取监控数据存储路径"""
-    return os.path.join(MONITORING_DIR, secure_filename(group_name))
-
-
-def save_group_data(group_name, data):
-    """保存群聊数据"""
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
+class MessageInfo:
+    """消息信息类，封装消息相关操作"""
     
-    data_file = os.path.join(group_path, 'data.json')
-    with open(data_file, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    def __init__(self, message: Any):
+        self.message = message
     
-    logger.info(f"Saved data for group: {group_name}")
+    def get_sender(self) -> str:
+        """获取消息发送者"""
+        if hasattr(self.message, 'sender'):
+            return self.message.sender
+        elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
+            return self.message.get('sender', '')
+        return ""
+    
+    def get_content(self) -> str:
+        """获取消息内容"""
+        if hasattr(self.message, 'content'):
+            return self.message.content or ""
+        elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
+            return self.message.get("content", "")
+        return str(self.message)
+    
+    def get_type(self) -> str:
+        """获取消息类型"""
+        if hasattr(self.message, "type"):
+            return self.message.type.lower()
+        return ""
+    
+    def is_system_message(self) -> bool:
+        """检查是否为系统消息"""
+        return self.get_type() == SYSTEM_MESSAGE_TYPE
+    
+    def is_self_message(self) -> bool:
+        """检查是否为自己发送的消息"""
+        return self.get_sender() == SELF_SENDER
+    
+    def is_empty_content(self) -> bool:
+        """检查消息内容是否为空"""
+        return not self.get_content().strip()
+    
+    def is_valid_message_type(self) -> bool:
+        """检查消息类型是否有效"""
+        return self.get_type() in MESSAGE_TYPES
 
 
-def load_group_data(group_name):
-    """加载群聊数据"""
-    group_path = get_group_data_path(group_name)
-    data_file = os.path.join(group_path, 'data.json')
+class WorkerConfig:
+    """工作线程配置类，用于减少参数数量"""
     
-    if os.path.exists(data_file):
-        with open(data_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    
-    return {}
+    def __init__(
+        self,
+        wx_instance: Any,
+        receiver: str,
+        only_at: bool = False,
+        group_at_reply: bool = False,
+        min_reply_interval: int = 0,
+        sensitive_words: List[str] = None
+    ):
+        self.wx_instance = wx_instance
+        self.receiver = receiver
+        self.only_at = only_at
+        self.group_at_reply = group_at_reply
+        self.min_reply_interval = min_reply_interval
+        self.sensitive_words = sensitive_words or []
 
 
-def save_monitoring_data(group_name, data):
-    """保存监控数据"""
-    monitoring_path = get_monitoring_data_path(group_name)
-    os.makedirs(monitoring_path, exist_ok=True)
+class MessageHistory:
+    """消息历史记录类，用于减少参数数量"""
     
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    data_file = os.path.join(monitoring_path, f"{today}.json")
+    def __init__(self, sender: str, message: str, reply: str, 
+                 status: str, response_time: float):
+        self.sender = sender
+        self.message = message
+        self.reply = reply
+        self.status = status
+        self.response_time = response_time
+        self.timestamp = datetime.now().isoformat()
+        self.id = str(uuid.uuid4())
+        self.time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    with open(data_file, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    
-    logger.info(f"Saved monitoring data for group: {group_name}, date: {today}")
-
-
-def load_monitoring_data(group_name, date=None):
-    """加载监控数据"""
-    monitoring_path = get_monitoring_data_path(group_name)
-    
-    if date:
-        data_file = os.path.join(monitoring_path, f"{date}.json")
-        if os.path.exists(data_file):
-            with open(data_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-    else:
-        # 获取最新的监控数据
-        if os.path.exists(monitoring_path):
-            files = [f for f in os.listdir(monitoring_path) if f.endswith('.json')]
-            if files:
-                latest_file = sorted(files)[-1]
-                with open(os.path.join(monitoring_path, latest_file), 'r', encoding='utf-8') as f:
-                    return json.load(f)
-    
-    return {}
-
-
-# ===== 群聊管理功能 =====
-def select_group(group_name):
-    """选择要管理的群聊"""
-    if not group_name:
-        return False, "群聊名称不能为空"
-    
-    # 初始化群聊数据
-    if group_name not in group_data:
-        group_data[group_name] = {
-            "name": group_name,
-            "created_at": datetime.datetime.now().isoformat(),
-            "message_recording": False,
-            "collection_template": "",
-            "auto_learning": False,
-            "monitoring": False,
-            "sensitive_words": []
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            "sender": self.sender,
+            "message": self.message,
+            "reply": self.reply,
+            "status": self.status,
+            "responseTime": self.response_time,
+            "timestamp": self.timestamp,
+            "id": self.id,
+            "time": self.time
         }
-        save_group_data(group_name, group_data[group_name])
-    
-    logger.info(f"Selected group: {group_name}")
-    return True, f"已选择群聊: {group_name}"
 
 
-def toggle_message_recording(group_name, enabled):
-    """开启/关闭群消息记录"""
-    if not group_name:
-        return False, "请先选择群聊"
+class WorkerState:
+    """工作线程状态类，用于减少实例属性数量"""
     
-    if group_name not in group_data:
-        group_data[group_name] = load_group_data(group_name)
+    def __init__(self):
+        self.listen_list: List[str] = []
+        self.last_reply_info = {"content": "", "time": 0}
+        self._message_lock = threading.Lock()
+        self._stop_event = threading.Event()
+        self._is_running = False
+        self._paused = False
+        self._pause_cond = threading.Condition(threading.Lock())
+        self.start_time: Optional[float] = None
     
-    group_data[group_name]["message_recording"] = enabled
-    message_recording_status[group_name] = enabled
-    save_group_data(group_name, group_data[group_name])
+    def get_message_lock(self) -> threading.Lock:
+        """获取消息锁"""
+        return self._message_lock
     
-    status = "开启" if enabled else "关闭"
-    logger.info(f"Message recording {status} for group: {group_name}")
-    return True, f"消息记录已{status}"
+    def get_stop_event(self) -> threading.Event:
+        """获取停止事件"""
+        return self._stop_event
+    
+    def is_running(self) -> bool:
+        """检查是否正在运行"""
+        return self._is_running
+    
+    def set_running(self, running: bool) -> None:
+        """设置运行状态"""
+        self._is_running = running
+    
+    def is_paused(self) -> bool:
+        """检查是否暂停"""
+        return self._paused
+    
+    def set_paused(self, paused: bool) -> None:
+        """设置暂停状态"""
+        self._paused = paused
+    
+    def get_pause_condition(self) -> threading.Condition:
+        """获取暂停条件"""
+        return self._pause_cond
+    
+    def get_start_time(self) -> Optional[float]:
+        """获取启动时间"""
+        return self.start_time
+    
+    def set_start_time(self, start_time: Optional[float]) -> None:
+        """设置启动时间"""
+        self.start_time = start_time
 
 
-# ===== 群消息数据收集功能 =====
-def set_collection_date(group_name, date):
-    """设置收集日期"""
-    if not group_name:
-        return False, "请先选择群聊"
+class GroupWorkerThread:
+    """
+    群聊管理工作线程类
+    负责处理群聊消息的存储和舆情监控功能
+
+    Attributes:
+        config: 工作线程配置对象
+        at_me: @我的标识
+        receiver_list: 接收者列表
+        state: 工作线程状态
+        rules_manager: 规则管理器
+        reply_handler: 回复处理器
+    """
+
+    def __init__(self, config: WorkerConfig):
+        """
+        初始化群聊管理工作线程
+
+        Args:
+            config: 工作线程配置对象
+
+        Raises:
+            ValueError: 当wx_instance参数为空时抛出
+        """
+        if not config.wx_instance:
+            raise ValueError("wx_instance参数不能为空")
+
+        self.config = config
+        self.at_me = f"@{self.config.wx_instance.nickname}"
+        self.receiver_list = [
+            r.strip() for r in self.config.receiver.replace("，", ",").split(",") if r.strip()
+        ]
+        
+        # 初始化状态对象
+        self.state = WorkerState()
+        
+        # 初始化规则管理器和回复处理器
+        rules_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_DIR, "rules.json")
+        self.rules_manager = RulesManager(rules_file_path)
+        self.reply_handler = ReplyHandler(self.config.wx_instance)
+
+        # 确保数据目录存在
+        os.makedirs(DATA_DIR, exist_ok=True)
+
+        logger.info(
+            "Group worker thread initialized: receiver=%s, only_at=%s, group_at_reply=%s, min_interval=%ss",
+            self.config.receiver,
+            self.config.only_at,
+            self.config.group_at_reply,
+            self.config.min_reply_interval,
+        )
+
+    def update_rules(self) -> bool:
+        """更新自定义规则，使规则变更立即生效
+        
+        Returns:
+            bool: 规则是否有变化
+        """
+        return self.rules_manager.update_rules()
+
+    def init_listeners(self) -> bool:
+        """
+        初始化消息监听器
+
+        Returns:
+            bool: True表示初始化成功，False表示失败
+        """
+        if self._should_stop():
+            logger.warning("Listener initialization interrupted")
+            return False
+
+        for target in self.receiver_list:
+            if self._should_stop():
+                return False
+
+            try:
+                self.config.wx_instance.AddListenChat(who=target)
+                self.state.listen_list.append(target)
+                logger.info("Added listener: %s", target)
+            except (ValueError, TypeError, AttributeError, KeyError) as e:
+                logger.error("Failed to add listener: %s, error: %s", target, str(e))
+                # 清理已添加的监听器
+                self._cleanup()
+                return False
+            except OSError as e:
+                logger.error("OS error adding listener: %s, error: %s", target, str(e))
+                # 清理已添加的监听器
+                self._cleanup()
+                return False
+            except RuntimeError as e:
+                logger.error("Runtime error adding listener: %s, error: %s", target, str(e))
+                # 清理已添加的监听器
+                self._cleanup()
+                return False
+        return True
+
+    def _get_chat_name(self, who: str) -> str:
+        """
+        获取聊天名称
+
+        Args:
+            who: 聊天对象标识
+
+        Returns:
+            str: 聊天名称，如果无法获取则返回原标识
+        """
+        if not hasattr(self.config.wx_instance, "GetChatName"):
+            return who
+        return self.config.wx_instance.GetChatName(who)
+
+    def _is_target_message(self, message: Any) -> bool:
+        """
+        检查消息是否来自目标联系人
+
+        Args:
+            message: 消息对象
+
+        Returns:
+            bool: True表示来自目标联系人，False表示不是
+        """
+        try:
+            msg_info = MessageInfo(message)
+            sender = msg_info.get_sender()
+            # 检查发送者是否在接收者列表中
+            return sender in self.receiver_list
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            logger.error("Error checking target message: %s", e)
+            return False
+        except OSError as e:
+            logger.error("OS error checking target message: %s", e)
+            return False
+        except Exception as e:
+            logger.error("Unexpected error checking target message: %s", e)
+            return False
+
+    def _append_to_file(self, content: str) -> None:
+        """
+        将内容追加到文件
+        
+        Args:
+            content: 要追加的内容
+        """
+        try:
+            with open(MESSAGES_FILE, 'a', encoding='utf-8') as f:
+                f.write(content + '\n')
+        except IOError as e:
+            logger.error(f"写入文件失败: {e}")
+
+    def _check_sensitive_words(self, content: str) -> bool:
+        """
+        检查内容是否包含敏感词
+        
+        Args:
+            content: 要检查的内容
+            
+        Returns:
+            bool: 是否包含敏感词
+        """
+        if not self.config.sensitive_words:
+            return False
+            
+        # 检查是否包含任何敏感词
+        for word in self.config.sensitive_words:
+            if re.search(re.escape(word), content, re.IGNORECASE):
+                return True
+        return False
+
+    def _process_message(self, msg: Any = None, chat: Any = None) -> None:
+        """
+        处理接收到的消息
+        
+        Args:
+            msg: 消息内容
+            chat: 消息窗口
+        """
+        try:
+            if msg is None:
+                return
+                
+            # 获取聊天信息
+            chat_info = self._get_chat_info(chat)
+            is_group = chat_info["type"] == "group"
+            group_name = chat.who
+
+            # 记录消息接收时间戳
+            receive_time = time.time()
+            time_str = datetime.fromtimestamp(receive_time).strftime("%Y-%m-%d %H:%M:%S")
+
+            # 获取消息内容
+            msg_info = MessageInfo(msg)
+            message_content = msg_info.get_content()
+            sender = msg_info.get_sender()
+
+            # 检查only_at功能（仅针对群聊有效）
+            if self.config.only_at and is_group:
+                if self.at_me not in message_content:
+                    logger.debug("[群聊管理] 群聊消息未包含@我，忽略消息: %s", message_content)
+                    return
+                message_content = message_content.replace(self.at_me, "").strip()
+
+            # 检查最小处理间隔（仅对相同内容的消息）
+            if self._should_ignore_due_to_interval(message_content):
+                logger.info("[群聊管理] 相同内容未达到最小处理间隔，忽略消息: %s", message_content)
+                return
+
+            # 1. 舆情监控：检查是否包含敏感词
+            if self._check_sensitive_words(message_content):
+                print("危险")  # 包含敏感词时打印"危险"
+                logger.warning(f"[舆情监控] 检测到敏感内容: {message_content[:50]}... 发送者: {sender}")
+
+            # 2. 存储消息到txt文件
+            message_entry = f"[{time_str}] 发送者: {sender} | 群聊: {group_name if is_group else '私聊'} | 内容: {message_content}"
+            self._append_to_file(message_entry)
+            logger.debug(f"[消息存储] 已保存消息: {message_entry[:100]}")
+
+            # 应用自定义规则（如果需要回复）
+            custom_reply = self.rules_manager.apply_custom_rules(message_content)
+            if custom_reply:
+                # 发送自定义回复
+                reply_sent = False
+                if is_group:
+                    # 根据group_at_reply设置决定是否@对方
+                    at_user = sender if self.config.group_at_reply else ""
+                    reply_sent = self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
+                else:
+                    reply_sent = self.reply_handler.send_reply(sender, custom_reply)
+                
+                # 根据发送结果记录历史记录
+                if reply_sent:
+                    self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                    # 计算实际响应时间
+                    actual_response_time = round(time.time() - receive_time, 2)
+                    # 记录回复历史（使用实际响应时间）
+                    history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
+                    self._record_history(history)
+                else:
+                    # 发送失败，记录未回复状态
+                    history = MessageHistory(sender, message_content, custom_reply, "not_replied", 0)
+                    self._record_history(history)
+                return
+
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            logger.error("处理消息时发生错误: %s", e)
+            # 记录错误历史
+            if msg is not None:
+                msg_info = MessageInfo(msg)
+                history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
+                self._record_history(history)
+        except OSError as e:
+            logger.error("OS error processing message: %s", e)
+            # 记录错误历史
+            if msg is not None:
+                msg_info = MessageInfo(msg)
+                history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
+                self._record_history(history)
+        except RuntimeError as e:
+            logger.error("Runtime error processing message: %s", e)
+            # 记录错误历史
+            if msg is not None:
+                msg_info = MessageInfo(msg)
+                history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
+                self._record_history(history)
     
-    if not date:
-        return False, "请选择日期"
+    def _get_chat_info(self, chat: Any) -> Dict[str, str]:
+        """获取聊天信息
+        
+        Args:
+            chat: 聊天对象
+            
+        Returns:
+            Dict[str, str]: 包含聊天类型和名称的字典
+        """
+        try:
+            if chat and hasattr(chat, 'ChatInfo'):
+                info = chat.ChatInfo()
+                return {
+                    "type": info.get("chat_type", ""),
+                    "name": info.get("chat_name", "")
+                }
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            logger.error("获取聊天信息失败: %s", e)
+        except OSError as e:
+            logger.error("OS error getting chat info: %s", e)
+        except Exception as e:
+            logger.error("Unexpected error getting chat info: %s", e)
+        
+        return {"type": "", "name": ""}
     
-    if group_name not in group_data:
-        group_data[group_name] = load_group_data(group_name)
+    def _should_ignore_due_to_interval(self, message_content: str) -> bool:
+        """检查是否因处理间隔而忽略消息
+        
+        Args:
+            message_content: 消息内容
+            
+        Returns:
+            bool: 是否应该忽略
+        """
+        if self.config.min_reply_interval <= 0:
+            return False
+            
+        current_time = time.time()
+        return (
+            message_content == self.state.last_reply_info["content"] and
+            current_time - self.state.last_reply_info["time"] < self.config.min_reply_interval
+        )
     
-    # 检查是否有收集的数据
-    has_data = check_collected_data(group_name, date)
-    
-    logger.info(f"Set collection date for group {group_name}: {date}, has data: {has_data}")
-    return True, {"has_data": has_data}
+    def _record_history(self, history: MessageHistory) -> None:
+        """记录处理历史
+        
+        Args:
+            history: 消息历史对象
+        """
+        add_ai_history(history.to_dict())
+
+    def run(self) -> None:
+        """
+        主运行循环
+        负责初始化监听器、处理消息和清理资源
+        """
+        self.state.set_running(True)
+        self.state.set_start_time(time.time())
+        logger.info("Group worker thread started")
+
+        try:
+            if not self.init_listeners():
+                self._cleanup()
+                self.state.set_running(False)
+                logger.error("Group worker thread initialization failed")
+                return
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            logger.error("Initialization failed: %s", str(e))
+            self._cleanup()
+            self.state.set_running(False)
+            return
+        except OSError as e:
+            logger.error("OS error during initialization: %s", str(e))
+            self._cleanup()
+            self.state.set_running(False)
+            return
+        except RuntimeError as e:
+            logger.error("Runtime error during initialization: %s", str(e))
+            self._cleanup()
+            self.state.set_running(False)
+            return
+
+        # 主消息循环
+        while not self._should_stop():
+            try:
+                # 检查是否暂停
+                if self.state.is_paused():
+                    self.wait_for_resume()
+                    continue
+
+                # 定期检查规则更新
+                if int(time.time()) % 10 == 0:  # 每10秒检查一次
+                    self.update_rules()
+
+                # 获取消息
+                messages_dict = self.config.wx_instance.GetListenMessage()
+                if not messages_dict:
+                    time.sleep(0.1)  # 避免CPU占用过高
+                    continue
+
+                # 处理每条消息
+                for chat, messages in messages_dict.items():
+                    if self._should_stop():
+                        break
+                    for message in messages:
+                        if self._should_stop():
+                            break
+
+                        # 使用线程锁保护消息处理
+                        with self.state.get_message_lock():
+                            # 检查是否为需要忽略的消息
+                            if self._is_ignored_message(message):
+                                continue
+                            # 处理消息
+                            self._process_message(message, chat)
+
+            except (ValueError, TypeError, AttributeError, KeyError) as e:
+                logger.error("Error in main loop: %s", e)
+                if self._should_stop():
+                    break
+                time.sleep(1)  # 出错时暂停一段时间
+            except OSError as e:
+                logger.error("OS error in main loop: %s", e)
+                if self._should_stop():
+                    break
+                time.sleep(1)  # 出错时暂停一段时间
+            except RuntimeError as e:
+                logger.error("Runtime error in main loop: %s", e)
+                if self._should_stop():
+                    break
+                time.sleep(1)  # 出错时暂停一段时间
+
+        # 清理资源
+        self._cleanup()
+        self.state.set_running(False)
+        logger.info("Group worker thread stopped")
+
+    def _is_ignored_message(self, message: Any) -> bool:
+        """
+        检查是否为需要忽略的消息
+
+        Args:
+            message: 消息对象
+
+        Returns:
+            bool: True表示需要忽略，False表示需要处理
+        """
+        try:
+            msg_info = MessageInfo(message)
+            
+            # 忽略系统消息
+            if msg_info.is_system_message():
+                return True
+
+            # 忽略自己发送的消息
+            if msg_info.is_self_message():
+                return True
+
+            # 检查消息类型是否有效
+            if not msg_info.is_valid_message_type():
+                return True
+
+            # 检查消息内容是否为空
+            if msg_info.is_empty_content():
+                return True
+
+            return False
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            logger.error("Error checking ignored message: %s", e)
+            return True
+        except OSError as e:
+            logger.error("OS error checking ignored message: %s", e)
+            return True
+        except Exception as e:
+            logger.error("Unexpected error checking ignored message: %s", e)
+            return True
+
+    def _should_stop(self) -> bool:
+        """
+        检查是否应该停止线程
+
+        Returns:
+            bool: True表示应该停止，False表示继续运行
+        """
+        return self.state.get_stop_event().is_set() or not self.state.is_running()
+
+    def _cleanup(self) -> None:
+        """
+        清理监听器资源
+        """
+        try:
+            for target in self.state.listen_list:
+                if hasattr(self.config.wx_instance, "RemoveListenChat"):
+                    try:
+                        self.config.wx_instance.RemoveListenChat(who=target)
+                    except (ValueError, TypeError, AttributeError, KeyError) as e:
+                        logger.error("Failed to remove listener for %s: %s", target, e)
+                    except OSError as e:
+                        logger.error("OS error removing listener for %s: %s", target, e)
+                    except RuntimeError as e:
+                        logger.error("Runtime error removing listener for %s: %s", target, e)
+            self.state.listen_list.clear()
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            logger.error("清理监听时出错: %s", str(e))
+        except OSError as e:
+            logger.error("OS error cleaning up listeners: %s", str(e))
+        except RuntimeError as e:
+            logger.error("Runtime error cleaning up listeners: %s", str(e))
+
+    def pause(self) -> None:
+        """
+        暂停工作线程
+        """
+        with self.state.get_pause_condition():
+            self.state.set_paused(True)
+
+    def resume(self) -> None:
+        """
+        恢复工作线程
+        """
+        with self.state.get_pause_condition():
+            self.state.set_paused(False)
+            self.state.get_pause_condition().notify()
+
+    def is_paused(self) -> bool:
+        """
+        检查线程是否暂停
+
+        Returns:
+            bool: True表示已暂停，False表示未暂停
+        """
+        return self.state.is_paused()
+
+    def wait_for_resume(self) -> None:
+        """
+        等待线程恢复
+        """
+        with self.state.get_pause_condition():
+            while self.state.is_paused():
+                self.state.get_pause_condition().wait()
+
+    def stop(self) -> None:
+        """
+        停止工作线程
+        """
+        self.state.get_stop_event().set()
+        self.state.set_running(False)
+        self.resume()
+
+    def is_running(self) -> bool:
+        """
+        检查线程是否运行
+
+        Returns:
+            bool: True表示正在运行，False表示已停止
+        """
+        return self.state.is_running()
+
+    def get_uptime(self) -> int:
+        """
+        获取线程运行时间
+
+        Returns:
+            int: 运行时间（秒），如果未启动则返回0
+        """
+        return int(time.time() - self.state.get_start_time()) if self.state.get_start_time() else 0
 
 
-def check_collected_data(group_name, date):
-    """检查是否有收集的数据"""
-    group_path = get_group_data_path(group_name)
-    data_file = os.path.join(group_path, f"collected_data_{date}.json")
-    
-    return os.path.exists(data_file)
+class GroupWorkerManager:
+    """
+    群聊管理工作管理器类（单例模式）
+    负责管理多个群聊管理工作线程的创建、停止和状态查询
 
+    Attributes:
+        _instance: 单例实例
+        workers: 工作线程字典
+        lock: 线程安全锁
+    """
 
-def save_collection_template(group_name, template):
-    """保存收集模板"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    if not template.strip():
-        return False, "模板内容不能为空"
-    
-    if group_name not in group_data:
-        group_data[group_name] = load_group_data(group_name)
-    
-    group_data[group_name]["collection_template"] = template
-    collection_templates[group_name] = template
-    save_group_data(group_name, group_data[group_name])
-    
-    logger.info(f"Saved collection template for group {group_name}")
-    return True, "模板保存成功"
+    _instance: Optional['GroupWorkerManager'] = None
+    workers: Dict[str, GroupWorkerThread] = {}
+    lock: threading.Lock = threading.Lock()
 
+    def __new__(cls) -> 'GroupWorkerManager':
+        """
+        单例模式实现
 
-def auto_learn_pattern(group_name):
-    """自动学习模式，建立正则表达式"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    if group_name not in group_data:
-        group_data[group_name] = load_group_data(group_name)
-    
-    template = group_data[group_name].get("collection_template", "")
-    if not template:
-        return False, "请先设置收集模板"
-    
-    # 根据模板生成正则表达式
-    # 这里简化处理，实际应用中可能需要更复杂的逻辑
-    fields = [field.strip() for field in template.split(',')]
-    pattern_parts = []
-    
-    for field in fields:
-        # 为每个字段生成匹配模式
-        if "姓名" in field or "名字" in field:
-            pattern_parts.append(r"([\u4e00-\u9fa5]{2,4})")  # 匹配中文名字
-        elif "电话" in field or "手机" in field:
-            pattern_parts.append(r"(1[3-9]\d{9})")  # 匹配手机号
-        elif "邮箱" in field:
-            pattern_parts.append(r"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})")  # 匹配邮箱
-        elif "地址" in field:
-            pattern_parts.append(r"([\u4e00-\u9fa5]{2,10}[市省区][\u4e00-\u9fa5]{2,10}[区县][\u4e00-\u9fa5]{2,20})")  # 匹配地址
+        Returns:
+            GroupWorkerManager: 单例实例
+        """
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.workers = {}
+            cls._instance.lock = threading.Lock()
+        return cls._instance
+
+    def start_worker(self, config: WorkerConfig) -> bool:
+        """
+        启动群聊管理工作线程
+
+        Args:
+            config: 工作线程配置对象
+
+        Returns:
+            bool: True表示启动成功，False表示启动失败
+        """
+        with self.lock:
+            worker_key = f"{config.receiver}_group"
+            if worker_key in self.workers:
+                return False
+
+            worker = GroupWorkerThread(config)
+            self.workers[worker_key] = worker
+
+            try:
+                thread = threading.Thread(target=worker.run, daemon=True)
+                thread.start()
+
+                # 等待线程启动
+                time.sleep(0.1)
+                if not worker.is_running():
+                    del self.workers[worker_key]
+                    return False
+
+                # 等待初始化完成，最多等待5秒
+                max_wait_time = 5
+                wait_interval = 0.1
+                total_wait_time = 0
+                
+                while total_wait_time < max_wait_time:
+                    # 检查线程是否仍在运行且初始化是否完成
+                    if not worker.is_running():
+                        # 线程已经停止，说明初始化失败
+                        del self.workers[worker_key]
+                        return False
+                    
+                    # 检查监听器是否已成功添加
+                    if hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
+                        # 监听器已添加，初始化成功
+                        return True
+                    
+                    # 继续等待
+                    time.sleep(wait_interval)
+                    total_wait_time += wait_interval
+                
+                # 超时后，检查线程状态
+                if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
+                    return True
+                else:
+                    # 初始化超时，停止线程并清理
+                    worker.stop()
+                    del self.workers[worker_key]
+                    return False
+
+            except (ValueError, TypeError, AttributeError, KeyError) as e:
+                if worker_key in self.workers:
+                    del self.workers[worker_key]
+                logger.error("Failed to start worker: %s", e)
+                return False
+            except OSError as e:
+                if worker_key in self.workers:
+                    del self.workers[worker_key]
+                logger.error("OS error starting worker: %s", e)
+                return False
+            except RuntimeError as e:
+                if worker_key in self.workers:
+                    del self.workers[worker_key]
+                logger.error("Runtime error starting worker: %s", e)
+                return False
+
+    def stop_worker(self, receiver: str) -> bool:
+        """
+        停止群聊管理工作线程
+
+        Args:
+            receiver: 接收者标识
+
+        Returns:
+            bool: True表示停止成功，False表示未找到对应线程
+        """
+        with self.lock:
+            worker_key = f"{receiver}_group"
+            if worker_key in self.workers:
+                worker = self.workers[worker_key]
+                worker.stop()
+                del self.workers[worker_key]
+                return True
+            return False
+
+    def get_worker_status(self, receiver: str) -> Optional[Dict[str, Any]]:
+        """
+        获取工作线程状态
+
+        Args:
+            receiver: 接收者标识
+
+        Returns:
+            dict: 线程状态信息，如果未找到则返回None
+        """
+        with self.lock:
+            worker_key = f"{receiver}_group"
+            if worker_key in self.workers:
+                worker = self.workers[worker_key]
+                return {
+                    "running": worker.is_running(),
+                    "uptime": worker.get_uptime(),
+                    "paused": worker.is_paused(),
+                }
+            return None
+
+    def get_all_workers(self) -> List[str]:
+        """
+        获取所有工作线程信息
+
+        Returns:
+            List[str]: 所有工作线程的键列表
+        """
+        with self.lock:
+            return list(self.workers.keys())
+
+    def stop_all_workers(self) -> None:
+        """停止所有工作线程"""
+        with self.lock:
+            for worker in self.workers.values():
+                worker.stop()
+            self.workers.clear()
+
+    def update_all_workers_rules(self) -> bool:
+        """通知所有工作线程更新规则
+        
+        Returns:
+            bool: 是否有工作线程更新了规则
+        """
+        updated_count = 0
+        for _, worker in self.workers.items():
+            if worker.update_rules():
+                updated_count += 1
+
+        if updated_count > 0:
+            logger.info("[群聊管理] 已通知 %s 个工作线程更新规则", updated_count)
         else:
-            pattern_parts.append(r"([^\s,]+)")  # 通用匹配
-    
-    pattern = r"\s*".join(pattern_parts)
-    
-    # 保存生成的正则表达式
-    auto_learning_patterns[group_name] = {
-        "template": template,
-        "pattern": pattern,
-        "created_at": datetime.datetime.now().isoformat()
-    }
-    
-    group_data[group_name]["auto_learning"] = True
-    save_group_data(group_name, group_data[group_name])
-    
-    logger.info(f"Auto-learned pattern for group {group_name}: {pattern}")
-    return True, f"自动学习已启动，正则表达式: {pattern}"
+            logger.debug("[群聊管理] 没有工作线程需要更新规则")
 
-
-def export_collected_data(group_name, date):
-    """导出收集的数据"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    if not date:
-        return False, "请选择日期"
-    
-    group_path = get_group_data_path(group_name)
-    data_file = os.path.join(group_path, f"collected_data_{date}.json")
-    
-    if not os.path.exists(data_file):
-        return False, f"未找到 {date} 的收集数据"
-    
-    # 读取收集的数据
-    with open(data_file, 'r', encoding='utf-8') as f:
-        collected_data = json.load(f)
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(collected_data)
-    
-    # 生成Excel文件
-    output_file = os.path.join(group_path, f"collected_data_{date}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported collected data for group {group_name}, date: {date}")
-    return True, output_file
-
-
-# ===== 舆情监控功能 =====
-def start_sentiment_monitoring(group_name, sensitive_words):
-    """开始舆情监控"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    if not sensitive_words.strip():
-        return False, "请输入敏感词"
-    
-    if group_name not in group_data:
-        group_data[group_name] = load_group_data(group_name)
-    
-    # 处理敏感词
-    words = [word.strip() for word in sensitive_words.split(',') if word.strip()]
-    
-    # 保存敏感词列表
-    group_data[group_name]["sensitive_words"] = words
-    group_data[group_name]["monitoring"] = True
-    sensitive_words_list[group_name] = words
-    sentiment_monitoring_status[group_name] = "运行中"
-    
-    save_group_data(group_name, group_data[group_name])
-    
-    logger.info(f"Started sentiment monitoring for group {group_name} with words: {words}")
-    return True, "舆情监控已启动"
-
-
-def stop_sentiment_monitoring(group_name):
-    """停止舆情监控"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    if group_name not in group_data:
-        group_data[group_name] = load_group_data(group_name)
-    
-    group_data[group_name]["monitoring"] = False
-    sentiment_monitoring_status[group_name] = "已停止"
-    
-    save_group_data(group_name, group_data[group_name])
-    
-    logger.info(f"Stopped sentiment monitoring for group {group_name}")
-    return True, "舆情监控已停止"
-
-
-def check_sentiment_monitoring_status(group_name):
-    """检查舆情监控状态"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    status = sentiment_monitoring_status.get(group_name, "未启动")
-    return True, status
-
-
-# ===== 数据导出功能 =====
-def export_group_messages(group_name):
-    """导出群消息"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    # 模拟数据导出
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
-    
-    # 创建示例数据
-    messages = [
-        {"sender": "张三", "content": "大家好，今天天气不错", "time": "2023-06-01 10:30:00"},
-        {"sender": "李四", "content": "是啊，适合出去走走", "time": "2023-06-01 10:32:15"},
-        {"sender": "王五", "content": "有人一起去公园吗？", "time": "2023-06-01 10:35:22"}
-    ]
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(messages)
-    
-    # 生成Excel文件
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    output_file = os.path.join(group_path, f"group_messages_{today}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported messages for group {group_name}")
-    return True, output_file
-
-
-def export_group_files(group_name):
-    """导出群文件"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    # 模拟数据导出
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
-    
-    # 创建示例数据
-    files = [
-        {"name": "项目计划.docx", "size": "2.5MB", "uploader": "张三", "upload_time": "2023-06-01 09:15:00"},
-        {"name": "会议记录.pdf", "size": "1.8MB", "uploader": "李四", "upload_time": "2023-06-01 14:20:00"},
-        {"name": "财务报表.xlsx", "size": "3.2MB", "uploader": "王五", "upload_time": "2023-06-02 11:05:00"}
-    ]
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(files)
-    
-    # 生成Excel文件
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    output_file = os.path.join(group_path, f"group_files_{today}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported files for group {group_name}")
-    return True, output_file
-
-
-def export_group_images(group_name):
-    """导出群图片"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    # 模拟数据导出
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
-    
-    # 创建示例数据
-    images = [
-        {"name": "风景照.jpg", "size": "3.5MB", "uploader": "张三", "upload_time": "2023-06-01 09:15:00"},
-        {"name": "会议照片.png", "size": "2.8MB", "uploader": "李四", "upload_time": "2023-06-01 14:20:00"},
-        {"name": "产品截图.jpeg", "size": "1.2MB", "uploader": "王五", "upload_time": "2023-06-02 11:05:00"}
-    ]
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(images)
-    
-    # 生成Excel文件
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    output_file = os.path.join(group_path, f"group_images_{today}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported images for group {group_name}")
-    return True, output_file
-
-
-def export_group_voices(group_name):
-    """导出群语音"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    # 模拟数据导出
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
-    
-    # 创建示例数据
-    voices = [
-        {"name": "会议录音.mp3", "duration": "15:30", "uploader": "张三", "upload_time": "2023-06-01 09:15:00"},
-        {"name": "语音留言.wav", "duration": "02:45", "uploader": "李四", "upload_time": "2023-06-01 14:20:00"},
-        {"name": "产品介绍.m4a", "duration": "08:12", "uploader": "王五", "upload_time": "2023-06-02 11:05:00"}
-    ]
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(voices)
-    
-    # 生成Excel文件
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    output_file = os.path.join(group_path, f"group_voices_{today}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported voices for group {group_name}")
-    return True, output_file
-
-
-def export_group_videos(group_name):
-    """导出群视频"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    # 模拟数据导出
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
-    
-    # 创建示例数据
-    videos = [
-        {"name": "产品演示.mp4", "duration": "15:30", "size": "125MB", "uploader": "张三", "upload_time": "2023-06-01 09:15:00"},
-        {"name": "会议录像.avi", "duration": "45:20", "size": "380MB", "uploader": "李四", "upload_time": "2023-06-01 14:20:00"},
-        {"name": "培训视频.mkv", "duration": "32:15", "size": "210MB", "uploader": "王五", "upload_time": "2023-06-02 11:05:00"}
-    ]
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(videos)
-    
-    # 生成Excel文件
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    output_file = os.path.join(group_path, f"group_videos_{today}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported videos for group {group_name}")
-    return True, output_file
-
-
-def export_group_links(group_name):
-    """导出群链接"""
-    if not group_name:
-        return False, "请先选择群聊"
-    
-    # 模拟数据导出
-    group_path = get_group_data_path(group_name)
-    os.makedirs(group_path, exist_ok=True)
-    
-    # 创建示例数据
-    links = [
-        {"title": "公司官网", "url": "https://example.com", "sender": "张三", "time": "2023-06-01 10:30:00"},
-        {"title": "产品文档", "url": "https://docs.example.com", "sender": "李四", "time": "2023-06-01 14:20:00"},
-        {"title": "项目代码", "url": "https://github.com/example/project", "sender": "王五", "time": "2023-06-02 11:05:00"}
-    ]
-    
-    # 转换为DataFrame
-    df = pd.DataFrame(links)
-    
-    # 生成Excel文件
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    output_file = os.path.join(group_path, f"group_links_{today}.xlsx")
-    df.to_excel(output_file, index=False)
-    
-    logger.info(f"Exported links for group {group_name}")
-    return True, output_file
-
-
-# ===== 模拟消息处理 =====
-def process_message(group_name, message):
-    """处理群消息，用于模拟数据收集和舆情监控"""
-    if not group_name or group_name not in group_data:
-        return
-    
-    # 如果开启了消息记录，保存消息
-    if group_data[group_name].get("message_recording", False):
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        group_path = get_group_data_path(group_name)
-        os.makedirs(group_path, exist_ok=True)
-        
-        messages_file = os.path.join(group_path, f"messages_{today}.json")
-        
-        # 读取现有消息
-        messages = []
-        if os.path.exists(messages_file):
-            with open(messages_file, 'r', encoding='utf-8') as f:
-                messages = json.load(f)
-        
-        # 添加新消息
-        messages.append({
-            "content": message,
-            "time": datetime.datetime.now().isoformat()
-        })
-        
-        # 保存消息
-        with open(messages_file, 'w', encoding='utf-8') as f:
-            json.dump(messages, f, ensure_ascii=False, indent=2)
-    
-    # 如果开启了自动学习，尝试从消息中提取数据
-    if group_data[group_name].get("auto_learning", False) and group_name in auto_learning_patterns:
-        pattern = auto_learning_patterns[group_name]["pattern"]
-        match = re.search(pattern, message)
-        
-        if match:
-            # 提取数据
-            extracted_data = match.groups()
-            
-            # 保存提取的数据
-            today = datetime.datetime.now().strftime('%Y-%m-%d')
-            group_path = get_group_data_path(group_name)
-            os.makedirs(group_path, exist_ok=True)
-            
-            data_file = os.path.join(group_path, f"collected_data_{today}.json")
-            
-            # 读取现有数据
-            collected_data = []
-            if os.path.exists(data_file):
-                with open(data_file, 'r', encoding='utf-8') as f:
-                    collected_data = json.load(f)
-            
-            # 添加新数据
-            template = auto_learning_patterns[group_name]["template"]
-            fields = [field.strip() for field in template.split(',')]
-            
-            if len(fields) == len(extracted_data):
-                data_entry = {}
-                for i, field in enumerate(fields):
-                    data_entry[field] = extracted_data[i]
-                
-                data_entry["source_message"] = message
-                data_entry["extracted_time"] = datetime.datetime.now().isoformat()
-                
-                collected_data.append(data_entry)
-                
-                # 保存数据
-                with open(data_file, 'w', encoding='utf-8') as f:
-                    json.dump(collected_data, f, ensure_ascii=False, indent=2)
-    
-    # 如果开启了舆情监控，检查敏感词
-    if group_data[group_name].get("monitoring", False) and group_name in sensitive_words_list:
-        for word in sensitive_words_list[group_name]:
-            if word in message:
-                # 发现敏感词，记录到监控数据
-                today = datetime.datetime.now().strftime('%Y-%m-%d')
-                
-                monitoring_data = load_monitoring_data(group_name, today)
-                
-                if "sensitive_words_detected" not in monitoring_data:
-                    monitoring_data["sensitive_words_detected"] = []
-                
-                monitoring_data["sensitive_words_detected"].append({
-                    "word": word,
-                    "message": message,
-                    "time": datetime.datetime.now().isoformat()
-                })
-                
-                save_monitoring_data(group_name, monitoring_data)
-                
-                # 这里可以添加触发后续操作的逻辑
-                logger.warning(f"Detected sensitive word '{word}' in group {group_name}: {message}")
-                break
+        return updated_count > 0

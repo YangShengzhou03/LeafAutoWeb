@@ -1,10 +1,10 @@
 <template>
-  <div class="app-container">
+  <div class="auto-info-container">
     <div class="main-content">
       <!-- 数据收集配置 -->
       <el-row :gutter="24">
         <el-col :span="24">
-          <el-card shadow="hover" class="section-card">
+          <el-card shadow="hover" class="group-config-card">
             <template #header>
               <div class="card-header">
                 <div class="header-title">
@@ -85,7 +85,7 @@
       <!-- 舆情监控配置 -->
       <el-row :gutter="24">
         <el-col :span="24">
-          <el-card shadow="hover" class="section-card">
+          <el-card shadow="hover" class="monitoring-config-card">
             <template #header>
               <div class="card-header">
                 <div class="header-title">
@@ -167,7 +167,7 @@
       <!-- 数据展示区域 -->
       <el-row :gutter="24">
         <el-col :span="24">
-          <el-card shadow="hover" class="section-card">
+          <el-card shadow="hover" class="data-display-card">
             <template #header>
               <div class="card-header">
                 <div class="header-title">
@@ -906,12 +906,10 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 /* 主容器优化 */
-.app-container {
+.auto-info-container {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 24px;
-  background-color: var(--el-bg-color-page);
   min-height: 100vh;
 }
 
@@ -922,17 +920,22 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 }
 
 /* 卡片样式优化 - 统一间距和对齐 */
-.el-card {
-  margin-bottom: 24px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+.group-config-card,
+.monitoring-config-card,
+.data-display-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--border-color);
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: white;
+  margin-bottom: 24px;
 }
 
-.el-card:hover {
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+.group-config-card:hover,
+.monitoring-config-card:hover,
+.data-display-card:hover {
+  box-shadow: 0 12px 28px 0 rgba(0, 0, 0, 0.08), 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  border-color: var(--primary-color);
 }
 
 /* 卡片头部优化 - 整齐对齐 */
@@ -1028,6 +1031,27 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   white-space: nowrap;
 }
 
+/* 按钮样式优化 */
+.el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+}
+
+.el-button {
+  transition: all 0.2s ease;
+  margin: 4px;
+}
+
+.el-button--primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.el-button--primary:hover {
+  background-color: #1e3a8a;
+  border-color: #1e3a8a;
+}
+
 /* 其他样式保持整齐一致 */
 .el-input,
 .el-select,
@@ -1083,14 +1107,27 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 .data-table {
   margin-top: 20px;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
 }
 
 .data-table .el-table__cell {
-  padding: 16px 20px;
+  padding: 12px 20px;
   font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table tr:last-child .el-table__cell {
+  border-bottom: none;
+}
+
+.data-table th {
+  background-color: rgba(30, 64, 175, 0.05);
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 12px 0;
 }
 
 .time-cell,
@@ -1241,6 +1278,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   transform: translateY(-1px);
 }
 
+/* 标签样式优化 */
 .el-tag {
   margin: 6px;
   transition: all 0.2s ease;
@@ -1250,8 +1288,25 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   transform: scale(1.05);
 }
 
+.el-tag--info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--secondary-color);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.el-tag--success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
 .el-table__cell .el-button {
   margin: 0 4px;
+}
+
+/* 表格行悬停效果 */
+.el-table--enable-row-hover .el-table__body tr:hover>td {
+  background-color: rgba(59, 130, 246, 0.08) !important;
 }
 
 .el-dialog .el-form-item {
@@ -1278,7 +1333,7 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 /* 响应式优化 - 保持小屏幕上的整齐布局 */
 @media (max-width: 768px) {
-  .app-container {
+  .auto-info-container {
     padding: 16px;
     height: calc(100vh - 32px);
   }
@@ -1302,19 +1357,10 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
     gap: 12px;
   }
   
-  .el-form-item {
-    padding: 0 16px;
-  }
-  
-  .sensitive-words-list {
-    margin: 0 16px 16px 16px;
-  }
-  
   .card-header {
-    padding: 16px 20px;
     flex-direction: column;
-    gap: 12px;
     align-items: flex-start;
+    gap: 10px;
   }
   
   .header-title {
@@ -1381,9 +1427,5 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 :deep(.el-form-item.is-success .el-input__inner) {
   border-color: var(--el-color-success);
-}
-
-:deep(.el-table__body tr:hover>td) {
-  background-color: var(--el-color-primary-light-9) !important;
 }
 </style>
