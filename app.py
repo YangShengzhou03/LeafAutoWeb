@@ -1049,7 +1049,7 @@ def api_stop_group_management():
                     json.dump(config, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.error(f"更新配置文件失败: {e}")
-            # 即使配置文件更新失败，只要工作线程停止成功，仍然返回成功
+            # 即使配置文件更新失败，但工作线程停止成功，仍然返回成功
         
         return jsonify({"success": True, "message": f"已成功停止管理群聊: {group_name}"}), 200
     else:
@@ -1196,6 +1196,316 @@ def api_export_group_links():
         return jsonify({"success": True, "file_path": file_path}), 200
     else:
         return jsonify({"success": False, "error": file_path}), 400
+
+
+@app.route("/api/message-quota", methods=["GET"])
+@handle_api_errors
+def get_message_quota():
+    """
+    获取消息配额信息
+
+    Returns:
+        Response: JSON格式的消息配额信息
+    """
+    try:
+        from data_manager import get_quota_info
+
+        quota_info = get_quota_info()
+        return jsonify({"success": True, "quota": quota_info}), 200
+    except Exception as e:
+        logger.error(f"获取消息配额失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/export/group-links", methods=["GET"])
+def export_group_links():
+    return jsonify({"error": "链接数据导出功能正在建设中"}), 501
+
+
+@app.route("/api/verify-activation", methods=["POST"])
+@handle_api_errors
+def verify_activation():
+    """
+    验证激活码
+    
+    Request Body:
+        JSON对象包含randomCode和activationCode字段
+    
+    Returns:
+        Response: 验证结果，包含成功状态、版本和过期时间
+    """
+    data = request.json
+    
+    if not data or "randomCode" not in data or "activationCode" not in data:
+        return jsonify({"success": False, "error": "请求参数不完整"}), 400
+    
+    random_code = data["randomCode"]
+    activation_code = data["activationCode"]
+    
+    # 验证randomCode是否为8位数字
+    if not random_code or not random_code.isdigit() or len(random_code) != 8:
+        return jsonify({"success": False, "error": "随机码格式不正确"}), 400
+    
+    # 验证activationCode是否为16位字母数字
+    if not activation_code or not activation_code.isalnum() or len(activation_code) != 16:
+        return jsonify({"success": False, "error": "激活码格式不正确"}), 400
+    
+    try:
+        # 将随机码转换为整数
+        random_num = int(random_code)
+        
+        # 计算basic版和企业版的密钥
+        basic_key = hex(random_num + 1)[2:].upper().zfill(16)
+        enterprise_key = hex(random_num + 2)[2:].upper().zfill(16)
+        
+        # 验证激活码
+        version = None
+        expiry_days = 30  # 默认30天有效期
+        
+        if activation_code == basic_key:
+            version = "basic"
+            expiry_days = 30  # 基础版30天
+        elif activation_code == enterprise_key:
+            version = "enterprise"
+            expiry_days = 90  # 企业版90天
+        else:
+            return jsonify({"success": False, "error": "激活码无效"}), 400
+        
+        # 计算过期时间
+        from datetime import datetime, timedelta
+        expiry_date = (datetime.now() + timedelta(days=expiry_days)).strftime("%Y-%m-%d")
+        
+        # 更新用户账户级别
+        from data_manager import update_account_level
+        update_account_level(version)
+        
+        return jsonify({
+            "success": True,
+            "version": version,
+            "expiryDate": expiry_date
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"激活码验证失败: {e}")
+        return jsonify({"success": False, "error": "激活码验证过程中发生错误"}), 500
+
+
+# 获取配置状态API
+@app.route("/api/group/get-config-status", methods=["GET"])
+@handle_api_errors
+def api_get_config_status():
+    """
+    获取配置状态（群聊管理、数据收集、舆情监控的开关状态和选择的群聊）
+    """
+    import json
+    import os
+    
+    # 读取group_manage.json配置文件
+    config_file = os.path.join(data_dir, "group_manage.json")
+    
+    # 默认为False状态
+    config_status = {
+        "ai_status": False,
+        "data_collection_enabled": False,
+        "monitoring_enabled": False,
+        "selected_group": ""
+    }
+    
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+                
+                # 从配置中提取状态信息
+                config_status["ai_status"] = config_data.get("management_enabled", False)
+                config_status["data_collection_enabled"] = config_data.get("data_collection_enabled", False)
+                config_status["monitoring_enabled"] = config_data.get("sentiment_monitoring_enabled", False)
+                config_status["selected_group"] = config_data.get("selected_group", "")
+        
+        return jsonify(config_status), 200
+    except Exception as e:
+        logger.error(f"读取配置状态失败: {e}")
+        return jsonify(config_status), 200  # 即使失败也返回默认状态
+
+
+# 更新配置状态API
+@app.route("/api/group/update-config-status", methods=["POST"])
+@handle_api_errors
+def api_update_config_status():
+    """
+    更新配置状态（数据收集、舆情监控的开关状态）
+    """
+    import json
+    import os
+    
+    data = request.json
+    data_collection_enabled = data.get("data_collection_enabled", False)
+    monitoring_enabled = data.get("monitoring_enabled", False)
+    
+    # 读取group_manage.json配置文件
+    config_file = os.path.join(data_dir, "group_manage.json")
+    
+    try:
+        config_data = {}
+        if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+        
+        # 更新配置状态
+        config_data["data_collection_enabled"] = data_collection_enabled
+        config_data["sentiment_monitoring_enabled"] = monitoring_enabled
+        
+        # 保存更新后的配置
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"配置状态已更新 - 数据收集: {data_collection_enabled}, 舆情监控: {monitoring_enabled}")
+        return jsonify({"success": True, "message": "配置状态已更新"}), 200
+    except Exception as e:
+        logger.error(f"更新配置状态失败: {e}")
+        return jsonify({"success": False, "error": f"更新配置状态失败: {e}"}), 500
+
+
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Flask应用启动参数')
+    parser.add_argument('--port', type=int, default=5000, help='服务器端口号')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='服务器主机地址')
+    parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    
+    args = parser.parse_args()
+    
+    start_task_scheduler()
+    app.run(debug=args.debug, host=args.host, port=args.port)
+
+# 获取收集的数据API
+@app.route("/api/group/get-collected-data", methods=["GET"])
+@handle_api_errors
+def api_get_collected_data():
+    """获取收集的数据"""
+    group_id = request.args.get('group_id', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    
+    try:
+        from group_manager import export_collected_data
+        
+        # 如果没有指定日期，使用当前日期
+        date_str = start_date if start_date else datetime.now().strftime("%Y-%m-%d")
+        
+        success, result = export_collected_data(group_id, date_str)
+        
+        if success:
+            # 读取导出的数据文件
+            with open(result, 'r', encoding='utf-8') as f:
+                collected_data = json.load(f)
+            
+            return jsonify({
+                "success": True,
+                "data": collected_data,
+                "total": len(collected_data)
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": result,
+                "data": [],
+                "total": 0
+            }), 200
+            
+    except Exception as e:
+        logger.error(f"获取收集的数据失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"获取数据失败: {e}",
+            "data": [],
+            "total": 0
+        }), 500
+
+# 获取正则规则API
+@app.route("/api/group/get-regex-rules", methods=["GET"])
+@handle_api_errors
+def api_get_regex_rules():
+    """获取正则规则列表"""
+    try:
+        # 从配置文件读取正则规则
+        regex_config_file = os.path.join(data_dir, "regex_rules.json")
+        
+        regex_rules = []
+        if os.path.exists(regex_config_file):
+            with open(regex_config_file, 'r', encoding='utf-8') as f:
+                regex_rules = json.load(f)
+        
+        return jsonify({
+            "success": True,
+            "rules": regex_rules
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"获取正则规则失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"获取规则失败: {e}",
+            "rules": []
+        }), 500
+
+# 获取敏感词API
+@app.route("/api/group/get-sensitive-words", methods=["GET"])
+@handle_api_errors
+def api_get_sensitive_words():
+    """获取敏感词列表"""
+    try:
+        # 从配置文件读取敏感词
+        sensitive_config_file = os.path.join(data_dir, "sensitive_words.json")
+        
+        sensitive_words = []
+        if os.path.exists(sensitive_config_file):
+            with open(sensitive_config_file, 'r', encoding='utf-8') as f:
+                sensitive_words = json.load(f)
+        
+        return jsonify({
+            "success": True,
+            "words": sensitive_words
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"获取敏感词失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"获取敏感词失败: {e}",
+            "words": []
+        }), 500
+
+# 获取可用群组API
+@app.route("/api/group/get-available-groups", methods=["GET"])
+@handle_api_errors
+def api_get_available_groups():
+    """获取可用群组列表"""
+    try:
+        from group_manager import get_available_groups
+        
+        success, groups = get_available_groups()
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "groups": groups
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": groups,
+                "groups": []
+            }), 200
+            
+    except Exception as e:
+        logger.error(f"获取可用群组失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"获取群组失败: {e}",
+            "groups": []
+        }), 500
 
 
 @app.route("/api/message-quota", methods=["GET"])

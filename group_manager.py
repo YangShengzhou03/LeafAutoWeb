@@ -30,6 +30,11 @@ RECORDING_DIR = os.path.join(data_dir, "recordings")
 if not os.path.exists(RECORDING_DIR):
     os.makedirs(RECORDING_DIR)
 
+# 聊天记录目录（按天存储）
+CHAT_DATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "chat_date")
+if not os.path.exists(CHAT_DATE_DIR):
+    os.makedirs(CHAT_DATE_DIR)
+
 # Constants
 DATA_DIR = "data"
 MESSAGE_TYPES = ["friend", "group"]
@@ -38,6 +43,22 @@ SELF_SENDER = "Self"
 # 存储消息的文件路径
 def get_messages_file(receiver):
     return os.path.join(RECORDING_DIR, f"{receiver}_messages.txt")
+
+# 获取按天存储的消息文件路径
+def get_daily_messages_file(chat_name: str) -> str:
+    """获取按天存储的消息文件路径
+    
+    Args:
+        chat_name: 聊天名称
+        
+    Returns:
+        str: 文件路径，格式：chat_date/群聊名_YYYY-MM-DD.txt
+    """
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    # 清理文件名中的非法字符
+    safe_chat_name = re.sub(r'[\\/:*?"<>|]', '_', chat_name)
+    filename = f"{safe_chat_name}_{date_str}.txt"
+    return os.path.join(CHAT_DATE_DIR, filename)
 
 
 class MessageInfo:
@@ -322,6 +343,21 @@ class GroupWorkerThread:
         except IOError as e:
             logger.error(f"写入文件失败: {e}")
 
+    def _append_to_daily_file(self, content: str, chat_name: str) -> None:
+        """
+        将内容追加到按天存储的消息文件
+        
+        Args:
+            content: 要追加的内容
+            chat_name: 聊天名称
+        """
+        try:
+            daily_file = get_daily_messages_file(chat_name)
+            with open(daily_file, 'a', encoding='utf-8') as f:
+                f.write(content + '\n')
+        except IOError as e:
+            logger.error(f"写入按天存储文件失败: {e}")
+
     def _check_sensitive_words(self, content: str) -> bool:
         """
         检查内容是否包含敏感词
@@ -377,9 +413,13 @@ class GroupWorkerThread:
             # 2. 存储消息到txt文件
             message_entry = f"[{time_str}] 发送者: {sender} | 群聊: {chat_name if is_group else '私聊'} | 内容: {message_content}"
             self._append_to_file(message_entry)
+            
+            # 3. 按天存储消息到chat_date文件夹
+            self._append_to_daily_file(message_entry, chat_name)
+            
             logger.debug(f"[消息存储] 已保存消息: {message_entry[:100]}")
 
-            # 3. 记录历史（不包含回复信息）
+            # 4. 记录历史（不包含回复信息）
             history = MessageHistory(sender, message_content, chat_name)
             # 不调用_record_history，因为不需要AI历史记录
 
@@ -1260,3 +1300,31 @@ def check_sentiment_monitoring_status(group_name: str) -> tuple:
     except Exception as e:
         logger.error(f"检查舆情监控状态失败: {str(e)}")
         return False, f"操作失败: {str(e)}"
+
+
+def get_available_groups() -> tuple:
+    """获取可用群组列表
+    
+    Returns:
+        tuple: (success, groups_list/error)
+    """
+    try:
+        # 从群聊管理配置文件中获取已配置的群聊
+        groups = []
+        
+        # 检查群聊管理配置文件
+        if os.path.exists(group_manage_config_file):
+            with open(group_manage_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                
+                # 获取所有配置的群聊名称
+                for group_name in config.keys():
+                    if group_name not in ["management_enabled", "data_collection_enabled", "sentiment_monitoring_enabled", "selected_group"]:
+                        groups.append(group_name)
+        
+        # 如果没有配置的群聊，返回空列表
+        return True, groups
+        
+    except Exception as e:
+        logger.error(f"获取可用群组失败: {str(e)}")
+        return False, f"获取群组失败: {str(e)}"
