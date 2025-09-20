@@ -184,8 +184,6 @@ class GroupWorkerThread:
         at_me: @我的标识
         receiver_list: 接收者列表
         state: 工作线程状态
-        rules_manager: 规则管理器
-        reply_handler: 回复处理器
     """
 
     def __init__(self, config: WorkerConfig):
@@ -368,6 +366,9 @@ class GroupWorkerThread:
             msg_info = MessageInfo(msg)
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
+
+            # 打印接收到的消息
+            print(f"[{time_str}] 收到消息 - 发送者: {sender}, 群聊: {chat_name}, 内容: {message_content}")
 
             # 1. 检查是否包含敏感词
             if self._check_sensitive_words(message_content):
