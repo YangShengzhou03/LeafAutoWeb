@@ -543,7 +543,7 @@ const handleFileImport = async (event) => {
             
             if (isNaN(dateObj.getTime())) {
               // 如果标准解析失败，尝试手动解析常见格式
-              const timeMatch = timeString.match(/(\d{4})[\-/](\d{1,2})[\-/](\d{1,2})[\sT](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/)
+              const timeMatch = timeString.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})[\sT](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/)
               if (timeMatch) {
                 const year = parseInt(timeMatch[1])
                 const month = parseInt(timeMatch[2]) - 1
