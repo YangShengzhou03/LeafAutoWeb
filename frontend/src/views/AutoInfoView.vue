@@ -300,7 +300,20 @@ const submitForm = async () => {
       })
 
       if (response.ok) {
-        const newTask = await response.json()
+        const responseData = await response.json()
+        
+        // 处理API返回格式
+        let newTask
+        if (responseData && responseData.success && responseData.data) {
+          newTask = responseData.data
+        } else if (responseData && responseData.id) {
+          // 兼容旧版本直接返回任务对象
+          newTask = responseData
+        } else {
+          console.warn('创建任务返回格式异常:', responseData)
+          throw new Error('创建任务失败: 返回数据格式异常')
+        }
+        
         tasks.value.push(newTask)
         successCount++
       }
@@ -421,10 +434,24 @@ const refreshTasks = async () => {
     const response = await fetch('http://localhost:5000/api/tasks')
     if (response.ok) {
       const data = await response.json()
-      tasks.value = data
+      
+      // 处理API返回格式
+      let tasksData = []
+      if (data && data.success && Array.isArray(data.data)) {
+        tasksData = data.data
+      } else if (Array.isArray(data)) {
+        // 兼容旧版本直接返回数组
+        tasksData = data
+      } else {
+        console.warn('获取任务列表格式异常:', data)
+        ElMessage.error('获取任务列表失败: 数据格式异常')
+        return
+      }
+      
+      tasks.value = tasksData
 
       // 检查是否有待执行的任务，如果没有则自动停止调度器
-      const pendingTasks = data.filter(task => task.status === 'pending')
+      const pendingTasks = tasksData.filter(task => task.status === 'pending')
       if (pendingTasks.length === 0 && isSchedulerRunning.value) {
         // 没有待执行任务，自动停止调度器
         isSchedulerRunning.value = false
@@ -607,8 +634,15 @@ const handleFileImport = async (event) => {
         })
 
         if (response.ok) {
-          ElMessage.success(`成功导入 ${validTasks.length} 个任务`)
-          refreshTasks()
+          const data = await response.json()
+          
+          // 处理API返回格式
+          if (data && data.success) {
+            ElMessage.success(`成功导入 ${validTasks.length} 个任务`)
+            refreshTasks()
+          } else {
+            throw new Error(data.error || '服务器导入失败')
+          }
         } else {
           throw new Error('服务器导入失败')
         }
@@ -655,8 +689,15 @@ const toggleTaskScheduler = async () => {
       })
 
       if (response.ok) {
-        isSchedulerRunning.value = false
-        ElMessage.success('任务调度器已停止')
+        const data = await response.json()
+        
+        // 处理API返回格式
+        if (data && data.success) {
+          isSchedulerRunning.value = false
+          ElMessage.success('任务调度器已停止')
+        } else {
+          ElMessage.error(`停止失败: ${data.error || '未知错误'}`)
+        }
       } else {
         const errorData = await response.json()
         ElMessage.error(`停止失败: ${errorData.error || '未知错误'}`)
@@ -695,8 +736,15 @@ const toggleTaskScheduler = async () => {
       })
 
       if (response.ok) {
-        isSchedulerRunning.value = true
-        ElMessage.success('任务调度器已启动')
+        const data = await response.json()
+        
+        // 处理API返回格式
+        if (data && data.success) {
+          isSchedulerRunning.value = true
+          ElMessage.success('任务调度器已启动')
+        } else {
+          ElMessage.error(`启动失败: ${data.error || '未知错误'}`)
+        }
       } else {
         const errorData = await response.json()
         ElMessage.error(`启动失败: ${errorData.error || '未知错误'}`)
@@ -713,7 +761,20 @@ const checkSchedulerStatus = async () => {
     const response = await fetch('http://localhost:5000/api/task-scheduler/status')
     if (response.ok) {
       const data = await response.json()
-      isSchedulerRunning.value = data.isRunning
+      
+      // 处理API返回格式
+      let isRunning = false
+      if (data && data.success && data.data && data.data.isRunning !== undefined) {
+        isRunning = data.data.isRunning
+      } else if (data && data.isRunning !== undefined) {
+        // 兼容旧版本直接返回状态对象
+        isRunning = data.isRunning
+      } else {
+        console.warn('获取调度器状态格式异常:', data)
+        return
+      }
+      
+      isSchedulerRunning.value = isRunning
     }
   } catch (error) {
     console.error('获取调度器状态失败:', error)

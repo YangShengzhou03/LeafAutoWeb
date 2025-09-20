@@ -967,14 +967,15 @@ const loadInitialData = async () => {
     collectedData.value = collectedDataResponse
     
     // 设置配置状态
-    if (configStatusData) {
-      aiStatus.value = configStatusData.ai_status !== undefined ? configStatusData.ai_status : aiStatus.value
-      dataCollectionEnabled.value = configStatusData.data_collection_enabled !== undefined ? configStatusData.data_collection_enabled : dataCollectionEnabled.value
-      monitoringEnabled.value = configStatusData.monitoring_enabled !== undefined ? configStatusData.monitoring_enabled : monitoringEnabled.value
+    if (configStatusData && configStatusData.success) {
+      const configData = configStatusData
+      aiStatus.value = configData.ai_status !== undefined ? configData.ai_status : aiStatus.value
+      dataCollectionEnabled.value = configData.data_collection_enabled !== undefined ? configData.data_collection_enabled : dataCollectionEnabled.value
+      monitoringEnabled.value = configData.monitoring_enabled !== undefined ? configData.monitoring_enabled : monitoringEnabled.value
       
       // 设置选择的群聊名称
-      if (configStatusData.selected_group) {
-        contactPerson.value = configStatusData.selected_group
+      if (configData.selected_group) {
+        contactPerson.value = configData.selected_group
       }
     }
     
@@ -1017,6 +1018,18 @@ function getCollectedDataAPI(groupId = '', dateRange = []) {
       }
       return response.json()
     })
+    .then(data => {
+      // 确保返回的是数组数据，处理API返回格式
+      if (data && data.success && Array.isArray(data.data)) {
+        return data.data
+      } else if (Array.isArray(data)) {
+        // 如果直接返回数组（兼容旧版本）
+        return data
+      } else {
+        console.warn('获取的数据格式异常:', data)
+        return []
+      }
+    })
 }
 
 // 获取配置状态API
@@ -1028,6 +1041,21 @@ function getConfigStatusAPI() {
       }
       return response.json()
     })
+    .then(data => {
+      // 直接返回配置状态数据，后端API返回的是配置对象本身
+      if (data && (data.ai_status !== undefined || data.selected_group !== undefined)) {
+        return data
+      } else {
+        console.warn('获取配置状态失败或格式不正确:', data)
+        // 返回默认配置状态
+        return {
+          ai_status: false,
+          data_collection_enabled: false,
+          monitoring_enabled: false,
+          selected_group: ""
+        }
+      }
+    })
 }
 
 function getRegexRulesAPI() {
@@ -1037,6 +1065,18 @@ function getRegexRulesAPI() {
         throw new Error('获取规则列表失败')
       }
       return response.json()
+    })
+    .then(data => {
+      // 处理API返回格式
+      if (data && data.success && Array.isArray(data.rules)) {
+        return data.rules
+      } else if (Array.isArray(data)) {
+        // 兼容旧版本直接返回数组
+        return data
+      } else {
+        console.warn('获取规则列表失败:', data)
+        return []
+      }
     })
 }
 
@@ -1048,6 +1088,18 @@ function getSensitiveWordsAPI() {
       }
       return response.json()
     })
+    .then(data => {
+      // 处理API返回格式
+      if (data && data.success && Array.isArray(data.words)) {
+        return data.words
+      } else if (Array.isArray(data)) {
+        // 兼容旧版本直接返回数组
+        return data
+      } else {
+        console.warn('获取敏感词列表失败:', data)
+        return []
+      }
+    })
 }
 
 function getAvailableGroupsAPI() {
@@ -1057,6 +1109,18 @@ function getAvailableGroupsAPI() {
         throw new Error('获取可用群组失败')
       }
       return response.json()
+    })
+    .then(data => {
+      // 处理API返回格式
+      if (data && data.success && Array.isArray(data.groups)) {
+        return data.groups
+      } else if (Array.isArray(data)) {
+        // 兼容旧版本直接返回数组
+        return data
+      } else {
+        console.warn('获取可用群组失败:', data)
+        return []
+      }
     })
 }
 
@@ -1076,6 +1140,15 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
       throw new Error('智能学习失败')
     }
     return response.json()
+  })
+  .then(data => {
+    // 处理API返回格式
+    if (data && data.success) {
+      return data
+    } else {
+      console.warn('智能学习失败:', data)
+      throw new Error(data.error || '智能学习失败')
+    }
   })
 }
 </script>

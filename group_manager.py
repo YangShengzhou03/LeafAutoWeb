@@ -25,6 +25,8 @@ if not os.path.exists(messages_dir):
 # 群聊管理配置
 group_manage_config_file = os.path.join(data_dir, "group_manage.json")
 
+
+
 # 记录目录
 RECORDING_DIR = os.path.join(data_dir, "recordings")
 if not os.path.exists(RECORDING_DIR):
@@ -40,9 +42,7 @@ DATA_DIR = "data"
 MESSAGE_TYPES = ["friend", "group"]
 SYSTEM_MESSAGE_TYPE = "sys"
 SELF_SENDER = "Self"
-# 存储消息的文件路径
-def get_messages_file(receiver):
-    return os.path.join(RECORDING_DIR, f"{receiver}_messages.txt")
+
 
 # 获取按天存储的消息文件路径
 def get_daily_messages_file(chat_name: str) -> str:
@@ -232,13 +232,7 @@ class GroupWorkerThread:
         # 初始化敏感词列表
         self.sensitive_words = self.config.sensitive_words or []
 
-        # 确保记录目录存在
-        os.makedirs(RECORDING_DIR, exist_ok=True)
 
-        # 确保消息文件存在
-        messages_file = get_messages_file(self.config.receiver)
-        if not os.path.exists(messages_file):
-            open(messages_file, 'w', encoding='utf-8').close()
 
         logger.info(
             "Group worker thread initialized: receiver=%s, record_interval=%ss",
@@ -329,19 +323,7 @@ class GroupWorkerThread:
             logger.error("Unexpected error checking target message: %s", e)
             return False
 
-    def _append_to_file(self, content: str) -> None:
-        """
-        将内容追加到指定接收者的消息文件
-        
-        Args:
-            content: 要追加的内容
-        """
-        try:
-            messages_file = get_messages_file(self.config.receiver)
-            with open(messages_file, 'a', encoding='utf-8') as f:
-                f.write(content + '\n')
-        except IOError as e:
-            logger.error(f"写入文件失败: {e}")
+
 
     def _append_to_daily_file(self, content: str, chat_name: str) -> None:
         """
@@ -353,8 +335,18 @@ class GroupWorkerThread:
         """
         try:
             daily_file = get_daily_messages_file(chat_name)
-            with open(daily_file, 'a', encoding='utf-8') as f:
-                f.write(content + '\n')
+            
+            # 确保目录存在（CHAT_DATE_DIR已在文件顶部创建）
+            # 检查文件是否存在，不存在则创建文件
+            if not os.path.exists(daily_file):
+                # 创建新文件并写入内容
+                with open(daily_file, 'w', encoding='utf-8') as f:
+                    f.write(content + '\n')
+                logger.info(f"创建新的按天存储文件: {daily_file}")
+            else:
+                # 文件已存在，追加内容
+                with open(daily_file, 'a', encoding='utf-8') as f:
+                    f.write(content + '\n')
         except IOError as e:
             logger.error(f"写入按天存储文件失败: {e}")
 
@@ -410,21 +402,12 @@ class GroupWorkerThread:
             if self._check_sensitive_words(message_content):
                 logger.warning(f"[敏感内容检测] 检测到敏感内容: {message_content[:50]}... 发送者: {sender}")
 
-            # 2. 存储消息到txt文件
+            # 2. 存储消息到按天文件
+            print("存储消息到按天文件")
             message_entry = f"[{time_str}] 发送者: {sender} | 群聊: {chat_name if is_group else '私聊'} | 内容: {message_content}"
-            self._append_to_file(message_entry)
-            
-            # 3. 按天存储消息到chat_date文件夹
             self._append_to_daily_file(message_entry, chat_name)
             
-            logger.debug(f"[消息存储] 已保存消息: {message_entry[:100]}")
-
-            # 4. 记录历史（不包含回复信息）
-            history = MessageHistory(sender, message_content, chat_name)
-            # 不调用_record_history，因为不需要AI历史记录
-
-            # 更新最后记录信息
-            self.state.last_record_info = {"content": message_content, "time": time.time()}
+            logger.debug(f"[消息存储] 已保存消息到按天文件: {message_entry[:100]}")
 
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error("处理消息时发生错误: %s", e)
@@ -895,11 +878,7 @@ def select_group(group_name: str) -> tuple:
         tuple: (success, message/error)
     """
     try:
-        # 保存选择的群聊到默认文件
-        with open(default_group_file, 'w', encoding='utf-8') as f:
-            json.dump({"group_name": group_name}, f, ensure_ascii=False, indent=2)
-        
-        # 同时保存选择的群聊到group_manage.json配置文件
+        # 保存选择的群聊到group_manage.json配置文件
         config = {}
         if os.path.exists(group_manage_config_file):
             with open(group_manage_config_file, 'r', encoding='utf-8') as f:

@@ -9,7 +9,8 @@ Flask应用主模块
 - 微信状态监控API
 - 前后端路由转发
 """
-
+import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -23,7 +24,7 @@ from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
                           load_home_data, load_reply_history, load_tasks,
                           save_ai_settings, save_reply_history, update_task_status)
 from logging_config import get_logger
-import re
+
 
 # 辅助函数：根据原始消息和目标内容生成基于结构的正则表达式
 def generate_structure_based_regex(original_message, target_items):
@@ -1102,102 +1103,6 @@ def api_check_sentiment_monitoring_status():
         return jsonify({"success": False, "error": status}), 400
 
 
-# 更新导出功能API
-@app.route("/api/export/group-members", methods=["GET"])
-def export_group_members():
-    return jsonify({"error": "群成员导出功能正在建设中"}), 501
-
-
-@app.route("/api/export/group-messages", methods=["POST"])
-@handle_api_errors
-def api_export_group_messages():
-    """导出群消息"""
-    data = request.json
-    group_name = data.get("group_name", "")
-    
-    success, file_path = export_group_messages(group_name)
-    
-    if success:
-        return jsonify({"success": True, "file_path": file_path}), 200
-    else:
-        return jsonify({"success": False, "error": file_path}), 400
-
-
-@app.route("/api/export/group-files", methods=["POST"])
-@handle_api_errors
-def api_export_group_files():
-    """导出群文件"""
-    data = request.json
-    group_name = data.get("group_name", "")
-    
-    success, file_path = export_group_files(group_name)
-    
-    if success:
-        return jsonify({"success": True, "file_path": file_path}), 200
-    else:
-        return jsonify({"success": False, "error": file_path}), 400
-
-
-@app.route("/api/export/group-images", methods=["POST"])
-@handle_api_errors
-def api_export_group_images():
-    """导出群图片"""
-    data = request.json
-    group_name = data.get("group_name", "")
-    
-    success, file_path = export_group_images(group_name)
-    
-    if success:
-        return jsonify({"success": True, "file_path": file_path}), 200
-    else:
-        return jsonify({"success": False, "error": file_path}), 400
-
-
-@app.route("/api/export/group-voices", methods=["POST"])
-@handle_api_errors
-def api_export_group_voices():
-    """导出群语音"""
-    data = request.json
-    group_name = data.get("group_name", "")
-    
-    success, file_path = export_group_voices(group_name)
-    
-    if success:
-        return jsonify({"success": True, "file_path": file_path}), 200
-    else:
-        return jsonify({"success": False, "error": file_path}), 400
-
-
-@app.route("/api/export/group-videos", methods=["POST"])
-@handle_api_errors
-def api_export_group_videos():
-    """导出群视频"""
-    data = request.json
-    group_name = data.get("group_name", "")
-    
-    success, file_path = export_group_videos(group_name)
-    
-    if success:
-        return jsonify({"success": True, "file_path": file_path}), 200
-    else:
-        return jsonify({"success": False, "error": file_path}), 400
-
-
-@app.route("/api/export/group-links", methods=["POST"])
-@handle_api_errors
-def api_export_group_links():
-    """导出群链接"""
-    data = request.json
-    group_name = data.get("group_name", "")
-    
-    success, file_path = export_group_links(group_name)
-    
-    if success:
-        return jsonify({"success": True, "file_path": file_path}), 200
-    else:
-        return jsonify({"success": False, "error": file_path}), 400
-
-
 @app.route("/api/message-quota", methods=["GET"])
 @handle_api_errors
 def get_message_quota():
@@ -1502,178 +1407,10 @@ def api_get_available_groups():
     except Exception as e:
         logger.error(f"获取可用群组失败: {e}")
         return jsonify({
-            "success": False,
-            "error": f"获取群组失败: {e}",
-            "groups": []
-        }), 500
-
-
-@app.route("/api/message-quota", methods=["GET"])
-@handle_api_errors
-def get_message_quota():
-    """
-    获取消息配额信息
-
-    Returns:
-        Response: JSON格式的消息配额信息
-    """
-    try:
-        from data_manager import get_quota_info
-
-        quota_info = get_quota_info()
-        return jsonify({"success": True, "quota": quota_info}), 200
-    except Exception as e:
-        logger.error(f"获取消息配额失败: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route("/api/export/group-links", methods=["GET"])
-def export_group_links():
-    return jsonify({"error": "链接数据导出功能正在建设中"}), 501
-
-
-@app.route("/api/verify-activation", methods=["POST"])
-@handle_api_errors
-def verify_activation():
-    """
-    验证激活码
-    
-    Request Body:
-        JSON对象包含randomCode和activationCode字段
-    
-    Returns:
-        Response: 验证结果，包含成功状态、版本和过期时间
-    """
-    data = request.json
-    
-    if not data or "randomCode" not in data or "activationCode" not in data:
-        return jsonify({"success": False, "error": "请求参数不完整"}), 400
-    
-    random_code = data["randomCode"]
-    activation_code = data["activationCode"]
-    
-    # 验证randomCode是否为8位数字
-    if not random_code or not random_code.isdigit() or len(random_code) != 8:
-        return jsonify({"success": False, "error": "随机码格式不正确"}), 400
-    
-    # 验证activationCode是否为16位字母数字
-    if not activation_code or not activation_code.isalnum() or len(activation_code) != 16:
-        return jsonify({"success": False, "error": "激活码格式不正确"}), 400
-    
-    try:
-        # 将随机码转换为整数
-        random_num = int(random_code)
-        
-        # 计算basic版和企业版的密钥
-        basic_key = hex(random_num + 1)[2:].upper().zfill(16)
-        enterprise_key = hex(random_num + 2)[2:].upper().zfill(16)
-        
-        # 验证激活码
-        version = None
-        expiry_days = 30  # 默认30天有效期
-        
-        if activation_code == basic_key:
-            version = "basic"
-            expiry_days = 30  # 基础版30天
-        elif activation_code == enterprise_key:
-            version = "enterprise"
-            expiry_days = 90  # 企业版90天
-        else:
-            return jsonify({"success": False, "error": "激活码无效"}), 400
-        
-        # 计算过期时间
-        from datetime import datetime, timedelta
-        expiry_date = (datetime.now() + timedelta(days=expiry_days)).strftime("%Y-%m-%d")
-        
-        # 更新用户账户级别
-        from data_manager import update_account_level
-        update_account_level(version)
-        
-        return jsonify({
-            "success": True,
-            "version": version,
-            "expiryDate": expiry_date
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"激活码验证失败: {e}")
-        return jsonify({"success": False, "error": "激活码验证过程中发生错误"}), 500
-
-
-# 获取配置状态API
-@app.route("/api/group/get-config-status", methods=["GET"])
-@handle_api_errors
-def api_get_config_status():
-    """
-    获取配置状态（群聊管理、数据收集、舆情监控的开关状态和选择的群聊）
-    """
-    import json
-    import os
-    
-    # 读取group_manage.json配置文件
-    config_file = os.path.join(data_dir, "group_manage.json")
-    
-    # 默认为False状态
-    config_status = {
-        "ai_status": False,
-        "data_collection_enabled": False,
-        "monitoring_enabled": False,
-        "selected_group": ""
-    }
-    
-    try:
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config_data = json.load(f)
-                
-                # 从配置中提取状态信息
-                config_status["ai_status"] = config_data.get("management_enabled", False)
-                config_status["data_collection_enabled"] = config_data.get("data_collection_enabled", False)
-                config_status["monitoring_enabled"] = config_data.get("sentiment_monitoring_enabled", False)
-                config_status["selected_group"] = config_data.get("selected_group", "")
-        
-        return jsonify(config_status), 200
-    except Exception as e:
-        logger.error(f"读取配置状态失败: {e}")
-        return jsonify(config_status), 200  # 即使失败也返回默认状态
-
-
-# 更新配置状态API
-@app.route("/api/group/update-config-status", methods=["POST"])
-@handle_api_errors
-def api_update_config_status():
-    """
-    更新配置状态（数据收集、舆情监控的开关状态）
-    """
-    import json
-    import os
-    
-    data = request.json
-    data_collection_enabled = data.get("data_collection_enabled", False)
-    monitoring_enabled = data.get("monitoring_enabled", False)
-    
-    # 读取group_manage.json配置文件
-    config_file = os.path.join(data_dir, "group_manage.json")
-    
-    try:
-        config_data = {}
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config_data = json.load(f)
-        
-        # 更新配置状态
-        config_data["data_collection_enabled"] = data_collection_enabled
-        config_data["sentiment_monitoring_enabled"] = monitoring_enabled
-        
-        # 保存更新后的配置
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(config_data, f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"配置状态已更新 - 数据收集: {data_collection_enabled}, 舆情监控: {monitoring_enabled}")
-        return jsonify({"success": True, "message": "配置状态已更新"}), 200
-    except Exception as e:
-        logger.error(f"更新配置状态失败: {e}")
-        return jsonify({"success": False, "error": f"更新配置状态失败: {e}"}), 500
+                "success": False,
+                "error": f"获取群组失败: {e}",
+                "groups": []
+            }), 500
 
 
 if __name__ == "__main__":
