@@ -28,21 +28,21 @@
                       <div class="status-control">
                         <el-switch v-model="aiStatus" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
-                        <span class="status-text">{{ aiStatus ? '管理已启用' : '管理已禁用' }}</span>
+                        <span class="status-text">{{ aiStatus ? '管理已启用' : '管理未开启' }}</span>
                       </div>
                       
                       <!-- 数据收集开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="dataCollectionEnabled" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleDataCollectionChange" :disabled="!aiStatus"></el-switch>
-                        <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集已禁用' }}</span>
+                        <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集未开启' }}</span>
                       </div>
                       
                       <!-- 舆情监控开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="monitoringEnabled" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleMonitoringChange" :disabled="!aiStatus"></el-switch>
-                        <span class="status-text">{{ monitoringEnabled ? '舆情监控已启用' : '舆情监控已禁用' }}</span>
+                        <span class="status-text">{{ monitoringEnabled ? '舆情监控已启用' : '舆情监控未开启' }}</span>
                       </div>
                     </div>
                   </el-form-item>
@@ -408,9 +408,6 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="messageDetailVisible = false">关闭</el-button>
-          <el-button type="primary" @click="analyzeMessage(selectedMessage)" v-if="selectedMessage">
-            深度分析
-          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -594,7 +591,7 @@ const handleSwitchChange = (enabled) => {
       .then(result => {
         isTakeoverLoading.value = false
         if (result.success) {
-          ElMessage.success(result.message || '管理已禁用')
+          ElMessage.success(result.message || '管理未开启')
         } else {
           ElMessage.error(result.error || '禁用管理失败')
           aiStatus.value = true // 恢复状态
@@ -618,7 +615,7 @@ const handleDataCollectionChange = (enabled) => {
   if (enabled) {
     ElMessage.success('数据收集功能已启用')
   } else {
-    ElMessage.info('数据收集功能已禁用')
+    ElMessage.info('数据收集功能未开启')
   }
 }
 
@@ -632,7 +629,7 @@ const handleMonitoringChange = (enabled) => {
   if (enabled) {
     ElMessage.success('舆情监控功能已启用')
   } else {
-    ElMessage.info('舆情监控功能已禁用')
+    ElMessage.info('舆情监控功能未开启')
   }
 }
 
@@ -756,9 +753,7 @@ const viewMessageDetail = (row) => {
   messageDetailVisible.value = true
 }
 
-const analyzeMessage = () => {
-  ElMessage.info('深度分析功能开发中')
-}
+
 
 // 删除已收集的消息
 const deleteCollectedMessage = (row) => {
@@ -1577,20 +1572,6 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
 </style>
 
 /* 加载动画样式 */
-:deep(.el-loading-mask) {
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-:deep(.el-loading-spinner .circular) {
-  width: 42px;
-  height: 42px;
-}
-
-/* 表单验证样式 */
-:deep(.el-form-item.is-error .el-input__inner) {
-  border-color: var(--el-color-error);
-}
-
 :deep(.el-form-item.is-success .el-input__inner) {
   border-color: var(--el-color-success);
 }
