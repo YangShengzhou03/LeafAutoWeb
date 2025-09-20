@@ -546,6 +546,17 @@ const stopGroupManagementAPI = async (groupName) => {
   }
 }
 
+// 调用后端API更新配置状态
+const updateConfigStatusAPI = async (configData) => {
+  try {
+    const response = await axios.post('/api/group/update-config-status', configData)
+    return response.data
+  } catch (error) {
+    console.error('更新配置状态失败:', error)
+    throw error
+  }
+}
+
 const handleSwitchChange = (enabled) => {
   isTakeoverLoading.value = true
   
@@ -562,8 +573,6 @@ const handleSwitchChange = (enabled) => {
       data_collection_enabled: dataCollectionEnabled.value,
       monitoring_enabled: monitoringEnabled.value,
       sensitive_words: sensitiveWordsList.value,
-      only_at: false, // 默认设置
-      group_at_reply: true, // 默认设置
       min_reply_interval: 0 // 默认设置
     }
     
@@ -612,11 +621,28 @@ const handleDataCollectionChange = (enabled) => {
     return
   }
   
-  if (enabled) {
-    ElMessage.success('数据收集功能已启用')
-  } else {
-    ElMessage.info('数据收集功能未开启')
-  }
+  // 更新配置状态到后端
+  updateConfigStatusAPI({
+    data_collection_enabled: enabled,
+    monitoring_enabled: monitoringEnabled.value
+  })
+    .then(result => {
+      if (result.success) {
+        if (enabled) {
+          ElMessage.success('数据收集功能已启用')
+        } else {
+          ElMessage.info('数据收集功能未开启')
+        }
+      } else {
+        ElMessage.error(result.error || '更新配置状态失败')
+        dataCollectionEnabled.value = !enabled // 恢复原状态
+      }
+    })
+    .catch(error => {
+      console.error('更新配置状态失败:', error)
+      ElMessage.error('更新配置状态失败')
+      dataCollectionEnabled.value = !enabled // 恢复原状态
+    })
 }
 
 const handleMonitoringChange = (enabled) => {
@@ -626,11 +652,28 @@ const handleMonitoringChange = (enabled) => {
     return
   }
   
-  if (enabled) {
-    ElMessage.success('舆情监控功能已启用')
-  } else {
-    ElMessage.info('舆情监控功能未开启')
-  }
+  // 更新配置状态到后端
+  updateConfigStatusAPI({
+    data_collection_enabled: dataCollectionEnabled.value,
+    monitoring_enabled: enabled
+  })
+    .then(result => {
+      if (result.success) {
+        if (enabled) {
+          ElMessage.success('舆情监控功能已启用')
+        } else {
+          ElMessage.info('舆情监控功能未开启')
+        }
+      } else {
+        ElMessage.error(result.error || '更新配置状态失败')
+        monitoringEnabled.value = !enabled // 恢复原状态
+      }
+    })
+    .catch(error => {
+      console.error('更新配置状态失败:', error)
+      ElMessage.error('更新配置状态失败')
+      monitoringEnabled.value = !enabled // 恢复原状态
+    })
 }
 
 const showAddRuleDialog = () => {
@@ -928,6 +971,11 @@ const loadInitialData = async () => {
       aiStatus.value = configStatusData.ai_status !== undefined ? configStatusData.ai_status : aiStatus.value
       dataCollectionEnabled.value = configStatusData.data_collection_enabled !== undefined ? configStatusData.data_collection_enabled : dataCollectionEnabled.value
       monitoringEnabled.value = configStatusData.monitoring_enabled !== undefined ? configStatusData.monitoring_enabled : monitoringEnabled.value
+      
+      // 设置选择的群聊名称
+      if (configStatusData.selected_group) {
+        contactPerson.value = configStatusData.selected_group
+      }
     }
     
   } catch (error) {

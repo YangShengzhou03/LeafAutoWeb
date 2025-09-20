@@ -850,8 +850,6 @@ from group_manager import (
     select_group, toggle_message_recording, set_collection_date, 
     save_collection_template, auto_learn_pattern, export_collected_data,
     start_sentiment_monitoring, stop_sentiment_monitoring, check_sentiment_monitoring_status,
-    export_group_messages, export_group_files, export_group_images, 
-    export_group_voices, export_group_videos, export_group_links,
     start_group_management, group_manager, data_dir
 )
 import re
@@ -1297,7 +1295,7 @@ def verify_activation():
 @handle_api_errors
 def api_get_config_status():
     """
-    获取配置状态（群聊管理、数据收集、舆情监控的开关状态）
+    获取配置状态（群聊管理、数据收集、舆情监控的开关状态和选择的群聊）
     """
     import json
     import os
@@ -1309,7 +1307,8 @@ def api_get_config_status():
     config_status = {
         "ai_status": False,
         "data_collection_enabled": False,
-        "monitoring_enabled": False
+        "monitoring_enabled": False,
+        "selected_group": ""
     }
     
     try:
@@ -1321,11 +1320,50 @@ def api_get_config_status():
                 config_status["ai_status"] = config_data.get("management_enabled", False)
                 config_status["data_collection_enabled"] = config_data.get("data_collection_enabled", False)
                 config_status["monitoring_enabled"] = config_data.get("sentiment_monitoring_enabled", False)
+                config_status["selected_group"] = config_data.get("selected_group", "")
         
         return jsonify(config_status), 200
     except Exception as e:
         logger.error(f"读取配置状态失败: {e}")
         return jsonify(config_status), 200  # 即使失败也返回默认状态
+
+
+# 更新配置状态API
+@app.route("/api/group/update-config-status", methods=["POST"])
+@handle_api_errors
+def api_update_config_status():
+    """
+    更新配置状态（数据收集、舆情监控的开关状态）
+    """
+    import json
+    import os
+    
+    data = request.json
+    data_collection_enabled = data.get("data_collection_enabled", False)
+    monitoring_enabled = data.get("monitoring_enabled", False)
+    
+    # 读取group_manage.json配置文件
+    config_file = os.path.join(data_dir, "group_manage.json")
+    
+    try:
+        config_data = {}
+        if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+        
+        # 更新配置状态
+        config_data["data_collection_enabled"] = data_collection_enabled
+        config_data["sentiment_monitoring_enabled"] = monitoring_enabled
+        
+        # 保存更新后的配置
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"配置状态已更新 - 数据收集: {data_collection_enabled}, 舆情监控: {monitoring_enabled}")
+        return jsonify({"success": True, "message": "配置状态已更新"}), 200
+    except Exception as e:
+        logger.error(f"更新配置状态失败: {e}")
+        return jsonify({"success": False, "error": f"更新配置状态失败: {e}"}), 500
 
 
 if __name__ == "__main__":

@@ -7,5 +7,9 @@
       "sensitive_words": []
     }
   },
+  "management_enabled": false,
+  "data_collection_enabled": false,
+  "sentiment_monitoring_enabled": false,
+  "selected_group": "",
   "version": "1.0"
 }

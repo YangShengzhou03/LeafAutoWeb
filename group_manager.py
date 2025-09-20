@@ -25,9 +25,6 @@ if not os.path.exists(messages_dir):
 # 群聊管理配置
 group_manage_config_file = os.path.join(data_dir, "group_manage.json")
 
-# 当前选择的群聊配置文件
-default_group_file = os.path.join(data_dir, "default_group.json")
-
 # 记录目录
 RECORDING_DIR = os.path.join(data_dir, "recordings")
 if not os.path.exists(RECORDING_DIR):
@@ -95,13 +92,11 @@ class WorkerConfig:
         self,
         wx_instance: Any,
         receiver: str,
-        only_at: bool = False,
         record_interval: int = 0,
         sensitive_words: List[str] = None
     ):
         self.wx_instance = wx_instance
         self.receiver = receiver
-        self.only_at = only_at
         self.record_interval = record_interval
         self.sensitive_words = sensitive_words or []
 
@@ -227,9 +222,8 @@ class GroupWorkerThread:
             open(messages_file, 'w', encoding='utf-8').close()
 
         logger.info(
-            "Group worker thread initialized: receiver=%s, only_at=%s, record_interval=%ss",
+            "Group worker thread initialized: receiver=%s, record_interval=%ss",
             self.config.receiver,
-            self.config.only_at,
             self.config.record_interval,
         )
 
@@ -375,18 +369,6 @@ class GroupWorkerThread:
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
 
-            # 检查only_at功能（仅针对群聊有效）
-            if self.config.only_at and is_group:
-                if self.at_me not in message_content:
-                    logger.debug("[群聊管理] 群聊消息未包含@我，忽略消息: %s", message_content)
-                    return
-                message_content = message_content.replace(self.at_me, "").strip()
-
-            # 检查最小记录间隔（仅对相同内容的消息）
-            if self._should_ignore_due_to_interval(message_content):
-                logger.info("[群聊管理] 相同内容未达到最小记录间隔，忽略消息: %s", message_content)
-                return
-
             # 1. 检查是否包含敏感词
             if self._check_sensitive_words(message_content):
                 logger.warning(f"[敏感内容检测] 检测到敏感内容: {message_content[:50]}... 发送者: {sender}")
@@ -434,31 +416,6 @@ class GroupWorkerThread:
             logger.error("Unexpected error getting chat info: %s", e)
         
         return {"type": "", "name": ""}
-    
-    def _should_ignore_due_to_interval(self, message_content: str) -> bool:
-        """检查是否因记录间隔而忽略消息
-        
-        Args:
-            message_content: 消息内容
-            
-        Returns:
-            bool: 是否应该忽略
-        """
-        if self.config.record_interval <= 0:
-            return False
-            
-        current_time = time.time()
-        return (
-            message_content == self.state.last_record_info["content"] and
-            current_time - self.state.last_record_info["time"] < self.config.record_interval
-        )
-    
-    def _record_history(self, history: MessageHistory) -> None:
-        """记录处理历史（空实现，因为不需要AI历史记录）
-        
-        Args:
-            history: 消息历史对象
-        """
 
     def run(self) -> None:
         """
@@ -897,116 +854,27 @@ def select_group(group_name: str) -> tuple:
         tuple: (success, message/error)
     """
     try:
-        # 保存选择的群聊
+        # 保存选择的群聊到默认文件
         with open(default_group_file, 'w', encoding='utf-8') as f:
             json.dump({"group_name": group_name}, f, ensure_ascii=False, indent=2)
+        
+        # 同时保存选择的群聊到group_manage.json配置文件
+        config = {}
+        if os.path.exists(group_manage_config_file):
+            with open(group_manage_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        config["selected_group"] = group_name
+        
+        # 保存更新后的配置
+        with open(group_manage_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
         
         logger.info(f"已选择群聊: {group_name}")
         return True, f"已选择群聊: {group_name}"
     except Exception as e:
         logger.error(f"选择群聊失败: {str(e)}")
         return False, f"选择群聊失败: {str(e)}"
-
-
-def init_listeners(self) -> bool:
-    """
-    初始化消息监听器
-
-    Returns:
-        bool: True表示初始化成功，False表示失败
-    """
-    if self._should_stop():
-        logger.warning("Listener initialization interrupted")
-        return False
-
-    for target in self.receiver_list:
-        if self._should_stop():
-            return False
-
-        try:
-            self.config.wx_instance.AddListenChat(who=target)
-            self.state.listen_list.append(target)
-            logger.info("Added listener: %s", target)
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Failed to add listener: %s, error: %s", target, str(e))
-            # 清理已添加的监听器
-            self._cleanup()
-            return False
-        except OSError as e:
-            logger.error("OS error adding listener: %s, error: %s", target, str(e))
-            # 清理已添加的监听器
-            self._cleanup()
-            return False
-        except RuntimeError as e:
-            logger.error("Runtime error adding listener: %s, error: %s", target, str(e))
-            # 清理已添加的监听器
-            self._cleanup()
-            return False
-    return True
-
-
-def _get_chat_name(self, who: str) -> str:
-    """
-    获取聊天名称
-
-    Args:
-        who: 聊天对象标识
-
-    Returns:
-        str: 聊天名称，如果无法获取则返回原标识
-    """
-    if not hasattr(self.config.wx_instance, "GetChatName"):
-        return who
-    return self.config.wx_instance.GetChatName(who)
-
-def _is_target_message(self, message: Any) -> bool:
-    """
-    检查消息是否来自目标联系人
-
-    Args:
-        message: 消息对象
-
-    Returns:
-        bool: True表示来自目标联系人，False表示不是
-    """
-    try:
-        msg_info = MessageInfo(message)
-        sender = msg_info.get_sender()
-        # 检查发送者是否在接收者列表中
-        return sender in self.receiver_list
-    except (ValueError, TypeError, AttributeError, KeyError) as e:
-        logger.error("Error checking target message: %s", e)
-        return False
-    except OSError as e:
-        logger.error("OS error checking target message: %s", e)
-        return False
-    except Exception as e:
-        logger.error("Unexpected error checking target message: %s", e)
-        return False
-
-
-def _cleanup(self) -> None:
-    """
-    清理监听器资源
-    """
-    try:
-        for target in self.state.listen_list:
-            if hasattr(self.config.wx_instance, "RemoveListenChat"):
-                try:
-                    self.config.wx_instance.RemoveListenChat(who=target)
-                except (ValueError, TypeError, AttributeError, KeyError) as e:
-                    logger.error("Failed to remove listener for %s: %s", target, e)
-                except OSError as e:
-                    logger.error("OS error removing listener for %s: %s", target, e)
-                except RuntimeError as e:
-                    logger.error("Runtime error removing listener for %s: %s", target, e)
-        self.state.listen_list.clear()
-    except (ValueError, TypeError, AttributeError, KeyError) as e:
-        logger.error("清理监听时出错: %s", str(e))
-    except OSError as e:
-        logger.error("OS error cleaning up listeners: %s", str(e))
-    except RuntimeError as e:
-        logger.error("Runtime error cleaning up listeners: %s", str(e))
 
 def toggle_message_recording(group_name: str, enabled: bool) -> tuple:
     """开启/关闭群消息记录
@@ -1269,7 +1137,6 @@ def start_group_management(group_name: str, settings: dict) -> tuple:
             worker_config = WorkerConfig(
                 wx_instance=default_wx_instance,
                 receiver=group_name,
-                only_at=settings.get("only_at", False),
                 record_interval=settings.get("record_interval", 0),
                 sensitive_words=settings.get("sensitive_words", [])
             )
