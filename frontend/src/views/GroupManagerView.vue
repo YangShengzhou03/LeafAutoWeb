@@ -254,11 +254,12 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="type" label="提取数据" width="100">
-                <template #default="{ }">
+              <el-table-column prop="type" label="提取数据" min-width="120">
+                <template #default="{ row }">
                   <div class="extracted-content-status">
-                    <el-icon class="success-icon"><Check /></el-icon>
-                    <span>已提取</span>
+                    <el-icon class="success-icon" v-if="extractContent(row.content) !== '无提取内容'"><Check /></el-icon>
+                    <el-icon class="warning-icon" v-else><InfoFilled /></el-icon>
+                    <span>{{ extractContent(row.content) }}</span>
                   </div>
                 </template>
               </el-table-column>
@@ -512,6 +513,20 @@ const collectedData = ref([
     content: '会议议程.docx', 
     type: '文件',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qianqi'
+  },
+  { 
+    time: '2023-06-01 11:30:00', 
+    sender: '小米', 
+    content: '你好，我叫小米，我12岁。', 
+    type: '文本',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaomi'
+  },
+  { 
+    time: '2023-06-01 11:35:00', 
+    sender: '小红', 
+    content: '大家好，我叫小红，今年8岁了。', 
+    type: '文本',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaohong'
   }
 ])
 const dataLoading = ref(false)
@@ -788,6 +803,28 @@ const getMessageTypeTag = (type) => {
 
 const getContentClass = (type) => {
   return `content-${type.toLowerCase()}`
+}
+
+// 提取内容的逻辑函数
+const extractContent = (message) => {
+  // 这里模拟提取内容的逻辑
+  // 例如：提取姓名、年龄等信息
+  let extracted = ''
+  
+  // 匹配姓名
+  const nameMatch = message.match(/我叫([^，,。；;\s]+)/)
+  if (nameMatch && nameMatch[1]) {
+    extracted += nameMatch[1]
+  }
+  
+  // 匹配年龄
+  const ageMatch = message.match(/我(\d+)岁/)
+  if (ageMatch && ageMatch[1]) {
+    if (extracted) extracted += '，'
+    extracted += `${ageMatch[1]}岁`
+  }
+  
+  return extracted || '无提取内容'
 }
 
 const autoLearnPattern = () => {
@@ -1114,11 +1151,22 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
   padding: 4px 8px;
   color: #1890ff;
   font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .extracted-content-status .success-icon {
   margin-right: 4px;
   color: #52c41a;
+  font-size: 14px;
+}
+
+.extracted-content-status .warning-icon {
+  margin-right: 4px;
+  color: #faad14;
+  font-size: 14px;
 }
 
 .sensitive-words-list {
