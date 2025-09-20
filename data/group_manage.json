@@ -1,0 +1,12 @@
+{
+  "_comment": "群聊管理配置文件",
+  "groups": {},
+  "settings": {
+    "default": {
+      "only_at": false,
+      "record_interval": 0,
+      "sensitive_words": []
+    }
+  },
+  "version": "1.0"
+}

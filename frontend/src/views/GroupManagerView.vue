@@ -259,7 +259,7 @@
                   <el-button 
                     type="danger" 
                     link 
-                    @click.stop="deleteRule(row)"
+                    @click.stop="deleteCollectedMessage(row)"
                     class="delete-btn">
                     删除
                   </el-button>
@@ -420,6 +420,7 @@
 <script setup>
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, computed, onMounted, watch } from 'vue'
+import axios from 'axios'
 import { 
   Plus, Key, Refresh, Clock,
   Collection, Monitor, DataAnalysis, Document,
@@ -505,20 +506,106 @@ const totalDataCount = computed(() => {
 })
 
 // 事件处理
+// 调用后端API选择群聊
+const selectGroupAPI = async (groupName) => {
+  try {
+    const response = await axios.post('/api/group/select', {
+      group_name: groupName
+    })
+    if (response.data.success) {
+      ElMessage.success('群聊选择成功')
+    } else {
+      ElMessage.error(response.data.error || '群聊选择失败')
+    }
+  } catch (error) {
+    console.error('群聊选择失败:', error)
+  }
+}
+
+// 调用后端API开始群聊管理
+const startGroupManagementAPI = async (groupName, settings) => {
+  try {
+    const response = await axios.post('/api/group/start-management', {
+      group_name: groupName,
+      settings: settings
+    })
+    return response.data
+  } catch (error) {
+    console.error('启动群聊管理失败:', error)
+    throw error
+  }
+}
+
+// 调用后端API停止群聊管理
+const stopGroupManagementAPI = async (groupName) => {
+  try {
+    const response = await axios.post('/api/group/stop-management', {
+      group_name: groupName
+    })
+    return response.data
+  } catch (error) {
+    console.error('停止群聊管理失败:', error)
+    throw error
+  }
+}
+
 const handleSwitchChange = (enabled) => {
   isTakeoverLoading.value = true
   
-  // 模拟API调用
-  setTimeout(() => {
+  if (enabled && !contactPerson.value.trim()) {
     isTakeoverLoading.value = false
-    if (enabled && !contactPerson.value.trim()) {
-      ElMessage.warning('请输入接管联系人姓名')
-      aiStatus.value = false
-      return
+    ElMessage.warning('请输入接管联系人姓名')
+    aiStatus.value = false
+    return
+  }
+  
+  if (enabled) {
+    // 准备设置对象
+    const settings = {
+      data_collection_enabled: dataCollectionEnabled.value,
+      monitoring_enabled: monitoringEnabled.value,
+      sensitive_words: sensitiveWordsList.value,
+      only_at: false, // 默认设置
+      group_at_reply: true, // 默认设置
+      min_reply_interval: 0 // 默认设置
     }
     
-    ElMessage.success(enabled ? '管理已启用' : '管理已禁用')
-  }, 800)
+    // 调用后端API
+    startGroupManagementAPI(contactPerson.value, settings)
+      .then(result => {
+        isTakeoverLoading.value = false
+        if (result.success) {
+          ElMessage.success(result.message || '管理已启用')
+          // 选择群聊
+          selectGroupAPI(contactPerson.value)
+        } else {
+          ElMessage.error(result.error || '启用管理失败')
+          aiStatus.value = false
+        }
+      })
+      .catch(error => {
+        isTakeoverLoading.value = false
+        ElMessage.error('启用管理失败: ' + (error.message || '未知错误'))
+        aiStatus.value = false
+      })
+  } else {
+    // 调用后端API停止群聊管理
+    stopGroupManagementAPI(contactPerson.value)
+      .then(result => {
+        isTakeoverLoading.value = false
+        if (result.success) {
+          ElMessage.success(result.message || '管理已禁用')
+        } else {
+          ElMessage.error(result.error || '禁用管理失败')
+          aiStatus.value = true // 恢复状态
+        }
+      })
+      .catch(error => {
+        isTakeoverLoading.value = false
+        ElMessage.error('禁用管理失败: ' + (error.message || '未知错误'))
+        aiStatus.value = true // 恢复状态
+      })
+  }
 }
 
 const handleDataCollectionChange = (enabled) => {
@@ -673,6 +760,29 @@ const analyzeMessage = () => {
   ElMessage.info('深度分析功能开发中')
 }
 
+// 删除已收集的消息
+const deleteCollectedMessage = (row) => {
+  ElMessageBox.confirm(
+    '确定要删除这条消息记录吗？',
+    '确认删除',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    if (Array.isArray(collectedData.value)) {
+      const index = collectedData.value.findIndex(item => item.time === row.time && item.sender === row.sender)
+      if (index !== -1) {
+        collectedData.value.splice(index, 1)
+        ElMessage.success('消息记录已删除')
+      }
+    }
+  }).catch(() => {
+    // 用户取消删除
+  })
+}
+
 // 工具函数
 const getAvatarUrl = (sender) => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sender)}`
@@ -805,17 +915,25 @@ const loadInitialData = async () => {
     dataLoading.value = true
     
     // 并行加载各项数据
-    const [rulesData, groupsData, sensitiveWordsData, collectedDataResponse] = await Promise.all([
+    const [rulesData, groupsData, sensitiveWordsData, collectedDataResponse, configStatusData] = await Promise.all([
       getRegexRulesAPI(),
       getAvailableGroupsAPI(),
       getSensitiveWordsAPI(),
-      getCollectedDataAPI()
+      getCollectedDataAPI(),
+      getConfigStatusAPI()
     ])
     
     regexRules.value = rulesData
     availableGroups.value = groupsData
     sensitiveWordsList.value = sensitiveWordsData
     collectedData.value = collectedDataResponse
+    
+    // 设置配置状态
+    if (configStatusData) {
+      aiStatus.value = configStatusData.ai_status !== undefined ? configStatusData.ai_status : aiStatus.value
+      dataCollectionEnabled.value = configStatusData.data_collection_enabled !== undefined ? configStatusData.data_collection_enabled : dataCollectionEnabled.value
+      monitoringEnabled.value = configStatusData.monitoring_enabled !== undefined ? configStatusData.monitoring_enabled : monitoringEnabled.value
+    }
     
   } catch (error) {
     console.error('加载初始数据失败:', error)
@@ -840,16 +958,30 @@ watch([dataCollectionEnabled, monitoringEnabled], ([dataEnabled, monitorEnabled]
 
 // API调用函数
 function getCollectedDataAPI(groupId = '', dateRange = []) {
-  let url = '/api/group/get-collected-data?'
-  if (groupId) url += `group_id=${groupId}&`
+  const params = new URLSearchParams()
+  if (groupId) params.append('group_id', groupId)
   if (dateRange && dateRange.length > 0) {
-    url += `start_date=${dateRange[0]}&end_date=${dateRange[1]}&`
+    params.append('start_date', dateRange[0])
+    params.append('end_date', dateRange[1])
   }
+  
+  const url = `/api/group/get-collected-data${params.toString() ? '?' + params.toString() : ''}`
   
   return fetch(url)
     .then(response => {
       if (!response.ok) {
         throw new Error('获取收集的数据失败')
+      }
+      return response.json()
+    })
+}
+
+// 获取配置状态API
+function getConfigStatusAPI() {
+  return fetch(`/api/group/get-config-status`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('获取配置状态失败')
       }
       return response.json()
     })

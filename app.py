@@ -839,7 +839,8 @@ from group_manager import (
     save_collection_template, auto_learn_pattern, export_collected_data,
     start_sentiment_monitoring, stop_sentiment_monitoring, check_sentiment_monitoring_status,
     export_group_messages, export_group_files, export_group_images, 
-    export_group_voices, export_group_videos, export_group_links
+    export_group_voices, export_group_videos, export_group_links,
+    start_group_management, group_manager
 )
 import re
 
@@ -983,6 +984,66 @@ def api_export_collected_data():
     else:
         return jsonify({"success": False, "error": result}), 400
 
+
+# 群聊管理API
+@app.route("/api/group/start-management", methods=["POST"])
+@handle_api_errors
+def api_start_group_management():
+    """开始群聊管理"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    settings = data.get("settings", {})
+    
+    success, message = start_group_management(group_name, settings)
+    
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "error": message}), 400
+
+@app.route("/api/group/stop-management", methods=["POST"])
+@handle_api_errors
+def api_stop_group_management():
+    """停止群聊管理"""
+    data = request.json
+    group_name = data.get("group_name", "")
+    
+    if not group_name:
+        return jsonify({"success": False, "error": "群聊名称不能为空"}), 400
+    
+    # 调用group_manager的stop_worker方法停止群聊管理
+    success = group_manager.stop_worker(group_name)
+    
+    if success:
+        # 更新配置文件中的管理状态
+        import json
+        import os
+        from group_manager import group_manage_config_file
+        
+        try:
+            if os.path.exists(group_manage_config_file):
+                with open(group_manage_config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                
+                # 更新群聊配置
+                if group_name in config:
+                    config[group_name]["enabled"] = False
+                    config[group_name]["stop_time"] = datetime.now().isoformat()
+                
+                # 如果所有工作线程都已停止，更新全局管理状态
+                if len(group_manager.workers) == 0:
+                    config["management_enabled"] = False
+                
+                # 保存更新后的配置
+                with open(group_manage_config_file, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"更新配置文件失败: {e}")
+            # 即使配置文件更新失败，只要工作线程停止成功，仍然返回成功
+        
+        return jsonify({"success": True, "message": f"已成功停止管理群聊: {group_name}"}), 200
+    else:
+        return jsonify({"success": False, "error": "未找到对应群聊的管理线程"}), 400
 
 # 舆情监控API
 @app.route("/api/group/start-monitoring", methods=["POST"])
@@ -1217,6 +1278,42 @@ def verify_activation():
     except Exception as e:
         logger.error(f"激活码验证失败: {e}")
         return jsonify({"success": False, "error": "激活码验证过程中发生错误"}), 500
+
+
+# 获取配置状态API
+@app.route("/api/group/get-config-status", methods=["GET"])
+@handle_api_errors
+def api_get_config_status():
+    """
+    获取配置状态（群聊管理、数据收集、舆情监控的开关状态）
+    """
+    import json
+    import os
+    
+    # 读取group_manage.json配置文件
+    config_file = os.path.join(data_dir, "group_manage.json")
+    
+    # 默认为False状态
+    config_status = {
+        "ai_status": False,
+        "data_collection_enabled": False,
+        "monitoring_enabled": False
+    }
+    
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+                
+                # 从配置中提取状态信息
+                config_status["ai_status"] = config_data.get("management_enabled", False)
+                config_status["data_collection_enabled"] = config_data.get("data_collection_enabled", False)
+                config_status["monitoring_enabled"] = config_data.get("sentiment_monitoring_enabled", False)
+        
+        return jsonify(config_status), 200
+    except Exception as e:
+        logger.error(f"读取配置状态失败: {e}")
+        return jsonify(config_status), 200  # 即使失败也返回默认状态
 
 
 if __name__ == "__main__":
