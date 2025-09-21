@@ -445,7 +445,7 @@ const totalDataCount = computed(() => {
 // 调用后端API选择群聊
 const selectGroupAPI = async (groupName) => {
   try {
-    const response = await axios.post('/api/group/select', {
+    const response = await axios.post('http://localhost:5000/api/group/select', {
       group_name: groupName
     })
     if (response.data.success) {
@@ -461,7 +461,7 @@ const selectGroupAPI = async (groupName) => {
 // 调用后端API开始群聊管理
 const startGroupManagementAPI = async (groupName, settings) => {
   try {
-    const response = await axios.post('/api/group/start-management', {
+    const response = await axios.post('http://localhost:5000/api/group/start-management', {
       group_name: groupName,
       settings: settings
     })
@@ -475,7 +475,7 @@ const startGroupManagementAPI = async (groupName, settings) => {
 // 调用后端API停止群聊管理
 const stopGroupManagementAPI = async (groupName) => {
   try {
-    const response = await axios.post('/api/group/stop-management', {
+    const response = await axios.post('http://localhost:5000/api/group/stop-management', {
       group_name: groupName
     })
     return response.data
@@ -488,7 +488,7 @@ const stopGroupManagementAPI = async (groupName) => {
 // 调用后端API更新配置状态
 const updateConfigStatusAPI = async (configData) => {
   try {
-    const response = await axios.post('/api/group/update-config-status', configData)
+    const response = await axios.post('http://localhost:5000/api/group/update-config-status', configData)
     return response.data
   } catch (error) {
     console.error('更新配置状态失败:', error)
@@ -790,7 +790,7 @@ const exportCollectedData = async () => {
     }
 
     // 调用后端API导出数据
-    const response = await fetch('/api/group/export-collected-data', {
+    const response = await fetch('http://localhost:5000/api/group/export-collected-data', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -807,7 +807,7 @@ const exportCollectedData = async () => {
     if (result.success) {
       // 创建下载链接
       const downloadLink = document.createElement('a')
-      downloadLink.href = `/api/download-file?file_path=${encodeURIComponent(result.file_path)}`
+      downloadLink.href = `http://localhost:5000/api/download-file?file_path=${encodeURIComponent(result.file_path)}`
       downloadLink.download = result.file_path.split('/').pop() || 'collected_data.xlsx'
       document.body.appendChild(downloadLink)
       downloadLink.click()
@@ -1064,7 +1064,7 @@ function getCollectedDataAPI(groupId = '', dateRange = []) {
     params.append('end_date', dateRange[1])
   }
 
-  const url = `/api/group/get-collected-data${params.toString() ? '?' + params.toString() : ''}`
+  const url = `http://localhost:5000/api/group/get-collected-data${params.toString() ? '?' + params.toString() : ''}`
 
   return fetch(url)
     .then(response => {
@@ -1108,7 +1108,7 @@ function getCollectedDataAPI(groupId = '', dateRange = []) {
 
 // 获取配置状态API
 function getConfigStatusAPI() {
-  return fetch(`/api/group/get-config-status`)
+  return fetch(`http://localhost:5000/api/group/get-config-status`)
     .then(response => {
       if (!response.ok) {
         throw new Error('获取配置状态失败')
@@ -1133,7 +1133,7 @@ function getConfigStatusAPI() {
 }
 
 function getRegexRulesAPI() {
-  return fetch(`/api/group/get-regex-rules`)
+  return fetch(`http://localhost:5000/api/group/get-regex-rules`)
     .then(response => {
       if (!response.ok) {
         throw new Error('获取规则列表失败')
@@ -1155,7 +1155,7 @@ function getRegexRulesAPI() {
 }
 
 function getSensitiveWordsAPI() {
-  return fetch(`/api/group/get-sensitive-words`)
+  return fetch(`http://localhost:5000/api/group/get-sensitive-words`)
     .then(response => {
       if (!response.ok) {
         throw new Error('获取敏感词列表失败')
@@ -1177,7 +1177,7 @@ function getSensitiveWordsAPI() {
 }
 
 function getAvailableGroupsAPI() {
-  return fetch(`/api/group/get-available-groups`)
+  return fetch(`http://localhost:5000/api/group/get-available-groups`)
     .then(response => {
       if (!response.ok) {
         throw new Error('获取可用群组失败')
@@ -1199,7 +1199,7 @@ function getAvailableGroupsAPI() {
 }
 
 function autoLearnPatternAPI(originalMessage, targetContent) {
-  return fetch('/api/group/auto-learn-pattern', {
+  return fetch('http://localhost:5000/api/group/auto-learn-pattern', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1228,7 +1228,7 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
 
 // 保存敏感词API
 function saveSensitiveWordsAPI(words) {
-  return fetch('/api/group/save-sensitive-words', {
+  return fetch('http://localhost:5000/api/group/save-sensitive-words', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1256,7 +1256,7 @@ function saveSensitiveWordsAPI(words) {
 
 // 保存正则规则API
 function saveRegexRulesAPI(rules) {
-  return fetch('/api/group/save-regex-rules', {
+  return fetch('http://localhost:5000/api/group/save-regex-rules', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
