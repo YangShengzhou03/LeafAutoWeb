@@ -1284,7 +1284,12 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
                         if not isinstance(items, list):
                             items = [items]
                     except json.JSONDecodeError:
-                        items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                        # 尝试匹配类似 ['杨圣洲', '23', '醋'] 的格式
+                        match = re.findall(r"'([^']*)'", extracted_content)
+                        if match:
+                            items = match
+                        else:
+                            items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                 else:
                     items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                 
@@ -1316,7 +1321,12 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
                         if not isinstance(items, list):
                             items = [items]
                     except json.JSONDecodeError:
-                        items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                        # 尝试匹配类似 ['杨圣洲', '23', '醋'] 的格式
+                        match = re.findall(r"'([^']*)'", extracted_content)
+                        if match:
+                            items = match
+                        else:
+                            items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                 else:
                     items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                     

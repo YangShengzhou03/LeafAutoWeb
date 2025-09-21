@@ -1,18 +1,7 @@
 {
-  "total_replies": 1,
-  "successful_replies": 1,
+  "total_replies": 0,
+  "successful_replies": 0,
   "failed_replies": 0,
-  "average_response_time": 2.68,
-  "history": [
-    {
-      "sender": "小羊",
-      "message": "你好",
-      "reply": "你也好啊啊",
-      "status": "replied",
-      "responseTime": 2.68,
-      "timestamp": "2025-09-21T12:12:31.180276",
-      "id": "5c74e517-daa0-49b5-8c81-bd40ebc23f56",
-      "time": "2025-09-21 12:12:31"
-    }
-  ]
+  "average_response_time": 0,
+  "history": []
 }
