@@ -18,7 +18,7 @@
                 <el-col :span="24">
                   <el-form-item label="系统功能控制" class="inline-form-item">
                     <div>
-                      <el-input v-model="contactPerson" placeholder="输入待管理群聊" class="contact-input"></el-input>
+                      <el-input v-model="contactPerson" placeholder="输入待管群聊的备注" class="contact-input"></el-input>
                     </div>
 
                     <div class="controls-row inline-controls">
@@ -118,9 +118,6 @@
                   </el-input>
                   <el-button type="primary" @click="addSensitiveWord" :disabled="!newSensitiveWord.trim()"
                     class="add-word-btn" size="mid">
-                    <el-icon>
-                      <Plus />
-                    </el-icon>
                     添加
                   </el-button>
                 </div>
@@ -358,7 +355,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import {
-  Plus, Key, Refresh, Clock, Document,
+  Key, Refresh, Clock, Document,
   QuestionFilled, InfoFilled, MagicStick, Picture,
   Message, Microphone, VideoCamera, Delete, Download
 } from '@element-plus/icons-vue'
@@ -629,13 +626,15 @@ const showAddRuleDialog = () => {
 
 const showRegexHelp = () => {
   ElMessageBox.alert(
-    '正则表达式帮助：\n\n' +
-    '1. 使用 \\d+ 匹配数字\n' +
-    '2. 使用 [a-zA-Z]+ 匹配字母\n' +
-    '3. 使用 (.*?) 匹配任意内容\n' +
-    '4. 使用 ^ 匹配开头，$ 匹配结尾\n\n' +
-    '示例：姓名[:：]?\\s*([^\\s，,]+) 可以匹配"姓名：张三"中的"张三"',
-    '正则表达式帮助',
+    '数据收集功能使用说明：\n\n' +
+    '1. 首先在群管理中开启对应群组的管理\n' +
+    '2. 打开"数据收集"开始收集消息\n' +
+    '3. 当收到固定格式的消息时，在"原始消息"中输入示例消息\n' +
+    '4. 在"提取值"中输入您想提取的信息（中文逗号分隔，不要句号）\n' +
+    '5. 系统会自动生成正则表达式，后续遇到类似格式的消息就能自动提取信息\n\n' +
+    '示例：\n' +
+    '原始消息："我是小明，今年12岁"\n' +
+    '提取值："小明，12"',
     { confirmButtonText: '明白了' }
   )
 }
@@ -941,12 +940,12 @@ const autoLearnPattern = () => {
 
 const showPatternHelp = () => {
   ElMessageBox.alert(
-    '智能模板使用说明：\n\n' +
+    '数据收集使用说明：\n\n' +
     '1. 在"原始消息内容"中输入完整的消息示例\n' +
-    '2. 在"需要提取的内容"中输入您想提取的内容，用逗号分隔\n' +
-    '3. 点击"智能学习"让系统自动生成匹配规则\n' +
-    '4. 检查生成的规则并进行必要的调整\n' +
-    '5. 保存模板后即可用于数据收集',
+    '2. 在"需提取的内容"中输入您想提取的内容，中文逗号分隔\n' +
+    '3. 点击"智能学习"让系统自动生成正则表达式\n' +
+    '4. 检查正则表达式并进行必要的调整\n' +
+    '5. 保存规则后即可用于数据收集。',
     '使用说明',
     { confirmButtonText: '明白了' }
   )
