@@ -8,26 +8,5 @@
   },
   "management_enabled": false,
   "data_collection_enabled": false,
-  "sentiment_monitoring_enabled": false,
-  "group": "快乐群",
-  "version": "1.0",
-  "selected_group": "快乐群",
-  "快乐群": {
-    "enabled": true,
-    "start_time": "2025-09-21T16:52:12.229565",
-    "settings": {
-      "data_collection_enabled": false,
-      "monitoring_enabled": false,
-      "sensitive_words": [
-        "作弊器",
-        "外挂程序",
-        "刷金币",
-        "破解版",
-        "色情服务",
-        "特殊服务",
-        "兼职刷单"
-      ],
-      "min_reply_interval": 0
-    }
-  }
+  "sentiment_monitoring_enabled": false
 }
