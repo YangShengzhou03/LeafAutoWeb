@@ -14,48 +14,36 @@ from logging_config import get_logger
 
 
 def generate_structure_based_regex(original_message, target_items):
-    """生成能够捕获相似结构但不同内容的正则表达式"""
     try:
-        # 找到目标内容在原始消息中的位置
         positions = []
         for item in target_items:
             start_pos = original_message.find(item)
             if start_pos != -1:
                 positions.append((item, start_pos, start_pos + len(item)))
         
-        # 按位置排序
         positions.sort(key=lambda x: x[1])
         
         if not positions:
             return None
         
-        # 构建正则表达式，保留目标内容前后的上下文
         regex_parts = []
         last_end = 0
         
         for i, (item, start, end) in enumerate(positions):
-            # 添加目标内容前的上下文
             prefix = original_message[last_end:start]
             if prefix:
                 regex_parts.append(re.escape(prefix))
-            
-            # 对于目标内容，使用捕获组并允许匹配任何内容
-            # 根据用户需求，我们需要更灵活的匹配模式
             if item.isdigit():
-                # 数字使用\d+匹配
                 regex_parts.append("(\\d+)")
             else:
-                # 非数字使用.*?匹配，这样可以捕获任何字符（非贪婪模式）
                 regex_parts.append("(.*?)")
             
             last_end = end
         
-        # 添加最后一个目标内容后的上下文
         suffix = original_message[last_end:]
         if suffix:
             regex_parts.append(re.escape(suffix))
         
-        # 组合成完整的正则表达式
         regex_pattern = ''.join(regex_parts)
         
         # 为了提高匹配的准确性，添加开始和结束标记
@@ -1334,20 +1322,12 @@ def api_get_collected_data():
         success, result = get_collected_data(group_id, start_date, end_date)
         
         if success:
-            print(f"传给前端的数据: {result}")
-            print(f"数据条数: {len(result)}")
-            print(f"数据类型: {type(result)}")
-            if len(result) > 0:
-                print(f"第一条数据: {result[0]}")
-                print(f"数据键: {result[0].keys() if isinstance(result[0], dict) else '非字典类型'}")
-            
             return jsonify({
                 "success": True,
                 "data": result,
                 "total": len(result)
             }), 200
         else:
-            print(f"获取数据失败: {result}")
             return jsonify({
                 "success": False,
                 "error": result,
@@ -1356,7 +1336,6 @@ def api_get_collected_data():
             }), 200
             
     except Exception as e:
-        print(f"API异常: {e}")
         logger.error(f"获取收集的数据失败: {e}")
         return jsonify({
             "success": False,

@@ -7,13 +7,13 @@
     }
   },
   "management_enabled": false,
-  "data_collection_enabled": false,
+  "data_collection_enabled": true,
   "sentiment_monitoring_enabled": false,
   "group": "快乐群",
   "version": "1.0",
   "快乐群": {
-    "enabled": true,
-    "start_time": "2025-09-21T16:07:46.898938",
+    "enabled": false,
+    "start_time": "2025-09-21T16:32:55.215199",
     "settings": {
       "data_collection_enabled": false,
       "monitoring_enabled": false,
@@ -29,7 +29,7 @@
       ],
       "min_reply_interval": 0
     },
-    "stop_time": "2025-09-21T15:34:35.392708"
+    "stop_time": "2025-09-21T16:35:05.283097"
   },
   "selected_group": "快乐群"
 }

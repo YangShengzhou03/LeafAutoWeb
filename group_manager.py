@@ -498,43 +498,36 @@ class GroupWorkerThread:
 
     def _process_message(self, msg: Any = None, chat: Any = None) -> None:
         """
-        处理接收到的消息，只负责记录，不回复
+        Process received messages, only responsible for recording, no replies
         
         Args:
-            msg: 消息内容
-            chat: 消息窗口
+            msg: Message content
+            chat: Message window
         """
         try:
             if msg is None:
                 return
                 
-            # 获取聊天信息
             chat_info = self._get_chat_info(chat)
             is_group = chat_info["type"] == "group"
-            chat_name = chat_info["name"] or "未知聊天"
+            chat_name = chat_info["name"] or "Unknown chat"
 
-            # 记录消息接收时间戳
             receive_time = time.time()
             time_str = datetime.fromtimestamp(receive_time).strftime("%Y-%m-%d %H:%M:%S")
 
-            # 获取消息内容
             msg_info = MessageInfo(msg)
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
 
-            # 1. 检查是否包含敏感词
             if self._check_sensitive_words(message_content):
-                logger.warning(f"[敏感内容检测] 检测到敏感内容: {message_content[:50]}... 发送者: {sender}")
+                logger.warning("Sensitive content detected: %s... Sender: %s", message_content[:50], sender)
 
-            # 2. 存储消息到按天文件
-            message_entry = f"[{time_str}] 发送者: {sender} | 群聊: {chat_name if is_group else '私聊'} | 内容: {message_content}"
+            message_entry = f"[{time_str}] Sender: {sender} | Group: {chat_name if is_group else 'Private chat'} | Content: {message_content}"
             self._append_to_daily_file(message_entry, chat_name)
             
-            # 3. 正则匹配消息内容
             matched_rules = self._match_regex_rules(message_content)
             if matched_rules:
                 for matched_rule in matched_rules:
-                    # 保存匹配到的内容到collect目录
                     matched_data = {
                         "time": time_str,
                         "sender": sender,
@@ -545,25 +538,25 @@ class GroupWorkerThread:
                     }
                     self._save_matched_content(matched_data, chat_name)
                     
-                    logger.info(f"[正则匹配] 匹配到规则: {matched_rule['pattern']}, 提取内容: {matched_rule['extracted_content']}")
+                    logger.info("Pattern matched: %s, Extracted content: %s", matched_rule['pattern'], matched_rule['extracted_content'])
             
-            logger.debug(f"[消息存储] 已保存消息到按天文件: {message_entry[:100]}")
+            logger.debug("Message saved to daily file: %s", message_entry[:100])
 
         except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("处理消息时发生错误: %s", e)
+            logger.error("Error processing message: %s", e)
         except OSError as e:
             logger.error("OS error processing message: %s", e)
         except RuntimeError as e:
             logger.error("Runtime error processing message: %s", e)
     
     def _get_chat_info(self, chat: Any) -> Dict[str, str]:
-        """获取聊天信息
+        """Get chat information
         
         Args:
-            chat: 聊天对象
+            chat: Chat object
             
         Returns:
-            Dict[str, str]: 包含聊天类型和名称的字典
+            Dict[str, str]: Dictionary containing chat type and name
         """
         try:
             if chat and hasattr(chat, 'ChatInfo'):
@@ -573,7 +566,7 @@ class GroupWorkerThread:
                     "name": info.get("chat_name", "")
                 }
         except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("获取聊天信息失败: %s", e)
+            logger.error("Failed to get chat info: %s", e)
         except OSError as e:
             logger.error("OS error getting chat info: %s", e)
         except Exception as e:
@@ -582,10 +575,6 @@ class GroupWorkerThread:
         return {"type": "", "name": ""}
 
     def run(self) -> None:
-        """
-        主运行循环
-        负责初始化监听器、处理消息和清理资源
-        """
         self.state.set_running(True)
         self.state.set_start_time(time.time())
         logger.info("AI worker thread started")
@@ -612,25 +601,20 @@ class GroupWorkerThread:
             self.state.set_running(False)
             return
 
-        # 主消息循环
         while not self._should_stop():
             try:
-                # 检查是否暂停
                 if self.state.is_paused():
                     self.wait_for_resume()
                     continue
 
-                # 定期检查规则更新
-                if int(time.time()) % 10 == 0:  # 每10秒检查一次
+                if int(time.time()) % 10 == 0:  # Check every 10 seconds
                     self.update_rules()
 
-                # 获取消息
                 messages_dict = self.config.wx_instance.GetListenMessage()
                 if not messages_dict:
-                    time.sleep(0.1)  # 避免CPU占用过高
+                    time.sleep(0.1)  # Avoid high CPU usage
                     continue
 
-                # 处理每条消息
                 for chat, messages in messages_dict.items():
                     if self._should_stop():
                         break
@@ -638,61 +622,44 @@ class GroupWorkerThread:
                         if self._should_stop():
                             break
 
-                        # 使用线程锁保护消息处理
                         with self.state.get_message_lock():
-                            # 检查是否为需要忽略的消息
                             if self._is_ignored_message(message):
                                 continue
-                            # 处理消息
                             self._process_message(message, chat)
 
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 logger.error("Error in main loop: %s", e)
                 if self._should_stop():
                     break
-                time.sleep(1)  # 出错时暂停一段时间
+                time.sleep(1)  # Pause for a while when error occurs
             except OSError as e:
                 logger.error("OS error in main loop: %s", e)
                 if self._should_stop():
                     break
-                time.sleep(1)  # 出错时暂停一段时间
+                time.sleep(1)  # Pause for a while when error occurs
             except RuntimeError as e:
                 logger.error("Runtime error in main loop: %s", e)
                 if self._should_stop():
                     break
-                time.sleep(1)  # 出错时暂停一段时间
+                time.sleep(1)  # Pause for a while when error occurs
 
-        # 清理资源
         self._cleanup()
         self.state.set_running(False)
         logger.info("AI worker thread stopped")
 
     def _is_ignored_message(self, message: Any) -> bool:
-        """
-        检查是否为需要忽略的消息
-
-        Args:
-            message: 消息对象
-
-        Returns:
-            bool: True表示需要忽略，False表示需要处理
-        """
         try:
             msg_info = MessageInfo(message)
             
-            # 忽略系统消息
             if msg_info.is_system_message():
                 return True
 
-            # 忽略自己发送的消息
             if msg_info.is_self_message():
                 return True
 
-            # 检查消息类型是否有效
             if not msg_info.is_valid_message_type():
                 return True
 
-            # 检查消息内容是否为空
             if msg_info.is_empty_content():
                 return True
 
@@ -708,18 +675,9 @@ class GroupWorkerThread:
             return True
 
     def _should_stop(self) -> bool:
-        """
-        检查是否应该停止线程
-
-        Returns:
-            bool: True表示应该停止，False表示继续运行
-        """
         return self.state.get_stop_event().is_set() or not self.state.is_running()
 
     def _cleanup(self) -> None:
-        """
-        清理监听器资源
-        """
         try:
             for target in self.state.listen_list:
                 if hasattr(self.config.wx_instance, "RemoveListenChat"):
@@ -733,68 +691,38 @@ class GroupWorkerThread:
                         logger.error("Runtime error removing listener for %s: %s", target, e)
             self.state.listen_list.clear()
         except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("清理监听时出错: %s", str(e))
+            logger.error("Error cleaning up listeners: %s", str(e))
         except OSError as e:
             logger.error("OS error cleaning up listeners: %s", str(e))
         except RuntimeError as e:
             logger.error("Runtime error cleaning up listeners: %s", str(e))
 
     def pause(self) -> None:
-        """
-        暂停工作线程
-        """
         with self.state.get_pause_condition():
             self.state.set_paused(True)
 
     def resume(self) -> None:
-        """
-        恢复工作线程
-        """
         with self.state.get_pause_condition():
             self.state.set_paused(False)
             self.state.get_pause_condition().notify()
 
     def is_paused(self) -> bool:
-        """
-        检查线程是否暂停
-
-        Returns:
-            bool: True表示已暂停，False表示未暂停
-        """
         return self.state.is_paused()
 
     def wait_for_resume(self) -> None:
-        """
-        等待线程恢复
-        """
         with self.state.get_pause_condition():
             while self.state.is_paused():
                 self.state.get_pause_condition().wait()
 
     def stop(self) -> None:
-        """
-        停止工作线程
-        """
         self.state.get_stop_event().set()
         self.state.set_running(False)
         self.resume()
 
     def is_running(self) -> bool:
-        """
-        检查线程是否运行
-
-        Returns:
-            bool: True表示正在运行，False表示已停止
-        """
         return self.state.is_running()
 
     def get_uptime(self) -> int:
-        """
-        获取线程运行时间
-
-        Returns:
-            int: 运行时间（秒），如果未启动则返回0
-        """
         return int(time.time() - self.state.get_start_time()) if self.state.get_start_time() else 0
 
 
@@ -884,7 +812,7 @@ class GroupWorkerManager:
                         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
                             json.dump(config, f, ensure_ascii=False, indent=2)
                 except Exception as e:
-                    logger.error(f"更新配置状态失败: {e}")
+                    logger.error("Failed to update config status: %s", e)
                 
                 return True
             return False
@@ -918,16 +846,14 @@ class GroupWorkerManager:
                 updated_count += 1
 
         if updated_count > 0:
-            logger.info("[群聊管理] 已通知 %s 个工作线程更新规则", updated_count)
+            logger.info("Notified %s worker threads to update rules", updated_count)
         else:
-            logger.debug("[群聊管理] 没有工作线程需要更新规则")
+            logger.debug("No worker threads need to update rules")
 
         return updated_count > 0
 
-# 全局的群聊管理器实例
 group_manager = GroupWorkerManager()
 
-# 默认的微信实例，实际使用时会被注入
 default_wx_instance = None
 
 def set_wechat_instance(wx_instance):
@@ -939,15 +865,13 @@ def get_wechat_instance():
 
 def select_group(group_name: str) -> tuple:
     try:
-        # 首先验证群组是否在可用群组列表中
         success, available_groups = get_available_groups()
         if not success:
-            return False, "获取可用群组失败"
+            return False, "Failed to get available groups"
         
         if group_name not in available_groups:
-            return False, f"群组 '{group_name}' 不在可用群组列表中"
+            return False, f"Group '{group_name}' is not in the available group list"
         
-        # 保存选择的群聊到group_manage.json配置文件
         config = {}
         if os.path.exists(group_manage_config_file):
             with open(group_manage_config_file, 'r', encoding='utf-8') as f:
@@ -955,217 +879,177 @@ def select_group(group_name: str) -> tuple:
         
         config["selected_group"] = group_name
         
-        # 保存更新后的配置
         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
-        logger.info(f"已选择群聊: {group_name}")
-        return True, f"已选择群聊: {group_name}"
+        logger.info("Selected group: %s", group_name)
+        return True, f"Selected group: {group_name}"
     except Exception as e:
-        logger.error(f"选择群聊失败: {str(e)}")
-        return False, f"选择群聊失败: {str(e)}"
+        logger.error("Failed to select group: %s", e)
+        return False, f"Failed to select group: {str(e)}"
 
 def toggle_message_recording(group_name: str, enabled: bool) -> tuple:
     try:
-        # 加载配置
         config = {}
         if os.path.exists(collection_config_file):
             with open(collection_config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
-        # 更新配置
         if group_name not in config:
             config[group_name] = {}
         config[group_name]["recording_enabled"] = enabled
         
-        # 保存配置
         with open(collection_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
-        status = "开启" if enabled else "关闭"
-        logger.info(f"已{status}{group_name}的消息记录功能")
+        status = "enabled" if enabled else "disabled"
+        logger.info("Message recording %s for %s", status, group_name)
         
-        # 如果开启记录，确保对应的消息目录存在
         if enabled:
             group_messages_dir = os.path.join(messages_dir, group_name)
             if not os.path.exists(group_messages_dir):
                 os.makedirs(group_messages_dir)
         
-        return True, f"已{status}{group_name}的消息记录功能"
+        return True, f"Message recording {status} for {group_name}"
     except Exception as e:
-        logger.error(f"切换消息记录状态失败: {str(e)}")
-        return False, f"操作失败: {str(e)}"
+        logger.error("Failed to toggle message recording: %s", e)
+        return False, f"Operation failed: {str(e)}"
 
 def set_collection_date(group_name: str, date: str) -> tuple:
     try:
-        # 验证日期格式
         datetime.strptime(date, "%Y-%m-%d")
         
-        # 加载配置
         config = {}
         if os.path.exists(collection_config_file):
             with open(collection_config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
-        # 更新配置
         if group_name not in config:
             config[group_name] = {}
         config[group_name]["collection_date"] = date
         
-        # 保存配置
         with open(collection_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
-        logger.info(f"已设置{group_name}的数据收集日期为: {date}")
+        logger.info("Set collection date for %s to: %s", group_name, date)
         return True, {"date": date}
     except ValueError:
-        return False, "无效的日期格式，请使用YYYY-MM-DD格式"
+        return False, "Invalid date format, please use YYYY-MM-DD format"
     except Exception as e:
-        logger.error(f"设置收集日期失败: {str(e)}")
-        return False, f"操作失败: {str(e)}"
+        logger.error("Failed to set collection date: %s", e)
+        return False, f"Operation failed: {str(e)}"
 
 def save_collection_template(group_name: str, template: str) -> tuple:
     try:
-        # 加载配置
         config = {}
         if os.path.exists(collection_config_file):
             with open(collection_config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
-        # 更新配置
         if group_name not in config:
             config[group_name] = {}
         config[group_name]["template"] = template
         
-        # 保存配置
         with open(collection_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
-        logger.info(f"已保存{group_name}的数据收集模板")
-        return True, "模板保存成功"
+        logger.info("Saved collection template for %s", group_name)
+        return True, "Template saved successfully"
     except Exception as e:
-        logger.error(f"保存收集模板失败: {str(e)}")
-        return False, f"操作失败: {str(e)}"
+        logger.error("Failed to save collection template: %s", e)
+        return False, f"Operation failed: {str(e)}"
 
 def auto_learn_pattern(group_name: str) -> tuple:
     try:
-        # 获取群消息目录
         group_messages_dir = os.path.join(messages_dir, group_name)
         if not os.path.exists(group_messages_dir):
-            return False, "该群聊没有消息记录，无法学习模式"
+            return False, "No message records for this group chat, cannot learn pattern"
         
-        # 加载最近的消息文件
         message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
         if not message_files:
-            return False, "该群聊没有消息记录，无法学习模式"
+            return False, "No message records for this group chat, cannot learn pattern"
         
-        # 取最新的消息文件
         message_files.sort(reverse=True)
         latest_file = message_files[0]
         
         with open(os.path.join(group_messages_dir, latest_file), 'r', encoding='utf-8') as f:
             messages = json.load(f)
         
-        # 简单的模式学习逻辑示例
-        # 提取消息内容中的关键词和模式
         content_patterns = []
         for msg in messages:
             content = msg.get("content", "")
             if content and len(content) > 10:
-                # 尝试提取简单的模式
                 if "=" in content and len(content.split("=")) > 1:
                     content_patterns.append("\\w+=")
                 if ":" in content and len(content.split(":")) > 1:
                     content_patterns.append("\\w+:")
                 
-        # 生成正则表达式
         if content_patterns:
             unique_patterns = list(set(content_patterns))
             regex = "|".join(unique_patterns)
             
-            # 保存生成的正则表达式
             save_collection_template(group_name, regex)
-            return True, f"已自动学习模式，生成正则表达式: {regex}"
+            return True, f"Automatically learned pattern, generated regex: {regex}"
         else:
-            return False, "未能从消息中学习到有效的模式"
+            return False, "Could not learn valid patterns from messages"
             
     except Exception as e:
-        logger.error(f"自动学习模式失败: {str(e)}")
-        return False, f"操作失败: {str(e)}"
+        logger.error("Failed to auto-learn pattern: %s", e)
+        return False, f"Operation failed: {str(e)}"
 
 def get_collected_data(group_name: str, start_date: str = None, end_date: str = None) -> tuple:
     try:
-        # 只使用collect目录下的数据
         collect_dir = os.path.join(CHAT_DATE_DIR, "collect")
         
         if not os.path.exists(collect_dir):
-            return False, "没有聊天数据目录"
+            return False, "No chat data directory"
         
-        # 收集要返回的消息数据
         collected_data = []
         
-        # 只遍历collect目录中的CSV文件
-        print(f"扫描目录: {collect_dir}")
         for file_name in os.listdir(collect_dir):
             if not file_name.endswith('.csv'):
                 continue
                 
-            # 检查文件名是否包含群名
             if group_name and not file_name.startswith(group_name):
                 continue
                 
-            # 从文件名中提取日期
-            # 文件名格式: 群名_YYYY-MM-DD.csv
             if group_name:
-                # 检查文件名是否包含群名
                 if file_name.startswith(group_name + "_"):
-                    # 提取日期部分
-                    date_part = file_name[len(group_name + "_"):-4]  # 去掉群名前缀和.csv后缀
+                    date_part = file_name[len(group_name + "_"):-4]
                     file_date_str = date_part
-                    print(f"处理文件: {file_name}, 提取的日期: {file_date_str}")
                 else:
-                    # 尝试使用正则表达式匹配文件名中的日期
                     import re
                     date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
                     if date_match:
                         file_date_str = date_match.group(1)
-                        print(f"处理文件: {file_name}, 通过正则提取的日期: {file_date_str}")
                     else:
-                        print(f"文件名格式不符合预期: {file_name}")
                         continue
             else:
-                # 如果没有指定群名，尝试使用正则表达式提取日期
                 import re
                 date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
                 if date_match:
                     file_date_str = date_match.group(1)
-                    print(f"处理文件: {file_name}, 通过正则提取的日期: {file_date_str}")
                 else:
-                    print(f"文件名格式不符合预期: {file_name}")
                     continue
             
-            # 检查日期是否在指定范围内
             if start_date is not None and file_date_str is not None and file_date_str < start_date:
                 continue
             if end_date is not None and file_date_str is not None and file_date_str > end_date:
                 continue
             
             file_path = os.path.join(collect_dir, file_name)
-            print(f"读取文件路径: {file_path}")
             
-            # 读取CSV文件 - collect目录下的文件格式不同
             with open(file_path, 'r', encoding='utf-8') as f:
                 csv_reader = csv.reader(f)
                 for row in csv_reader:
-                    if len(row) >= 4:  # 确保行有足够的列
-                        # collect目录下的文件格式：时间,发送者,群聊,原始消息,匹配规则,提取内容
+                    if len(row) >= 4:
                         processed_row = {
                             'time': row[0] if len(row) > 0 else '',
                             'sender': row[1] if len(row) > 1 else '',
                             'group': row[2] if len(row) > 2 else '',
                             'content': row[3] if len(row) > 3 else '',
-                            'type': '文本',
-                            'extractedContent': row[5] if len(row) > 5 else '',  # 使用提取内容
+                            'type': 'text',
+                            'extractedContent': row[5] if len(row) > 5 else '',
                             'extracted_content': row[5] if len(row) > 5 else ''
                         }
                         
@@ -1174,29 +1058,27 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
         if not collected_data:
             date_range = ""
             if start_date and end_date:
-                date_range = f" ({start_date} 至 {end_date})"
+                date_range = f" (from {start_date} to {end_date})"
             elif start_date:
-                date_range = f" (从 {start_date} 开始)"
+                date_range = f" (from {start_date})"
             elif end_date:
-                date_range = f" (至 {end_date} 结束)"
+                date_range = f" (to {end_date})"
                 
-            return False, f"未找到{group_name}{date_range}的聊天记录"
+            return False, f"No chat records found for {group_name}{date_range}"
         
-        logger.info(f"已获取{group_name}的聊天数据，共{len(collected_data)}条记录")
+        logger.info("Retrieved chat data for %s, total %d records", group_name, len(collected_data))
         return True, collected_data
     except Exception as e:
-        logger.error(f"获取聊天数据失败: {str(e)}")
-        return False, f"操作失败: {str(e)}"
+        logger.error("Failed to get chat data: %s", e)
+        return False, f"Operation failed: {str(e)}"
 
 def start_group_management(group_name: str, settings: dict) -> tuple:
     try:
-        # 1. 保存群聊管理配置到group_manage.json
         config = {}
         if os.path.exists(group_manage_config_file):
             with open(group_manage_config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
-        # 更新配置
         if group_name not in config:
             config[group_name] = {}
         
@@ -1206,20 +1088,16 @@ def start_group_management(group_name: str, settings: dict) -> tuple:
             "settings": settings
         })
         
-        # 保存全局配置状态（用于API获取）
         config["management_enabled"] = True
         config["data_collection_enabled"] = settings.get("data_collection_enabled", False)
         config["sentiment_monitoring_enabled"] = settings.get("sentiment_monitoring_enabled", False)
         
-        # 保存配置到group_manage.json
         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
-        logger.info(f"已保存{group_name}的群聊管理配置到group_manage.json")
+        logger.info("Saved group management configuration for %s to group_manage.json", group_name)
         
-        # 2. 开始监听群聊
         if default_wx_instance:
-            # 创建工作线程配置
             worker_config = WorkerConfig(
                 wx_instance=default_wx_instance,
                 receiver=group_name,
@@ -1227,31 +1105,27 @@ def start_group_management(group_name: str, settings: dict) -> tuple:
                 sensitive_words=settings.get("sensitive_words", [])
             )
             
-            # 启动工作线程
             success = group_manager.start_worker(worker_config)
             if not success:
-                return False, "启动群聊监听失败"
+                return False, "Failed to start group chat monitoring"
             
-            logger.info(f"已开始监听群聊: {group_name}")
+            logger.info("Started monitoring group chat: %s", group_name)
         
-        return True, f"已成功开始管理群聊: {group_name}"
+        return True, f"Successfully started managing group chat: {group_name}"
     except Exception as e:
-        logger.error(f"开始群聊管理失败: {str(e)}")
-        return False, f"操作失败: {str(e)}"
+        logger.error("Failed to start group management: %s", e)
+        return False, f"Operation failed: {str(e)}"
 
 def start_sentiment_monitoring(group_name: str, sensitive_words: str) -> tuple:
     try:
-        # 加载配置
         config = {}
         if os.path.exists(monitoring_config_file):
             with open(monitoring_config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
-        # 更新配置
         if group_name not in config:
             config[group_name] = {}
         
-        # 处理敏感词列表
         sensitive_words_list = [word.strip() for word in sensitive_words.split(',') if word.strip()]
         
         config[group_name].update({
@@ -1260,7 +1134,6 @@ def start_sentiment_monitoring(group_name: str, sensitive_words: str) -> tuple:
             "start_time": datetime.now().isoformat()
         })
         
-        # 保存配置
         with open(monitoring_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
@@ -1272,22 +1145,18 @@ def start_sentiment_monitoring(group_name: str, sensitive_words: str) -> tuple:
 
 def stop_sentiment_monitoring(group_name: str) -> tuple:
     try:
-        # 加载配置
         if not os.path.exists(monitoring_config_file):
             return False, "没有舆情监控配置"
         
         with open(monitoring_config_file, 'r', encoding='utf-8') as f:
             config = json.load(f)
         
-        # 检查群聊是否在配置中
         if group_name not in config:
             return False, "该群聊未开启舆情监控"
         
-        # 更新配置
         config[group_name]["enabled"] = False
         config[group_name]["stop_time"] = datetime.now().isoformat()
         
-        # 保存配置
         with open(monitoring_config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         
@@ -1299,18 +1168,15 @@ def stop_sentiment_monitoring(group_name: str) -> tuple:
 
 def check_sentiment_monitoring_status(group_name: str) -> tuple:
     try:
-        # 加载配置
         if not os.path.exists(monitoring_config_file):
             return True, {"enabled": False}
         
         with open(monitoring_config_file, 'r', encoding='utf-8') as f:
             config = json.load(f)
         
-        # 获取状态信息
         if group_name not in config or not config[group_name].get("enabled", False):
             return True, {"enabled": False}
         
-        # 返回详细状态
         return True, {
             "enabled": True,
             "sensitive_words": config[group_name].get("sensitive_words", []),
@@ -1326,28 +1192,22 @@ def get_available_groups() -> tuple:
     try:
         groups = []
         
-        # 从chat_date/collect目录获取群组信息
         collect_dir = os.path.join(os.path.dirname(__file__), "chat_date", "collect")
         if os.path.exists(collect_dir):
             excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.csv')]
             for file_name in excel_files:
                 if '_' in file_name:
-                    # 移除文件扩展名
                     base_name = file_name.replace('.csv', '')
-                    # 分割群名和日期
                     parts = base_name.split('_')
                     if len(parts) >= 2:
-                        # 群名是除最后一部分（日期）之外的所有部分
                         group_name = '_'.join(parts[:-1])
                         date_part = parts[-1]
                         
-                        # 验证日期格式 (YYYY-MM-DD)
                         try:
                             datetime.strptime(date_part, "%Y-%m-%d")
                             if group_name not in groups:
                                 groups.append(group_name)
                         except ValueError:
-                            # 如果不是有效的日期格式，可能只是群名
                             if base_name not in groups:
                                 groups.append(base_name)
         return True, groups
@@ -1361,35 +1221,26 @@ def get_group_dates(group_name: str) -> tuple:
     try:
         dates = []
         
-        # 从chat_date/collect目录获取该群组的日期信息
         collect_dir = os.path.join(os.path.dirname(__file__), "chat_date", "collect")
         if os.path.exists(collect_dir):
-            # 获取所有Excel文件
             excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.xlsx')]
             
             for file_name in excel_files:
-                # 解析文件名格式：群名_日期.xlsx
                 if '_' in file_name and group_name in file_name:
-                    # 移除文件扩展名
                     base_name = file_name.replace('.xlsx', '')
-                    # 分割群名和日期
                     parts = base_name.split('_')
                     if len(parts) >= 2:
-                        # 检查是否匹配群名
                         file_group_name = '_'.join(parts[:-1])
                         date_part = parts[-1]
                         
                         if file_group_name == group_name:
-                            # 验证日期格式 (YYYY-MM-DD)
                             try:
                                 datetime.strptime(date_part, "%Y-%m-%d")
                                 if date_part not in dates:
                                     dates.append(date_part)
                             except ValueError:
-                                # 如果不是有效的日期格式，跳过
                                 continue
         
-        # 按日期排序（最新的在前）
         dates.sort(reverse=True)
         
         return True, dates
@@ -1400,17 +1251,6 @@ def get_group_dates(group_name: str) -> tuple:
 
 
 def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_date: str = None) -> tuple:
-    """
-    导出收集的数据为xlsx格式文件，提取内容按每个内容单独一列展示
-    
-    Args:
-        group_name: 群聊名称
-        start_date: 开始日期 (YYYY-MM-DD)
-        end_date: 结束日期 (YYYY-MM-DD)
-        
-    Returns:
-        tuple: (success: bool, file_path: str)
-    """
     try:
         import re
         import json
@@ -1418,53 +1258,41 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
         from openpyxl.utils import get_column_letter
         from openpyxl.styles import Font, PatternFill, Alignment
         
-        # 创建工作簿和工作表
         wb = Workbook()
         ws = wb.active
         ws.title = "收集数据"
         
-        # 设置表头样式
         header_font = Font(bold=True)
         header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
         header_alignment = Alignment(horizontal="center", vertical="center")
         
-        # 设置表头
         headers = ["时间", "发送者", "群聊", "消息内容", "消息类型"]
-        # 添加提取内容的列（动态）
         extracted_headers = []
         
-        # 先获取数据以确定提取内容的列数
         success, data = get_collected_data(group_name, start_date, end_date)
         if not success:
             return False, data
             
-        # 分析提取内容，确定需要多少列
         max_extracted_items = 0
         for item in data:
             extracted_content = item.get('extractedContent', '') or item.get('extracted_content', '')
             if extracted_content:
-                # 处理列表格式的提取内容
                 items = []
                 if isinstance(extracted_content, str) and extracted_content.startswith('[') and extracted_content.endswith(']'):
                     try:
-                        # 尝试解析为列表
                         items = json.loads(extracted_content)
                         if not isinstance(items, list):
                             items = [items]
                     except json.JSONDecodeError:
-                        # 如果解析失败，按逗号分割
                         items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                 else:
-                    # 按逗号分割
                     items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                 
                 max_extracted_items = max(max_extracted_items, len(items))
         
-        # 添加提取内容的列头
         for i in range(max_extracted_items):
             extracted_headers.append(f"提取内容{i+1}")
         
-        # 写入完整的表头
         all_headers = headers + extracted_headers
         for col_num, header in enumerate(all_headers, 1):
             cell = ws.cell(row=1, column=col_num, value=header)
@@ -1472,38 +1300,29 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
             cell.fill = header_fill
             cell.alignment = header_alignment
         
-        # 写入数据
         for row_num, item in enumerate(data, 2):
-            # 基本信息
             ws.cell(row=row_num, column=1, value=item.get('time', ''))
             ws.cell(row=row_num, column=2, value=item.get('sender', ''))
             ws.cell(row=row_num, column=3, value=item.get('group', ''))
             ws.cell(row=row_num, column=4, value=item.get('content', ''))
             ws.cell(row=row_num, column=5, value=item.get('type', ''))
             
-            # 提取内容分列
             extracted_content = item.get('extractedContent', '') or item.get('extracted_content', '')
             if extracted_content:
-                # 处理列表格式的提取内容
                 items = []
                 if isinstance(extracted_content, str) and extracted_content.startswith('[') and extracted_content.endswith(']'):
                     try:
-                        # 尝试解析为列表
                         items = json.loads(extracted_content)
                         if not isinstance(items, list):
                             items = [items]
                     except json.JSONDecodeError:
-                        # 如果解析失败，按逗号分割
                         items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                 else:
-                    # 按逗号分割
                     items = [item.strip() for item in extracted_content.split('，') if item.strip()]
                     
-                # 写入提取内容到对应的列
-                for col_idx, extracted_item in enumerate(items, 6):  # 从第6列开始
+                for col_idx, extracted_item in enumerate(items, 6):
                     ws.cell(row=row_num, column=col_idx, value=str(extracted_item))
         
-        # 自动调整列宽
         for column in ws.columns:
             max_length = 0
             column_letter = get_column_letter(column[0].column)
@@ -1513,15 +1332,13 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
                         max_length = len(str(cell.value))
                 except:
                     pass
-            adjusted_width = min(max_length + 2, 50)  # 最大宽度限制为50
+            adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column_letter].width = adjusted_width
         
-        # 保存文件
         export_dir = os.path.join(os.path.dirname(__file__), "chat_date", "export")
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
             
-        # 生成文件名
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if group_name:
             file_name = f"{group_name}_导出数据_{timestamp}.xlsx"
@@ -1539,5 +1356,4 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
         return False, f"导出失败: {str(e)}"
 
 
-# 正则规则配置文件
 regex_config_file = os.path.join(data_dir, "regex_rules.json")
