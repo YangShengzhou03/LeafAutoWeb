@@ -119,6 +119,45 @@ load_reply_history()
 start_status_monitor()
 logger.info("微信状态监控已启动")
 
+# 启动时初始化群聊管理配置状态为false
+import json
+import os
+from group_manager import data_dir
+try:
+    config_file = os.path.join(data_dir, "group_manage.json")
+    if os.path.exists(config_file):
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        # 确保management_enabled为false
+        config["management_enabled"] = False
+        
+        # 保存更新后的配置
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        logger.info("已初始化群聊管理配置状态为false")
+    else:
+        # 如果配置文件不存在，创建默认配置
+        default_config = {
+            "_comment": "群聊管理配置文件",
+            "settings": {
+                "default": {
+                    "record_interval": 0,
+                    "sensitive_words": []
+                }
+            },
+            "management_enabled": False,
+            "data_collection_enabled": False,
+            "sentiment_monitoring_enabled": False,
+            "group": "",
+            "version": "1.0"
+        }
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(default_config, f, ensure_ascii=False, indent=2)
+        logger.info("已创建默认群聊管理配置文件，状态为false")
+except Exception as e:
+    logger.error(f"初始化群聊管理配置失败: {e}")
+
 # 设置微信实例到群聊管理器
 try:
     from group_manager import set_wechat_instance
@@ -1041,9 +1080,8 @@ def api_stop_group_management():
                 config[group_name]["enabled"] = False
                 config[group_name]["stop_time"] = datetime.now().isoformat()
             
-            # 如果所有工作线程都已停止，更新全局管理状态
-            if len(group_manager.workers) == 0:
-                config["management_enabled"] = False
+            # 无论工作线程是否存在，前端请求停止时都设置management_enabled为false
+            config["management_enabled"] = False
             
             # 保存更新后的配置
             with open(group_manage_config_file, 'w', encoding='utf-8') as f:

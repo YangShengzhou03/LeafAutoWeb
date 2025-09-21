@@ -7,8 +7,34 @@
     }
   },
   "management_enabled": true,
-  "data_collection_enabled": false,
+  "data_collection_enabled": true,
   "sentiment_monitoring_enabled": false,
   "group": "技术交流群",
-  "version": "1.0"
+  "version": "1.0",
+  "?????": {
+    "enabled": false,
+    "start_time": "2025-09-21T12:04:12.757575",
+    "settings": {},
+    "stop_time": "2025-09-21T12:04:38.768617"
+  },
+  "快乐群": {
+    "enabled": true,
+    "start_time": "2025-09-21T12:12:50.654662",
+    "settings": {
+      "data_collection_enabled": false,
+      "monitoring_enabled": false,
+      "sensitive_words": [
+        "敏感词1",
+        "敏感词2",
+        "敏感词3",
+        "违规内容",
+        "禁止词汇",
+        "政治敏感",
+        "色情内容",
+        "暴力内容",
+        "111"
+      ],
+      "min_reply_interval": 0
+    }
+  }
 }

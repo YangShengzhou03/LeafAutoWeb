@@ -1,2 +1,14 @@
 {
+  "71f37ba3-ee7f-44e1-a938-6b4f418501c2": {
+    "recipient": "文件传输助手",
+    "sendTime": "2025-09-21T00:00:00",
+    "repeatType": "none",
+    "repeatDays": [],
+    "messageContent": "测试",
+    "importExpiredTask": "1",
+    "status": "completed",
+    "createdAt": "2025-09-21T12:11:35.312425",
+    "id": "71f37ba3-ee7f-44e1-a938-6b4f418501c2",
+    "updatedAt": "2025-09-21T12:11:42.170348"
+  }
 }

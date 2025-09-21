@@ -785,9 +785,8 @@ class GroupWorkerManager:
                         with open(group_manage_config_file, 'r', encoding='utf-8') as f:
                             config = json.load(f)
                         
-                        # 检查是否所有工作线程都已停止
-                        if len(self.workers) == 0:
-                            config["management_enabled"] = False
+                        # 无论工作线程是否存在，都设置management_enabled为false
+                        config["management_enabled"] = False
                         
                         # 保存更新后的配置
                         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
