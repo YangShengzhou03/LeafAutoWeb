@@ -13,7 +13,7 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 # 数据存储路径
-data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+data_dir = os.path.join(os.path.dirname(__file__), "data")
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 

@@ -1340,7 +1340,9 @@ def api_get_regex_rules():
         regex_rules = []
         if os.path.exists(regex_config_file):
             with open(regex_config_file, 'r', encoding='utf-8') as f:
-                regex_rules = json.load(f)
+                config_data = json.load(f)
+                # 提取rules数组
+                regex_rules = config_data.get("rules", [])
         
         return jsonify({
             "success": True,
@@ -1367,7 +1369,10 @@ def api_get_sensitive_words():
         sensitive_words = []
         if os.path.exists(sensitive_config_file):
             with open(sensitive_config_file, 'r', encoding='utf-8') as f:
-                sensitive_words = json.load(f)
+                config_data = json.load(f)
+                # 提取words数组
+                sensitive_words = config_data.get("words", [])
+                print(sensitive_words)
         
         return jsonify({
             "success": True,
@@ -1375,11 +1380,85 @@ def api_get_sensitive_words():
         }), 200
         
     except Exception as e:
+        print(f"获取敏感词失败: {e}")
         logger.error(f"获取敏感词失败: {e}")
         return jsonify({
             "success": False,
             "error": f"获取敏感词失败: {e}",
             "words": []
+        }), 500
+
+# 保存敏感词API
+@app.route("/api/group/save-sensitive-words", methods=["POST"])
+@handle_api_errors
+def api_save_sensitive_words():
+    """保存敏感词列表"""
+    try:
+        data = request.json
+        words = data.get("words", [])
+
+        print(words)
+        
+        if not isinstance(words, list):
+            return jsonify({
+                "success": False,
+                "error": "words参数必须是一个数组"
+            }), 400
+        
+        # 保存到配置文件
+        sensitive_config_file = os.path.join(data_dir, "sensitive_words.json")
+        config_data = {"words": words}
+        
+        with open(sensitive_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"敏感词已保存，共{len(words)}个敏感词")
+        return jsonify({
+            "success": True,
+            "message": f"敏感词保存成功，共{len(words)}个敏感词"
+        }), 200
+        
+    except Exception as e:
+        print(f"保存敏感词失败: {e}")
+        logger.error(f"保存敏感词失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"保存敏感词失败: {e}"
+        }), 500
+
+# 保存正则规则API
+@app.route("/api/group/save-regex-rules", methods=["POST"])
+@handle_api_errors
+def api_save_regex_rules():
+    """保存正则规则列表"""
+    try:
+        data = request.json
+        rules = data.get("rules", [])
+        
+        if not isinstance(rules, list):
+            return jsonify({
+                "success": False,
+                "error": "rules参数必须是一个数组"
+            }), 400
+        
+        # 保存到配置文件
+        regex_config_file = os.path.join(data_dir, "regex_rules.json")
+        config_data = {"rules": rules}
+        
+        with open(regex_config_file, 'w', encoding='utf-8') as f:
+            json.dump(config_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"正则规则已保存，共{len(rules)}条规则")
+        return jsonify({
+            "success": True,
+            "message": f"正则规则保存成功，共{len(rules)}条规则"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"保存正则规则失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"保存正则规则失败: {e}"
         }), 500
 
 # 获取可用群组API
@@ -1391,6 +1470,8 @@ def api_get_available_groups():
         from group_manager import get_available_groups
         
         success, groups = get_available_groups()
+
+        print(success, groups)
         
         if success:
             return jsonify({

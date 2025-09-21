@@ -709,6 +709,9 @@ const deleteRegexRule = (index) => {
     return
   }
   
+  // 保存要删除的规则用于回滚
+  const removedRule = regexRules.value[index]
+  
   ElMessageBox.confirm(
     `确定要删除这条规则吗？\n\n原始消息：${regexRules.value[index].originalMessage}\n正则表达式：${regexRules.value[index].pattern}`,
     '确认删除',
@@ -718,14 +721,25 @@ const deleteRegexRule = (index) => {
       type: 'warning'
     }
   ).then(() => {
+    // 从本地数组中删除
     regexRules.value.splice(index, 1)
-    ElMessage.success('规则已删除')
+    
+    // 调用后端API保存到文件
+    saveRegexRulesAPI(regexRules.value)
+      .then(() => {
+        ElMessage.success('规则已删除并已保存')
+      })
+      .catch(error => {
+        ElMessage.error(`保存失败：${error.message}`)
+        // 如果保存失败，回滚本地操作
+        regexRules.value.splice(index, 0, removedRule)
+      })
   }).catch(() => {
     // 用户取消删除
   })
 }
 
-// 已有的添加敏感词方法
+// 修改后的添加敏感词方法 - 调用后端API保存
 const addSensitiveWord = () => {
   const word = newSensitiveWord.value.trim()
   
@@ -743,12 +757,23 @@ const addSensitiveWord = () => {
     return
   }
   
+  // 添加到本地数组
   sensitiveWordsList.value.push(word)
   newSensitiveWord.value = ''
-  ElMessage.success('敏感词添加成功')
+  
+  // 调用后端API保存到文件
+  saveSensitiveWordsAPI(sensitiveWordsList.value)
+    .then(() => {
+      ElMessage.success('敏感词添加成功并已保存')
+    })
+    .catch(error => {
+      ElMessage.error(`保存失败：${error.message}`)
+      // 如果保存失败，回滚本地操作
+      sensitiveWordsList.value.pop()
+    })
 }
 
-// 已有的删除敏感词方法
+// 修改后的删除敏感词方法 - 调用后端API保存
 const removeSensitiveWord = (index) => {
   if (!Array.isArray(sensitiveWordsList.value)) {
     console.warn('sensitiveWordsList不是数组')
@@ -760,8 +785,22 @@ const removeSensitiveWord = (index) => {
     return
   }
   
-  const removedWord = sensitiveWordsList.value.splice(index, 1)
-  ElMessage.info(`敏感词 "${removedWord}" 已删除`)
+  // 保存要删除的单词用于回滚
+  const removedWord = sensitiveWordsList.value[index]
+  
+  // 从本地数组中删除
+  sensitiveWordsList.value.splice(index, 1)
+  
+  // 调用后端API保存到文件
+  saveSensitiveWordsAPI(sensitiveWordsList.value)
+    .then(() => {
+      ElMessage.info(`敏感词 "${removedWord}" 已删除并已保存`)
+    })
+    .catch(error => {
+      ElMessage.error(`保存失败：${error.message}`)
+      // 如果保存失败，回滚本地操作
+      sensitiveWordsList.value.splice(index, 0, removedWord)
+    })
 }
 
 // 其他方法保持不变
@@ -929,14 +968,24 @@ const saveCollectionTemplate = () => {
     regexRules.value = []
   }
   
+  // 添加到本地数组
   regexRules.value.push({
     originalMessage: originalMessage.value,
     pattern: generatedRegex.value,
     extractedContent: Object.values(extractedValues.value).join(', ')
   })
   
-  templateDialogVisible.value = false
-  ElMessage.success('模板保存成功')
+  // 调用后端API保存到文件
+  saveRegexRulesAPI(regexRules.value)
+    .then(() => {
+      templateDialogVisible.value = false
+      ElMessage.success('模板保存成功并已保存到服务器')
+    })
+    .catch(error => {
+      ElMessage.error(`保存失败：${error.message}`)
+      // 如果保存失败，回滚本地操作
+      regexRules.value.pop()
+    })
 }
 
 // 生命周期钩子
@@ -960,6 +1009,12 @@ const loadInitialData = async () => {
       getCollectedDataAPI(),
       getConfigStatusAPI()
     ])
+
+    console.log('加载初始数据 - 正则规则:', rulesData)
+    console.log('加载初始数据 - 可用群聊:', groupsData)
+    console.log('加载初始数据 - 敏感词:', sensitiveWordsData)
+    console.log('加载初始数据 - 收集数据:', collectedDataResponse)
+    console.log('加载初始数据 - 配置状态:', configStatusData)
     
     regexRules.value = rulesData
     availableGroups.value = groupsData
@@ -1148,6 +1203,62 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
     } else {
       console.warn('智能学习失败:', data)
       throw new Error(data.error || '智能学习失败')
+    }
+  })
+}
+
+// 保存敏感词API
+function saveSensitiveWordsAPI(words) {
+  return fetch('/api/group/save-sensitive-words', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      words: words
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('保存敏感词失败')
+    }
+    return response.json()
+  })
+  .then(data => {
+    // 处理API返回格式
+    if (data && data.success) {
+      return data
+    } else {
+      console.warn('保存敏感词失败:', data)
+      throw new Error(data.error || '保存敏感词失败')
+    }
+  })
+}
+
+// 保存正则规则API
+function saveRegexRulesAPI(rules) {
+  return fetch('/api/group/save-regex-rules', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      rules: rules
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('保存正则规则失败')
+    }
+    return response.json()
+  })
+  .then(data => {
+    // 处理API返回格式
+    if (data && data.success) {
+      return data
+    } else {
+      console.warn('保存正则规则失败:', data)
+      throw new Error(data.error || '保存正则规则失败')
     }
   })
 }
