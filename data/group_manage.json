@@ -6,7 +6,7 @@
       "sensitive_words": []
     }
   },
-  "management_enabled": true,
+  "management_enabled": false,
   "data_collection_enabled": true,
   "sentiment_monitoring_enabled": false,
   "group": "技术交流群",

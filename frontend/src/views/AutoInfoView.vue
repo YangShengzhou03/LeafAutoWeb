@@ -71,7 +71,7 @@
             <el-col :span="24">
               <el-form-item label="信息内容" prop="messageContent">
                 <el-input v-model="formData.messageContent" type="textarea" placeholder="输入要发送的消息内容或文件路径" :rows="4"
-                  show-word-limit maxlength="500" />
+                  show-word-limit maxlength="800" />
                 <div class="el-form-item__tip">
                   <p>发送文件：直接输入完整文件路径，如 <strong>D:\文档\报告.pdf</strong></p>
                   <p>发送表情：输入 <strong>SendEmotion:1</strong>，1为表情序号；随机表情范围用逗号分隔，如 <strong>SendEmotion:2,3,4</strong></p>
