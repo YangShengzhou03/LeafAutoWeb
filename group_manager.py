@@ -880,6 +880,14 @@ def select_group(group_name: str) -> tuple:
         tuple: (success, message/error)
     """
     try:
+        # 首先验证群组是否在可用群组列表中
+        success, available_groups = get_available_groups()
+        if not success:
+            return False, "获取可用群组失败"
+        
+        if group_name not in available_groups:
+            return False, f"群组 '{group_name}' 不在可用群组列表中"
+        
         # 保存选择的群聊到group_manage.json配置文件
         config = {}
         if os.path.exists(group_manage_config_file):
@@ -1286,26 +1294,105 @@ def check_sentiment_monitoring_status(group_name: str) -> tuple:
 def get_available_groups() -> tuple:
     """获取可用群组列表
     
+    从chat_date/collect目录获取群名和对应的日期信息
+    
     Returns:
         tuple: (success, groups_list/error)
     """
     try:
-        # 从群聊管理配置文件中获取已配置的群聊
         groups = []
         
-        # 检查群聊管理配置文件
-        if os.path.exists(group_manage_config_file):
+        # 从chat_date/collect目录获取群组信息
+        collect_dir = os.path.join(os.path.dirname(__file__), "chat_date", "collect")
+        if os.path.exists(collect_dir):
+            # 获取所有Excel文件
+            excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.xlsx')]
+            
+            for file_name in excel_files:
+                # 解析文件名格式：群名_日期.xlsx
+                if '_' in file_name:
+                    # 移除文件扩展名
+                    base_name = file_name.replace('.xlsx', '')
+                    # 分割群名和日期
+                    parts = base_name.split('_')
+                    if len(parts) >= 2:
+                        # 群名是除最后一部分（日期）之外的所有部分
+                        group_name = '_'.join(parts[:-1])
+                        date_part = parts[-1]
+                        
+                        # 验证日期格式 (YYYY-MM-DD)
+                        try:
+                            datetime.strptime(date_part, "%Y-%m-%d")
+                            if group_name not in groups:
+                                groups.append(group_name)
+                        except ValueError:
+                            # 如果不是有效的日期格式，可能只是群名
+                            if base_name not in groups:
+                                groups.append(base_name)
+        
+        # 如果没有从collect目录找到群组，尝试从群聊管理配置文件中获取
+        if not groups and os.path.exists(group_manage_config_file):
             with open(group_manage_config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 
                 # 获取所有配置的群聊名称
                 for group_name in config.keys():
                     if group_name not in ["management_enabled", "data_collection_enabled", "sentiment_monitoring_enabled", "selected_group"]:
-                        groups.append(group_name)
+                        if group_name not in groups:
+                            groups.append(group_name)
         
-        # 如果没有配置的群聊，返回空列表
         return True, groups
         
     except Exception as e:
         logger.error(f"获取可用群组失败: {str(e)}")
         return False, f"获取群组失败: {str(e)}"
+
+
+def get_group_dates(group_name: str) -> tuple:
+    """获取指定群组的日期列表
+    
+    Args:
+        group_name: 群聊名称
+        
+    Returns:
+        tuple: (success, dates_list/error)
+    """
+    try:
+        dates = []
+        
+        # 从chat_date/collect目录获取该群组的日期信息
+        collect_dir = os.path.join(os.path.dirname(__file__), "chat_date", "collect")
+        if os.path.exists(collect_dir):
+            # 获取所有Excel文件
+            excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.xlsx')]
+            
+            for file_name in excel_files:
+                # 解析文件名格式：群名_日期.xlsx
+                if '_' in file_name and group_name in file_name:
+                    # 移除文件扩展名
+                    base_name = file_name.replace('.xlsx', '')
+                    # 分割群名和日期
+                    parts = base_name.split('_')
+                    if len(parts) >= 2:
+                        # 检查是否匹配群名
+                        file_group_name = '_'.join(parts[:-1])
+                        date_part = parts[-1]
+                        
+                        if file_group_name == group_name:
+                            # 验证日期格式 (YYYY-MM-DD)
+                            try:
+                                datetime.strptime(date_part, "%Y-%m-%d")
+                                if date_part not in dates:
+                                    dates.append(date_part)
+                            except ValueError:
+                                # 如果不是有效的日期格式，跳过
+                                continue
+        
+        # 按日期排序（最新的在前）
+        dates.sort(reverse=True)
+        
+        return True, dates
+        
+    except Exception as e:
+        logger.error(f"获取群组 '{group_name}' 的日期列表失败: {str(e)}")
+        return False, f"获取日期列表失败: {str(e)}"

@@ -572,11 +572,11 @@ def start_ai_takeover():
     group_at_reply = data.get("groupAtReply", False)
 
     if not contact_person:
-        return jsonify({"success": False, "error": "联系人不能为空", "aiStatus": False}), 400
+        return jsonify({"success": False, "error": "联系人不能为空", "ai_status": False}), 400
 
     # 检查微信是否在线
     if not is_wechat_online():
-        return jsonify({"success": False, "error": "微信未登录或不可用", "aiStatus": False}), 400
+        return jsonify({"success": False, "error": "微信未登录或不可用", "ai_status": False}), 400
 
     wx = get_wechat_instance()
     ai_manager = AiWorkerManager()
@@ -605,7 +605,7 @@ def start_ai_takeover():
                 {
                     "success": True,
                     "message": f"已开始监听 {contact_person}",
-                    "aiStatus": True,
+                    "ai_status": True,
                 }
             ),
             200,
@@ -618,11 +618,11 @@ def start_ai_takeover():
         worker_key = f"{contact_person}_{ai_model}"
         if worker_key in workers:
             logger.info(f"[AI接管] 监听器已存在: {contact_person}, 模型: {ai_model}")
-            return jsonify({"success": False, "error": "监听器已存在", "aiStatus": False}), 400
+            return jsonify({"success": False, "error": "监听器已存在", "ai_status": False}), 400
         else:
             logger.error(f"[AI接管] 启动监听失败: {contact_person}, 模型: {ai_model}")
             # 若接管失败，则保持原状态不变，不更新JSON文件中的状态值
-            return jsonify({"success": False, "error": "启动监听失败，请检查联系人是否正确", "aiStatus": False}), 500
+            return jsonify({"success": False, "error": "启动监听失败，请检查联系人是否正确", "ai_status": False}), 500
 
 
 @app.route("/api/ai-takeover/stop", methods=["POST"])
@@ -633,7 +633,7 @@ def stop_ai_takeover():
     contact_person = data.get("contactPerson", "")
 
     if not contact_person:
-        return jsonify({"success": False, "error": "联系人不能为空", "aiStatus": False}), 400
+        return jsonify({"success": False, "error": "联系人不能为空", "ai_status": False}), 400
 
     ai_manager = AiWorkerManager()
     # 获取AI模型设置，默认为禁用
@@ -648,7 +648,7 @@ def stop_ai_takeover():
             {
                 "success": True,
                 "message": f"已停止监听 {contact_person}",
-                "aiStatus": False,
+                "ai_status": False,
             }
         ),
         200,
@@ -1210,10 +1210,10 @@ def api_get_config_status():
     
     # 默认为False状态
     config_status = {
-        "ai_status": False,
+        "management_status": False,  # 群聊管理状态（原ai_status）
         "data_collection_enabled": False,
         "monitoring_enabled": False,
-        "selected_group": ""
+        "group": ""
     }
     
     try:
@@ -1222,10 +1222,10 @@ def api_get_config_status():
                 config_data = json.load(f)
                 
                 # 从配置中提取状态信息
-                config_status["ai_status"] = config_data.get("management_enabled", False)
+                config_status["management_status"] = config_data.get("management_enabled", False)
                 config_status["data_collection_enabled"] = config_data.get("data_collection_enabled", False)
                 config_status["monitoring_enabled"] = config_data.get("sentiment_monitoring_enabled", False)
-                config_status["selected_group"] = config_data.get("selected_group", "")
+                config_status["group"] = config_data.get("group", "")
         
         return jsonify(config_status), 200
     except Exception as e:
@@ -1492,6 +1492,45 @@ def api_get_available_groups():
                 "error": f"获取群组失败: {e}",
                 "groups": []
             }), 500
+
+# 获取群组日期API
+@app.route("/api/group/get-group-dates", methods=["GET"])
+@handle_api_errors
+def api_get_group_dates():
+    """获取指定群组的日期列表"""
+    try:
+        group_name = request.args.get("group_name", "")
+        
+        if not group_name:
+            return jsonify({
+                "success": False,
+                "error": "群组名称不能为空"
+            }), 400
+            
+        from group_manager import get_group_dates
+        
+        success, dates = get_group_dates(group_name)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "group_name": group_name,
+                "dates": dates
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": dates,
+                "dates": []
+            }), 200
+            
+    except Exception as e:
+        logger.error(f"获取群组 '{group_name}' 的日期列表失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"获取日期列表失败: {e}",
+            "dates": []
+        }), 500
 
 
 if __name__ == "__main__":

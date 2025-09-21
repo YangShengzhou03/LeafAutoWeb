@@ -16,6 +16,7 @@ import json
 import os
 import threading
 import uuid
+from typing import Any, Dict, List, Optional, Union
 
 from logging_config import get_logger
 
@@ -23,22 +24,22 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 # 全局数据存储
-tasks = {}
+tasks: Dict[str, Any] = {}
 DATA_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "data.json"
 )
 
-home_data = {}
+home_data: Dict[str, Any] = {}
 HOME_DATA_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "home_data.json"
 )
 
-ai_settings = {}
+ai_settings: Dict[str, Any] = {}
 AI_DATA_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "ai_data.json"
 )
 
-reply_history = []
+reply_history: List[Dict[str, Any]] = []
 REPLY_HISTORY_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "reply_history.json"
 )

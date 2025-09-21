@@ -26,22 +26,22 @@
                     <div class="controls-row inline-controls">                      
                       <!-- 管理状态开关 - 保持原生样式 -->
                       <div class="status-control">
-                        <el-switch v-model="aiStatus" active-color="#409eff" inactive-color="#dcdfe6"
+                        <el-switch v-model="groupManagementStatus" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
-                        <span class="status-text">{{ aiStatus ? '管理已启用' : '管理未开启' }}</span>
+                        <span class="status-text">{{ groupManagementStatus ? '管理已启用' : '管理未开启' }}</span>
                       </div>
                       
                       <!-- 数据收集开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="dataCollectionEnabled" active-color="#409eff" inactive-color="#dcdfe6"
-                          @change="handleDataCollectionChange" :disabled="!aiStatus"></el-switch>
+                          @change="handleDataCollectionChange" :disabled="!groupManagementStatus"></el-switch>
                         <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集未开启' }}</span>
                       </div>
                       
                       <!-- 舆情监控开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="monitoringEnabled" active-color="#409eff" inactive-color="#dcdfe6"
-                          @change="handleMonitoringChange" :disabled="!aiStatus"></el-switch>
+                          @change="handleMonitoringChange" :disabled="!groupManagementStatus"></el-switch>
                         <span class="status-text">{{ monitoringEnabled ? '舆情监控已启用' : '舆情监控未开启' }}</span>
                       </div>
                     </div>
@@ -427,7 +427,7 @@ import {
 
 // 响应式数据
 const dataCollectionEnabled = ref(false)
-const aiStatus = ref(false) // 管理状态
+const groupManagementStatus = ref(false) // 群聊管理状态（原aiStatus）
 const isTakeoverLoading = ref(false) // 接管加载状态
 const contactPerson = ref('文件传输助手') // 接管联系人，设置默认值
 const regexRules = ref([])
@@ -563,7 +563,7 @@ const handleSwitchChange = (enabled) => {
   if (enabled && !contactPerson.value.trim()) {
     isTakeoverLoading.value = false
     ElMessage.warning('请输入接管联系人姓名')
-    aiStatus.value = false
+    groupManagementStatus.value = false
     return
   }
   
@@ -586,13 +586,13 @@ const handleSwitchChange = (enabled) => {
           selectGroupAPI(contactPerson.value)
         } else {
           ElMessage.error(result.error || '启用管理失败')
-          aiStatus.value = false
+          groupManagementStatus.value = false
         }
       })
       .catch(error => {
         isTakeoverLoading.value = false
         ElMessage.error('启用管理失败: ' + (error.message || '未知错误'))
-        aiStatus.value = false
+        groupManagementStatus.value = false
       })
   } else {
     // 调用后端API停止群聊管理
@@ -603,19 +603,19 @@ const handleSwitchChange = (enabled) => {
           ElMessage.success(result.message || '管理未开启')
         } else {
           ElMessage.error(result.error || '禁用管理失败')
-          aiStatus.value = true // 恢复状态
+          groupManagementStatus.value = true // 恢复状态
         }
       })
       .catch(error => {
         isTakeoverLoading.value = false
         ElMessage.error('禁用管理失败: ' + (error.message || '未知错误'))
-        aiStatus.value = true // 恢复状态
+        groupManagementStatus.value = true // 恢复状态
       })
   }
 }
 
 const handleDataCollectionChange = (enabled) => {
-  if (enabled && !aiStatus.value) {
+  if (enabled && !groupManagementStatus.value) {
     ElMessage.warning('请先启用管理功能')
     dataCollectionEnabled.value = false
     return
@@ -646,7 +646,7 @@ const handleDataCollectionChange = (enabled) => {
 }
 
 const handleMonitoringChange = (enabled) => {
-  if (enabled && !aiStatus.value) {
+  if (enabled && !groupManagementStatus.value) {
     ElMessage.warning('请先启用管理功能')
     monitoringEnabled.value = false
     return
@@ -1022,9 +1022,11 @@ const loadInitialData = async () => {
     collectedData.value = collectedDataResponse
     
     // 设置配置状态
-    if (configStatusData && configStatusData.success) {
+    if (configStatusData) {
       const configData = configStatusData
-      aiStatus.value = configData.ai_status !== undefined ? configData.ai_status : aiStatus.value
+      console.log(configData)
+      contactPerson.value = configData.group
+      groupManagementStatus.value = configData.management_status !== undefined ? configData.management_status : groupManagementStatus.value
       dataCollectionEnabled.value = configData.data_collection_enabled !== undefined ? configData.data_collection_enabled : dataCollectionEnabled.value
       monitoringEnabled.value = configData.monitoring_enabled !== undefined ? configData.monitoring_enabled : monitoringEnabled.value
       
@@ -1043,7 +1045,7 @@ const loadInitialData = async () => {
 }
 
 // 监听数据变化
-watch(aiStatus, (newVal) => {
+watch(groupManagementStatus, (newVal) => {
   if (newVal) {
     console.log('管理功能已启用')
   }
@@ -1098,16 +1100,16 @@ function getConfigStatusAPI() {
     })
     .then(data => {
       // 直接返回配置状态数据，后端API返回的是配置对象本身
-      if (data && (data.ai_status !== undefined || data.selected_group !== undefined)) {
+      if (data && (data.management_status !== undefined || data.group !== undefined)) {
         return data
       } else {
         console.warn('获取配置状态失败或格式不正确:', data)
         // 返回默认配置状态
         return {
-          ai_status: false,
+          management_status: false,
           data_collection_enabled: false,
           monitoring_enabled: false,
-          selected_group: ""
+          group: ""
         }
       }
     })

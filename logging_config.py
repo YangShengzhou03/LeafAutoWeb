@@ -81,12 +81,12 @@ def setup_logging(
     return root_logger
 
 
-def get_logger(name):
+def get_logger(name: str) -> logging.Logger:
     """
     获取指定名称的日志器
 
     Args:
-        name (str): 日志器名称，通常使用模块名
+        name: 日志器名称，通常使用模块名
 
     Returns:
         logging.Logger: 配置好的日志器

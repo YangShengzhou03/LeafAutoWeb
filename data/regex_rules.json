@@ -1,19 +1,24 @@
 {
   "rules": [
     {
+      "extractedContent": "13800138000",
       "originalMessage": "我的手机号是13800138000，请保存",
-      "pattern": "1[3-9]\\d{9}",
-      "extractedContent": "13800138000"
+      "pattern": "1[3-9]\\d{9}"
     },
     {
+      "extractedContent": "example@email.com",
       "originalMessage": "我的邮箱是example@email.com，请查收",
-      "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
-      "extractedContent": "example@email.com"
+      "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
     },
     {
+      "extractedContent": "https://www.example.com",
       "originalMessage": "请访问我们的网站https://www.example.com",
-      "pattern": "https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)",
-      "extractedContent": "https://www.example.com"
+      "pattern": "https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)"
+    },
+    {
+      "originalMessage": "我是小米",
+      "pattern": "^我是(.*?)$",
+      "extractedContent": "小米"
     }
   ]
 }
