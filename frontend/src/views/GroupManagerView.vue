@@ -8,8 +8,7 @@
             <template #header>
               <div class="card-header">
                 <div class="header-title">
-                  <el-icon class="feature-icon data-collection"><Collection /></el-icon>
-                  <span>系统功能配置</span>
+                  <span>群聊管家配置</span>
                 </div>
               </div>
             </template>
@@ -19,25 +18,24 @@
                 <el-col :span="24">
                   <el-form-item label="系统功能控制" class="inline-form-item">
                     <div>
-                      <el-input v-model="contactPerson" placeholder="输入待管理群聊"
-                       class="contact-input"></el-input>
+                      <el-input v-model="contactPerson" placeholder="输入待管理群聊" class="contact-input"></el-input>
                     </div>
 
-                    <div class="controls-row inline-controls">                      
+                    <div class="controls-row inline-controls">
                       <!-- 管理状态开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="groupManagementStatus" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleSwitchChange" :loading="isTakeoverLoading"></el-switch>
                         <span class="status-text">{{ groupManagementStatus ? '管理已启用' : '管理未开启' }}</span>
                       </div>
-                      
+
                       <!-- 数据收集开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="dataCollectionEnabled" active-color="#409eff" inactive-color="#dcdfe6"
                           @change="handleDataCollectionChange" :disabled="!groupManagementStatus"></el-switch>
                         <span class="status-text">{{ dataCollectionEnabled ? '数据收集已启用' : '数据收集未开启' }}</span>
                       </div>
-                      
+
                       <!-- 舆情监控开关 - 保持原生样式 -->
                       <div class="status-control">
                         <el-switch v-model="monitoringEnabled" active-color="#409eff" inactive-color="#dcdfe6"
@@ -58,11 +56,13 @@
                     添加规则
                   </el-button>
                   <el-button size="mid" @click="showRegexHelp">
-                    <el-icon><QuestionFilled /></el-icon>
+                    <el-icon>
+                      <QuestionFilled />
+                    </el-icon>
                     功能帮助
                   </el-button>
                 </div>
-                
+
                 <!-- 正则规则表格 -->
                 <el-table :data="regexRules" class="rules-table" empty-text="暂无规则，快添加试试吧" stripe>
                   <el-table-column prop="originalMessage" label="原始消息" width="250" />
@@ -71,7 +71,9 @@
                   <el-table-column label="操作" width="120" align="center">
                     <template #default="scope">
                       <el-button type="danger" size="small" @click="deleteRegexRule(scope.$index)">
-                        <el-icon><Delete /></el-icon>
+                        <el-icon>
+                          <Delete />
+                        </el-icon>
                         删除
                       </el-button>
                     </template>
@@ -90,8 +92,7 @@
             <template #header>
               <div class="card-header">
                 <div class="header-title">
-                  <el-icon class="feature-icon monitoring"><Monitor /></el-icon>
-                  <span>舆情监控配置</span>
+                  <span>舆情监控</span>
                 </div>
                 <div class="header-status">
                   <el-tag :type="monitoringEnabled ? 'success' : 'info'" effect="light" size="mid">
@@ -104,27 +105,22 @@
             <el-form label-position="top" class="monitoring-form">
               <!-- 敏感词管理区域 -->
               <el-form-item label="敏感词管理" class="monitoring-form-item">
-                
+
                 <!-- 添加敏感词区域 - 优化布局 -->
                 <div class="sensitive-word-input-container">
-                  <el-input
-                    v-model="newSensitiveWord"
-                    placeholder="输入敏感词"
-                    clearable
-                    @keyup.enter="addSensitiveWord"
-                    size="mid"
-                    class="sensitive-word-input">
+                  <el-input v-model="newSensitiveWord" placeholder="输入敏感词" clearable @keyup.enter="addSensitiveWord"
+                    size="mid" class="sensitive-word-input">
                     <template #prefix>
-                      <el-icon><Key /></el-icon>
+                      <el-icon>
+                        <Key />
+                      </el-icon>
                     </template>
                   </el-input>
-                  <el-button 
-                    type="primary" 
-                    @click="addSensitiveWord" 
-                    :disabled="!newSensitiveWord.trim()"
-                    class="add-word-btn"
-                    size="mid">
-                    <el-icon><Plus /></el-icon>
+                  <el-button type="primary" @click="addSensitiveWord" :disabled="!newSensitiveWord.trim()"
+                    class="add-word-btn" size="mid">
+                    <el-icon>
+                      <Plus />
+                    </el-icon>
                     添加
                   </el-button>
                 </div>
@@ -133,16 +129,12 @@
                 <div class="sensitive-words-wrapper">
                   <div class="sensitive-words-list">
                     <transition-group name="fade-in" tag="div">
-                      <el-tag
-                        v-for="(word, index) in sensitiveWordsList"
-                        :key="index"
-                        closable
-                        @close="removeSensitiveWord(index)"
-                        type="danger"
-                        effect="plain"
-                        size="mid"
+                      <el-tag v-for="(word, index) in sensitiveWordsList" :key="index" closable
+                        @close="removeSensitiveWord(index)" type="danger" effect="plain" size="mid"
                         class="sensitive-word-tag">
-                        <el-icon><Key /></el-icon>
+                        <el-icon>
+                          <Key />
+                        </el-icon>
                         {{ word }}
                       </el-tag>
                     </transition-group>
@@ -161,70 +153,43 @@
             <template #header>
               <div class="card-header">
                 <div class="header-title">
-                  <el-icon class="feature-icon"><DataAnalysis /></el-icon>
-                  <span>收集数据展示</span>
+                  <span>收集数据</span>
                 </div>
                 <div class="header-actions filter-row">
-              <el-select 
-                v-model="selectedGroupFilter" 
-                placeholder="筛选群聊" 
-                size="mid" 
-                class="filter-select"
-                clearable>
-                <el-option label="所有群聊" value="" />
-                <el-option 
-                  v-for="group in availableGroups" 
-                  :key="group" 
-                  :label="group" 
-                  :value="group" />
-              </el-select>
-              <el-date-picker
-                v-model="dateRangeFilter"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                size="mid"
-                class="date-picker-filter"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                clearable
-              />
-              <el-button 
-                type="primary" 
-                link 
-                @click="refreshData" 
-                :loading="dataLoading"
-                class="refresh-btn">
-                <el-icon><Refresh /></el-icon>
-                刷新
-              </el-button>
-              <el-button 
-                type="success" 
-                @click="exportCollectedData" 
-                :loading="exportLoading"
-                class="export-btn">
-                <el-icon><Download /></el-icon>
-                导出数据
-              </el-button>
-            </div>
+                  <el-select v-model="selectedGroupFilter" placeholder="筛选群聊" size="mid" class="filter-select"
+                    clearable>
+                    <el-option label="所有群聊" value="" />
+                    <el-option v-for="group in availableGroups" :key="group" :label="group" :value="group" />
+                  </el-select>
+                  <el-date-picker v-model="dateRangeFilter" type="daterange" range-separator="至"
+                    start-placeholder="开始日期" end-placeholder="结束日期" size="mid" class="date-picker-filter"
+                    format="YYYY-MM-DD" value-format="YYYY-MM-DD" clearable />
+                  <el-button type="primary" link @click="refreshData" :loading="dataLoading" class="refresh-btn">
+                    <el-icon>
+                      <Refresh />
+                    </el-icon>
+                    刷新
+                  </el-button>
+                  <el-button type="success" @click="exportCollectedData" :loading="exportLoading" class="export-btn">
+                    <el-icon>
+                      <Download />
+                    </el-icon>
+                    导出数据
+                  </el-button>
+                </div>
               </div>
             </template>
 
             <!-- 表格内容 -->
-            <el-table 
-              :data="currentPageData" 
-              class="data-table" 
-              border 
-              v-loading="dataLoading" 
-              stripe 
-              max-height="400"
+            <el-table :data="currentPageData" class="data-table" border v-loading="dataLoading" stripe max-height="400"
               @row-click="viewMessageDetail"
               :header-cell-style="{ backgroundColor: '#f5f7fa', color: '#606266', fontWeight: '600' }">
               <el-table-column prop="time" label="时间" width="160" sortable>
                 <template #default="{ row }">
                   <div class="time-cell">
-                    <el-icon><Clock /></el-icon>
+                    <el-icon>
+                      <Clock />
+                    </el-icon>
                     {{ row.time }}
                   </div>
                 </template>
@@ -233,6 +198,16 @@
                 <template #default="{ row }">
                   <div class="sender-cell">
                     <span>{{ row.sender }}</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="group" label="群聊" width="120">
+                <template #default="{ row }">
+                  <div class="group-cell">
+                    <el-icon>
+                      <ChatDotRound />
+                    </el-icon>
+                    {{ row.group || '未知群聊' }}
                   </div>
                 </template>
               </el-table-column>
@@ -249,26 +224,22 @@
               <el-table-column prop="type" label="提取数据" min-width="120">
                 <template #default="{ row }">
                   <div class="extracted-content-status">
-                    <el-icon class="success-icon" v-if="extractContent(row.content) !== '无提取内容'"><Check /></el-icon>
-                    <el-icon class="warning-icon" v-else><InfoFilled /></el-icon>
+                    <el-icon class="success-icon" v-if="extractContent(row.content) !== '无提取内容'">
+                      <Check />
+                    </el-icon>
+                    <el-icon class="warning-icon" v-else>
+                      <InfoFilled />
+                    </el-icon>
                     <span>{{ extractContent(row.content) }}</span>
                   </div>
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="120" fixed="right">
                 <template #default="{ row }">
-                  <el-button 
-                    type="primary" 
-                    link 
-                    @click.stop="viewMessageDetail(row)"
-                    class="detail-btn">
+                  <el-button type="primary" link @click.stop="viewMessageDetail(row)" class="detail-btn">
                     详情
                   </el-button>
-                  <el-button 
-                    type="danger" 
-                    link 
-                    @click.stop="deleteCollectedMessage(row)"
-                    class="delete-btn">
+                  <el-button type="danger" link @click.stop="deleteCollectedMessage(row)" class="delete-btn">
                     删除
                   </el-button>
                 </template>
@@ -276,18 +247,10 @@
             </el-table>
 
             <div class="table-footer" v-if="collectedData.length > 0">
-              <el-pagination
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-                :current-page="currentPage"
-                :page-sizes="[5, 10, 20, 50]"
-                :page-size="pageSize"
-                layout="total, sizes, prev, pager, next, jumper"
-                :total="totalDataCount"
-                mid
-                background
-                class="pagination"
-              />
+              <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                :current-page="currentPage" :page-sizes="[5, 10, 20, 50]" :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper" :total="totalDataCount" mid background
+                class="pagination" />
             </div>
           </el-card>
         </el-col>
@@ -295,91 +258,62 @@
     </div>
 
     <!-- 收集模板对话框 -->
-    <el-dialog
-      v-model="templateDialogVisible"
-      title="智能模板配置"
-      width="60%"
-      :close-on-click-modal="false">
+    <el-dialog v-model="templateDialogVisible" title="智能模板配置" width="60%" :close-on-click-modal="false">
       <el-form label-position="top">
         <el-form-item label="原始消息内容">
-          <el-input
-            v-model="originalMessage"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入原始消息示例，例如：'我叫张三，电话13800138000，住在北京市朝阳区'"
-            show-word-limit
-            maxlength="500"
-          />
+          <el-input v-model="originalMessage" type="textarea" :rows="4"
+            placeholder="请输入原始消息示例，例如：'我叫张三，电话13800138000，住在北京市朝阳区'" show-word-limit maxlength="500" />
         </el-form-item>
-        
+
         <el-form-item label="需要从中提取出来的内容">
-          <el-input
-            v-model="collectionTemplate"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入需要提取的内容，用逗号分隔，例如：张三，13800138000，北京市朝阳区"
-            show-word-limit
-            maxlength="200"
-          />
+          <el-input v-model="collectionTemplate" type="textarea" :rows="4"
+            placeholder="请输入需要提取的内容，用逗号分隔，例如：张三，13800138000，北京市朝阳区" show-word-limit maxlength="200" />
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button 
-            type="primary" 
-            @click="autoLearnPattern" 
-            :disabled="!originalMessage.trim() || !collectionTemplate.trim()"
-            :loading="patternLearning"
+          <el-button type="primary" @click="autoLearnPattern"
+            :disabled="!originalMessage.trim() || !collectionTemplate.trim()" :loading="patternLearning"
             class="learn-button">
-            <el-icon><MagicStick /></el-icon>
+            <el-icon>
+              <MagicStick />
+            </el-icon>
             智能学习
           </el-button>
-          
-          <el-button 
-            type="info" 
-            @click="showPatternHelp"
-            link
-            class="help-button">
-            <el-icon><QuestionFilled /></el-icon>
+
+          <el-button type="info" @click="showPatternHelp" link class="help-button">
+            <el-icon>
+              <QuestionFilled />
+            </el-icon>
             如何使用？
           </el-button>
         </el-form-item>
-        
+
         <el-form-item v-if="generatedRegex" label="生成的正则表达式">
-          <el-input
-            v-model="generatedRegex"
-            type="textarea"
-            :rows="3"
-            placeholder="生成的正则表达式将显示在这里，您可以手动编辑"
-            class="regex-input"
-          />
+          <el-input v-model="generatedRegex" type="textarea" :rows="3" placeholder="生成的正则表达式将显示在这里，您可以手动编辑"
+            class="regex-input" />
           <div class="regex-tips">
-            <el-icon><InfoFilled /></el-icon>
+            <el-icon>
+              <InfoFilled />
+            </el-icon>
             系统已自动学习并生成匹配规则，您可以根据需要进一步调整
           </div>
         </el-form-item>
-        
+
         <el-form-item v-if="extractedValues && Object.keys(extractedValues).length > 0" label="提取结果预览">
           <el-card shadow="never">
             <el-descriptions :column="2" border>
-              <el-descriptions-item 
-                v-for="(value, key) in extractedValues" 
-                :key="key" 
-                :label="key">
+              <el-descriptions-item v-for="(value, key) in extractedValues" :key="key" :label="key">
                 {{ value }}
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="templateDialogVisible = false">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="saveCollectionTemplate" 
-            :disabled="!generatedRegex"
-            class="save-button">
+          <el-button type="primary" @click="saveCollectionTemplate" :disabled="!generatedRegex" class="save-button">
             保存模板
           </el-button>
         </span>
@@ -387,14 +321,13 @@
     </el-dialog>
 
     <!-- 消息详情对话框 -->
-    <el-dialog
-      v-model="messageDetailVisible"
-      title="消息详情"
-      width="50%">
+    <el-dialog v-model="messageDetailVisible" title="消息详情" width="50%">
       <el-descriptions :column="1" border v-if="selectedMessage" class="message-details">
         <el-descriptions-item label="发送时间">
           <div class="detail-item">
-            <el-icon><Clock /></el-icon>
+            <el-icon>
+              <Clock />
+            </el-icon>
             {{ selectedMessage.time }}
           </div>
         </el-descriptions-item>
@@ -404,14 +337,17 @@
             <span>{{ selectedMessage.sender }}</span>
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="消息类型">
+
+        <el-descriptions-item label="消息内容">
+          <div class="detail-content">{{ selectedMessage.content }}</div>
+        </el-descriptions-item>
+
+        <el-descriptions-item label="提取内容">
           <el-tag :type="getMessageTypeTag(selectedMessage.type)" size="mid">
             {{ selectedMessage.type }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="消息内容">
-          <div class="detail-content">{{ selectedMessage.content }}</div>
-        </el-descriptions-item>
+
       </el-descriptions>
       <template #footer>
         <span class="dialog-footer">
@@ -426,10 +362,9 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
-import { 
-  Plus, Key, Refresh, Clock,
-  Collection, Monitor, DataAnalysis, Document,
-  QuestionFilled, InfoFilled, MagicStick, Picture, 
+import {
+  Plus, Key, Refresh, Clock, Document,
+  QuestionFilled, InfoFilled, MagicStick, Picture,
   Message, Microphone, VideoCamera, Delete, Check, Download
 } from '@element-plus/icons-vue'
 
@@ -467,9 +402,9 @@ const filteredData = computed(() => {
     console.warn('collectedData不是数组', collectedData.value)
     return []
   }
-  
+
   let filtered = [...collectedData.value]
-  
+
   // 群聊筛选
   if (selectedGroupFilter.value && selectedGroupFilter.value.trim()) {
     filtered = filtered.filter(item => {
@@ -477,7 +412,7 @@ const filteredData = computed(() => {
       return item.sender.includes(selectedGroupFilter.value)
     })
   }
-  
+
   // 日期范围筛选
   if (dateRangeFilter.value && Array.isArray(dateRangeFilter.value) && dateRangeFilter.value.length === 2) {
     const [startDate, endDate] = dateRangeFilter.value
@@ -489,7 +424,7 @@ const filteredData = computed(() => {
       })
     }
   }
-  
+
   return filtered
 })
 
@@ -497,7 +432,7 @@ const currentPageData = computed(() => {
   if (!Array.isArray(filteredData.value)) {
     return []
   }
-  
+
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return filteredData.value.slice(start, end)
@@ -507,7 +442,7 @@ const totalDataCount = computed(() => {
   if (!Array.isArray(filteredData.value)) {
     return 0
   }
-  
+
   return filteredData.value.length
 })
 
@@ -568,14 +503,14 @@ const updateConfigStatusAPI = async (configData) => {
 
 const handleSwitchChange = (enabled) => {
   isTakeoverLoading.value = true
-  
+
   if (enabled && !contactPerson.value.trim()) {
     isTakeoverLoading.value = false
     ElMessage.warning('请输入接管联系人姓名')
     groupManagementStatus.value = false
     return
   }
-  
+
   if (enabled) {
     // 准备设置对象
     const settings = {
@@ -584,7 +519,7 @@ const handleSwitchChange = (enabled) => {
       sensitive_words: sensitiveWordsList.value,
       min_reply_interval: 0 // 默认设置
     }
-    
+
     // 调用后端API
     startGroupManagementAPI(contactPerson.value, settings)
       .then(result => {
@@ -629,7 +564,7 @@ const handleDataCollectionChange = (enabled) => {
     dataCollectionEnabled.value = false
     return
   }
-  
+
   // 更新配置状态到后端
   updateConfigStatusAPI({
     data_collection_enabled: enabled,
@@ -660,7 +595,7 @@ const handleMonitoringChange = (enabled) => {
     monitoringEnabled.value = false
     return
   }
-  
+
   // 更新配置状态到后端
   updateConfigStatusAPI({
     data_collection_enabled: dataCollectionEnabled.value,
@@ -712,15 +647,15 @@ const deleteRegexRule = (index) => {
     ElMessage.error('规则数据异常')
     return
   }
-  
+
   if (index < 0 || index >= regexRules.value.length) {
     ElMessage.error('无效的规则索引')
     return
   }
-  
+
   // 保存要删除的规则用于回滚
   const removedRule = regexRules.value[index]
-  
+
   ElMessageBox.confirm(
     `确定要删除这条规则吗？\n\n原始消息：${regexRules.value[index].originalMessage}\n正则表达式：${regexRules.value[index].pattern}`,
     '确认删除',
@@ -732,7 +667,7 @@ const deleteRegexRule = (index) => {
   ).then(() => {
     // 从本地数组中删除
     regexRules.value.splice(index, 1)
-    
+
     // 调用后端API保存到文件
     saveRegexRulesAPI(regexRules.value)
       .then(() => {
@@ -751,25 +686,25 @@ const deleteRegexRule = (index) => {
 // 修改后的添加敏感词方法 - 调用后端API保存
 const addSensitiveWord = () => {
   const word = newSensitiveWord.value.trim()
-  
+
   if (!word) {
     ElMessage.warning('请输入敏感词')
     return
   }
-  
+
   if (!Array.isArray(sensitiveWordsList.value)) {
     sensitiveWordsList.value = []
   }
-  
+
   if (sensitiveWordsList.value.includes(word)) {
     ElMessage.warning('该敏感词已存在')
     return
   }
-  
+
   // 添加到本地数组
   sensitiveWordsList.value.push(word)
   newSensitiveWord.value = ''
-  
+
   // 调用后端API保存到文件
   saveSensitiveWordsAPI(sensitiveWordsList.value)
     .then(() => {
@@ -788,18 +723,18 @@ const removeSensitiveWord = (index) => {
     console.warn('sensitiveWordsList不是数组')
     return
   }
-  
+
   if (index < 0 || index >= sensitiveWordsList.value.length) {
     console.warn('无效的索引:', index)
     return
   }
-  
+
   // 保存要删除的单词用于回滚
   const removedWord = sensitiveWordsList.value[index]
-  
+
   // 从本地数组中删除
   sensitiveWordsList.value.splice(index, 1)
-  
+
   // 调用后端API保存到文件
   saveSensitiveWordsAPI(sensitiveWordsList.value)
     .then(() => {
@@ -815,7 +750,7 @@ const removeSensitiveWord = (index) => {
 // 其他方法保持不变
 const refreshData = () => {
   dataLoading.value = true
-  
+
   // 调用API获取最新数据
   getCollectedDataAPI(selectedGroupFilter.value, dateRangeFilter.value)
     .then(data => {
@@ -872,16 +807,16 @@ const deleteCollectedMessage = (row) => {
 // 导出收集的数据
 const exportCollectedData = async () => {
   exportLoading.value = true
-  
+
   try {
     // 准备导出参数
     const exportParams = {
       group_name: selectedGroupFilter.value || '',
-      date: dateRangeFilter.value && dateRangeFilter.value.length > 0 
+      date: dateRangeFilter.value && dateRangeFilter.value.length > 0
         ? dateRangeFilter.value.join('_')
         : ''
     }
-    
+
     // 调用后端API导出数据
     const response = await fetch('/api/group/export-collected-data', {
       method: 'POST',
@@ -890,13 +825,13 @@ const exportCollectedData = async () => {
       },
       body: JSON.stringify(exportParams)
     })
-    
+
     if (!response.ok) {
       throw new Error('导出数据失败')
     }
-    
+
     const result = await response.json()
-    
+
     if (result.success) {
       // 创建下载链接
       const downloadLink = document.createElement('a')
@@ -905,7 +840,7 @@ const exportCollectedData = async () => {
       document.body.appendChild(downloadLink)
       downloadLink.click()
       document.body.removeChild(downloadLink)
-      
+
       ElMessage.success('数据导出成功')
     } else {
       throw new Error(result.error || '导出数据失败')
@@ -954,20 +889,20 @@ const extractContent = (message) => {
   // 这里模拟提取内容的逻辑
   // 例如：提取姓名、年龄等信息
   let extracted = ''
-  
+
   // 匹配姓名
   const nameMatch = message.match(/我叫([^，,。；;\s]+)/)
   if (nameMatch && nameMatch[1]) {
     extracted += nameMatch[1]
   }
-  
+
   // 匹配年龄
   const ageMatch = message.match(/我(\d+)岁/)
   if (ageMatch && ageMatch[1]) {
     if (extracted) extracted += '，'
     extracted += `${ageMatch[1]}岁`
   }
-  
+
   return extracted || '无提取内容'
 }
 
@@ -976,14 +911,14 @@ const autoLearnPattern = () => {
     ElMessage.warning('请先输入原始消息内容')
     return
   }
-  
+
   if (!collectionTemplate.value.trim()) {
     ElMessage.warning('请先输入需要提取的内容')
     return
   }
-  
+
   patternLearning.value = true
-  
+
   // 使用统一的API函数调用后端Python服务进行智能学习
   autoLearnPatternAPI(originalMessage.value, collectionTemplate.value)
     .then(data => {
@@ -1016,23 +951,23 @@ const saveCollectionTemplate = () => {
     ElMessage.warning('请先生成正则表达式')
     return
   }
-  
+
   if (!originalMessage.value.trim()) {
     ElMessage.warning('请输入原始消息内容')
     return
   }
-  
+
   if (!Array.isArray(regexRules.value)) {
     regexRules.value = []
   }
-  
+
   // 添加到本地数组
   regexRules.value.push({
     originalMessage: originalMessage.value,
     pattern: generatedRegex.value,
     extractedContent: Object.values(extractedValues.value).join(', ')
   })
-  
+
   // 调用后端API保存到文件
   saveRegexRulesAPI(regexRules.value)
     .then(() => {
@@ -1049,7 +984,7 @@ const saveCollectionTemplate = () => {
 // 生命周期钩子
 onMounted(() => {
   console.log('数据收集配置视图已加载')
-  
+
   // 从API加载初始数据
   loadInitialData()
 })
@@ -1058,7 +993,7 @@ onMounted(() => {
 const loadInitialData = async () => {
   try {
     dataLoading.value = true
-    
+
     // 并行加载各项数据
     const [rulesData, groupsData, sensitiveWordsData, collectedDataResponse, configStatusData] = await Promise.all([
       getRegexRulesAPI(),
@@ -1073,12 +1008,12 @@ const loadInitialData = async () => {
     console.log('加载初始数据 - 敏感词:', sensitiveWordsData)
     console.log('加载初始数据 - 收集数据:', collectedDataResponse)
     console.log('加载初始数据 - 配置状态:', configStatusData)
-    
+
     regexRules.value = rulesData
     availableGroups.value = groupsData
     sensitiveWordsList.value = sensitiveWordsData
     collectedData.value = collectedDataResponse
-    
+
     // 设置配置状态
     if (configStatusData) {
       const configData = configStatusData
@@ -1088,7 +1023,7 @@ const loadInitialData = async () => {
       dataCollectionEnabled.value = configData.data_collection_enabled !== undefined ? configData.data_collection_enabled : dataCollectionEnabled.value
       monitoringEnabled.value = configData.monitoring_enabled !== undefined ? configData.monitoring_enabled : monitoringEnabled.value
     }
-    
+
   } catch (error) {
     console.error('加载初始数据失败:', error)
     ElMessage.error('加载数据失败，请稍后重试')
@@ -1118,9 +1053,9 @@ function getCollectedDataAPI(groupId = '', dateRange = []) {
     params.append('start_date', dateRange[0])
     params.append('end_date', dateRange[1])
   }
-  
+
   const url = `/api/group/get-collected-data${params.toString() ? '?' + params.toString() : ''}`
-  
+
   return fetch(url)
     .then(response => {
       if (!response.ok) {
@@ -1245,21 +1180,21 @@ function autoLearnPatternAPI(originalMessage, targetContent) {
       target_content: targetContent
     })
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('智能学习失败')
-    }
-    return response.json()
-  })
-  .then(data => {
-    // 处理API返回格式
-    if (data && data.success) {
-      return data
-    } else {
-      console.warn('智能学习失败:', data)
-      throw new Error(data.error || '智能学习失败')
-    }
-  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('智能学习失败')
+      }
+      return response.json()
+    })
+    .then(data => {
+      // 处理API返回格式
+      if (data && data.success) {
+        return data
+      } else {
+        console.warn('智能学习失败:', data)
+        throw new Error(data.error || '智能学习失败')
+      }
+    })
 }
 
 // 保存敏感词API
@@ -1273,21 +1208,21 @@ function saveSensitiveWordsAPI(words) {
       words: words
     })
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('保存敏感词失败')
-    }
-    return response.json()
-  })
-  .then(data => {
-    // 处理API返回格式
-    if (data && data.success) {
-      return data
-    } else {
-      console.warn('保存敏感词失败:', data)
-      throw new Error(data.error || '保存敏感词失败')
-    }
-  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('保存敏感词失败')
+      }
+      return response.json()
+    })
+    .then(data => {
+      // 处理API返回格式
+      if (data && data.success) {
+        return data
+      } else {
+        console.warn('保存敏感词失败:', data)
+        throw new Error(data.error || '保存敏感词失败')
+      }
+    })
 }
 
 // 保存正则规则API
@@ -1301,21 +1236,21 @@ function saveRegexRulesAPI(rules) {
       rules: rules
     })
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('保存正则规则失败')
-    }
-    return response.json()
-  })
-  .then(data => {
-    // 处理API返回格式
-    if (data && data.success) {
-      return data
-    } else {
-      console.warn('保存正则规则失败:', data)
-      throw new Error(data.error || '保存正则规则失败')
-    }
-  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('保存正则规则失败')
+      }
+      return response.json()
+    })
+    .then(data => {
+      // 处理API返回格式
+      if (data && data.success) {
+        return data
+      } else {
+        console.warn('保存正则规则失败:', data)
+        throw new Error(data.error || '保存正则规则失败')
+      }
+    })
 }
 </script>
 
@@ -1777,70 +1712,70 @@ function saveRegexRulesAPI(rules) {
     padding: 16px;
     height: calc(100vh - 32px);
   }
-  
+
   .header-actions {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .el-date-picker,
   .el-select {
     width: 100% !important;
     margin-right: 0 !important;
     margin-bottom: 12px;
   }
-  
+
   .rule-actions {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .header-title {
     font-size: 16px;
   }
-  
+
   .data-collection-form,
   .rules-form,
   .monitoring-form {
     padding: 16px;
   }
-  
+
   .data-table .el-table__cell {
     padding: 12px 16px;
   }
-  
+
   .table-footer {
     padding: 20px 16px;
   }
-  
+
   .dialog-footer {
     padding: 20px;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .el-button {
     width: 100%;
     margin: 4px 0;
   }
-  
+
   .controls-row {
     flex-wrap: wrap;
     gap: 16px;
   }
-  
+
   .status-control {
     margin-bottom: 8px;
   }
-  
+
   .contact-input {
     min-width: 100%;
   }
@@ -1856,9 +1791,9 @@ function saveRegexRulesAPI(rules) {
 .fade-leave-to {
   opacity: 0;
 }
-</style>
 
 /* 加载动画样式 */
 :deep(.el-form-item.is-success .el-input__inner) {
   border-color: var(--el-color-success);
 }
+</style>

@@ -131,6 +131,8 @@ try:
         
         # 确保management_enabled为false
         config["management_enabled"] = False
+        config["data_collection_enabled"] = False
+        config["sentiment_monitoring_enabled"] = False
         
         # 保存更新后的配置
         with open(config_file, 'w', encoding='utf-8') as f:
@@ -1328,6 +1330,7 @@ if __name__ == "__main__":
 @app.route("/api/group/get-collected-data", methods=["GET"])
 @handle_api_errors
 def api_get_collected_data():
+    print("收到请求")
     """获取收集的数据"""
     group_id = request.args.get('group_id', '')
     start_date = request.args.get('start_date', '')
@@ -1345,6 +1348,8 @@ def api_get_collected_data():
             # 读取导出的数据文件
             with open(result, 'r', encoding='utf-8') as f:
                 collected_data = json.load(f)
+
+                print(collected_data)
             
             return jsonify({
                 "success": True,
@@ -1360,6 +1365,7 @@ def api_get_collected_data():
             }), 200
             
     except Exception as e:
+        print(e)
         logger.error(f"获取收集的数据失败: {e}")
         return jsonify({
             "success": False,

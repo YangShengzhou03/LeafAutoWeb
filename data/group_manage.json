@@ -7,15 +7,15 @@
     }
   },
   "management_enabled": false,
-  "data_collection_enabled": true,
+  "data_collection_enabled": false,
   "sentiment_monitoring_enabled": false,
-  "group": "技术交流群",
+  "group": "快乐群",
   "version": "1.0",
   "快乐群": {
     "enabled": true,
-    "start_time": "2025-09-21T13:41:39.195640",
+    "start_time": "2025-09-21T13:53:54.261139",
     "settings": {
-      "data_collection_enabled": true,
+      "data_collection_enabled": false,
       "monitoring_enabled": false,
       "sensitive_words": [
         "敏感词1",
