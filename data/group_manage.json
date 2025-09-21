@@ -11,12 +11,6 @@
   "sentiment_monitoring_enabled": false,
   "group": "技术交流群",
   "version": "1.0",
-  "?????": {
-    "enabled": false,
-    "start_time": "2025-09-21T12:04:12.757575",
-    "settings": {},
-    "stop_time": "2025-09-21T12:04:38.768617"
-  },
   "快乐群": {
     "enabled": true,
     "start_time": "2025-09-21T13:41:39.195640",

@@ -232,6 +232,16 @@ class GroupWorkerThread:
         self.receiver_list = [
             r.strip() for r in self.config.receiver.replace("，", ",").split(",") if r.strip()
         ]
+
+        if os.path.exists(group_manage_config_file):
+            with open(group_manage_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            config["group"] = self.config.receiver
+
+            with open(group_manage_config_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+
         
         # 初始化状态对象
         self.state = WorkerState()
