@@ -11,25 +11,5 @@
   "sentiment_monitoring_enabled": false,
   "group": "快乐群",
   "version": "1.0",
-  "快乐群": {
-    "enabled": false,
-    "start_time": "2025-09-21T16:32:55.215199",
-    "settings": {
-      "data_collection_enabled": false,
-      "monitoring_enabled": false,
-      "sensitive_words": [
-        "敏感词1",
-        "敏感词2",
-        "敏感词3",
-        "违规内容",
-        "禁止词汇",
-        "政治敏感",
-        "色情内容",
-        "暴力内容"
-      ],
-      "min_reply_interval": 0
-    },
-    "stop_time": "2025-09-21T16:35:05.283097"
-  },
   "selected_group": "快乐群"
 }
