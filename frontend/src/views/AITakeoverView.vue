@@ -65,7 +65,7 @@
 
               <el-form-item label="AI人设" prop="aiPersona">
                 <el-input v-model="formData.aiPersona" type="textarea" placeholder="描述AI的性格和回复风格" :rows="4"
-                  show-word-limit maxlength="100" :disabled="isTakeoverLoading"></el-input>
+                  show-word-limit maxlength="250" :disabled="isTakeoverLoading"></el-input>
               </el-form-item>
 
               <div class="action-buttons">

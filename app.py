@@ -15,7 +15,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, request, send_from_directory
+from flask import Flask, jsonify, redirect, request, send_from_directory, send_file
 from flask_cors import CORS
 
 from ai_worker import AiWorkerManager, WorkerConfig
@@ -1570,6 +1570,59 @@ def api_get_group_dates():
             "success": False,
             "error": f"获取日期列表失败: {e}",
             "dates": []
+        }), 500
+
+# 文件下载API
+@app.route("/api/download-file", methods=["GET"])
+def download_file():
+    """下载文件API"""
+    try:
+        file_path = request.args.get("file_path", "")
+        
+        if not file_path:
+            return jsonify({
+                "success": False,
+                "error": "文件路径不能为空"
+            }), 400
+        
+        # 安全检查：确保文件路径在允许的目录内
+        allowed_dirs = [
+            os.path.join(os.getcwd(), "chat_date"),
+            os.path.join(os.getcwd(), "data")
+        ]
+        
+        file_abs_path = os.path.abspath(file_path)
+        is_allowed = False
+        
+        for allowed_dir in allowed_dirs:
+            if file_abs_path.startswith(os.path.abspath(allowed_dir)):
+                is_allowed = True
+                break
+        
+        if not is_allowed:
+            return jsonify({
+                "success": False,
+                "error": "文件访问被拒绝"
+            }), 403
+        
+        if not os.path.exists(file_abs_path):
+            return jsonify({
+                "success": False,
+                "error": "文件不存在"
+            }), 404
+        
+        # 返回文件下载
+        return send_file(
+            file_abs_path,
+            as_attachment=True,
+            download_name=os.path.basename(file_abs_path)
+        )
+        
+    except Exception as e:
+        logger.error(f"文件下载失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"文件下载失败: {e}"
         }), 500
 
 

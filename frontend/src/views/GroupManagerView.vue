@@ -199,6 +199,14 @@
                 <el-icon><Refresh /></el-icon>
                 刷新
               </el-button>
+              <el-button 
+                type="success" 
+                @click="exportCollectedData" 
+                :loading="exportLoading"
+                class="export-btn">
+                <el-icon><Download /></el-icon>
+                导出数据
+              </el-button>
             </div>
               </div>
             </template>
@@ -422,7 +430,7 @@ import {
   Plus, Key, Refresh, Clock,
   Collection, Monitor, DataAnalysis, Document,
   QuestionFilled, InfoFilled, MagicStick, Picture, 
-  Message, Microphone, VideoCamera, Delete, Check
+  Message, Microphone, VideoCamera, Delete, Check, Download
 } from '@element-plus/icons-vue'
 
 // 响应式数据
@@ -433,6 +441,7 @@ const contactPerson = ref('文件传输助手') // 接管联系人，设置默�
 const regexRules = ref([])
 const collectedData = ref([])
 const dataLoading = ref(false)
+const exportLoading = ref(false) // 导出加载状态
 const newSensitiveWord = ref('')
 const sensitiveWordsList = ref([])
 const monitoringEnabled = ref(false)
@@ -858,6 +867,55 @@ const deleteCollectedMessage = (row) => {
   }).catch(() => {
     // 用户取消删除
   })
+}
+
+// 导出收集的数据
+const exportCollectedData = async () => {
+  exportLoading.value = true
+  
+  try {
+    // 准备导出参数
+    const exportParams = {
+      group_name: selectedGroupFilter.value || '',
+      date: dateRangeFilter.value && dateRangeFilter.value.length > 0 
+        ? dateRangeFilter.value.join('_')
+        : ''
+    }
+    
+    // 调用后端API导出数据
+    const response = await fetch('/api/group/export-collected-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(exportParams)
+    })
+    
+    if (!response.ok) {
+      throw new Error('导出数据失败')
+    }
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      // 创建下载链接
+      const downloadLink = document.createElement('a')
+      downloadLink.href = `/api/download-file?file_path=${encodeURIComponent(result.file_path)}`
+      downloadLink.download = result.file_path.split('/').pop() || 'collected_data.csv'
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+      
+      ElMessage.success('数据导出成功')
+    } else {
+      throw new Error(result.error || '导出数据失败')
+    }
+  } catch (error) {
+    console.error('导出数据失败:', error)
+    ElMessage.error(`导出数据失败: ${error.message}`)
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 // 工具函数

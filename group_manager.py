@@ -442,14 +442,14 @@ class GroupWorkerThread:
             logger.error(f"加载正则规则失败: {e}")
             return []
 
-    def _match_regex_rules(self, message_content: str) -> List[Dict[str, str]]:
+    def _match_regex_rules(self, message_content: str) -> List[Dict[str, Any]]:
         """使用正则规则匹配消息内容
         
         Args:
             message_content: 消息内容
             
         Returns:
-            List[Dict[str, str]]: 匹配到的规则和提取的内容列表
+            List[Dict[str, Any]]: 匹配到的规则和提取的内容列表
         """
         matched_rules = []
         
@@ -462,12 +462,23 @@ class GroupWorkerThread:
                 # 使用正则表达式匹配
                 match = re.search(pattern, message_content)
                 if match:
-                    # 提取匹配的内容
-                    extracted_content = match.group(1) if len(match.groups()) > 0 else match.group(0)
+                    # 提取所有匹配组的内容
+                    extracted_contents = []
+                    if len(match.groups()) > 0:
+                        # 如果有捕获组，提取所有组的内容
+                        extracted_contents = list(match.groups())
+                    else:
+                        # 如果没有捕获组，使用完整匹配
+                        extracted_contents = [match.group(0)]
+                    
+                    # 将提取的内容用逗号分隔
+                    extracted_content_str = ", ".join(extracted_contents)
+                    
                     matched_rules.append({
                         "pattern": pattern,
                         "original_message": rule.get("originalMessage", ""),
-                        "extracted_content": extracted_content,
+                        "extracted_content": extracted_content_str,
+                        "extracted_contents": extracted_contents,  # 保存原始提取内容列表
                         "full_match": match.group(0)
                     })
             except re.error as e:
@@ -505,13 +516,25 @@ class GroupWorkerThread:
                 '群聊': chat_name,
                 '原始消息': matched_data['original_message'],
                 '匹配规则': matched_data['pattern'],
-                '提取内容': matched_data['extracted_content'],
                 '完整匹配': matched_data['full_match']
             }
             
+            # 添加提取内容列（如果有多个提取内容，分别放在不同列）
+            extracted_contents = matched_data.get('extracted_contents', [])
+            for i, content in enumerate(extracted_contents, 1):
+                row_data[f'提取内容{i}'] = content
+            
+            # 动态构建表头
+            fieldnames = ['时间', '发送者', '群聊', '原始消息', '匹配规则', '完整匹配']
+            max_extracted_columns = max(len(extracted_contents) for _ in range(1))  # 当前行的提取内容数量
+            
+            # 添加提取内容列名
+            for i in range(1, max_extracted_columns + 1):
+                fieldnames.append(f'提取内容{i}')
+            
             # 写入CSV文件
             with open(filepath, 'a', encoding='utf-8', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=['时间', '发送者', '群聊', '原始消息', '匹配规则', '提取内容', '完整匹配'])
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
                 
                 # 如果文件不存在，写入表头
                 if not file_exists:
@@ -570,6 +593,7 @@ class GroupWorkerThread:
                         "original_message": matched_rule["original_message"],
                         "pattern": matched_rule["pattern"],
                         "extracted_content": matched_rule["extracted_content"],
+                        "extracted_contents": matched_rule.get("extracted_contents", []),  # 传递提取内容列表
                         "full_match": matched_rule["full_match"]
                     }
                     self._save_matched_content(matched_data, chat_name)
@@ -954,6 +978,8 @@ class GroupWorkerManager:
                         
                         # 无论工作线程是否存在，都设置management_enabled为false
                         config["management_enabled"] = False
+                        config["data_collection_enabled"] = False
+                        config["sentiment_monitoring_enabled"] = False
                         
                         # 保存更新后的配置
                         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
@@ -1471,14 +1497,11 @@ def get_available_groups() -> tuple:
         # 从chat_date/collect目录获取群组信息
         collect_dir = os.path.join(os.path.dirname(__file__), "chat_date", "collect")
         if os.path.exists(collect_dir):
-            # 获取所有Excel文件
-            excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.txt')]
-            
+            excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.csv')]
             for file_name in excel_files:
-                # 解析文件名格式：群名_日期.txt
                 if '_' in file_name:
                     # 移除文件扩展名
-                    base_name = file_name.replace('.txt', '')
+                    base_name = file_name.replace('.csv', '')
                     # 分割群名和日期
                     parts = base_name.split('_')
                     if len(parts) >= 2:
@@ -1495,18 +1518,6 @@ def get_available_groups() -> tuple:
                             # 如果不是有效的日期格式，可能只是群名
                             if base_name not in groups:
                                 groups.append(base_name)
-        
-        # 如果没有从collect目录找到群组，尝试从群聊管理配置文件中获取
-        if not groups and os.path.exists(group_manage_config_file):
-            with open(group_manage_config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                
-                # 获取所有配置的群聊名称
-                for group_name in config.keys():
-                    if group_name not in ["management_enabled", "data_collection_enabled", "sentiment_monitoring_enabled", "selected_group"]:
-                        if group_name not in groups:
-                            groups.append(group_name)
-        
         return True, groups
         
     except Exception as e:

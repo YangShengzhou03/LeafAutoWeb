@@ -16,9 +16,14 @@
       "pattern": "https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)"
     },
     {
+      "extractedContent": "小米",
       "originalMessage": "我是小米",
-      "pattern": "^我是(.*?)$",
-      "extractedContent": "小米"
+      "pattern": "^我是(.*?)$"
+    },
+    {
+      "originalMessage": "我叫李四，今年20岁，爱吃西瓜。",
+      "pattern": "^我叫(.*?)，今年(\\d+)岁，爱吃(.*?)。$",
+      "extractedContent": "李四, 20, 西瓜"
     }
   ]
 }
