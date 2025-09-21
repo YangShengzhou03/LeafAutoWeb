@@ -12,10 +12,8 @@ from typing import Any, Dict, List, Optional
 from data_manager import add_ai_history
 from logging_config import get_logger
 
-# Initialize logger
 logger = get_logger(__name__)
 
-# Constants
 DEFAULT_MODEL = "MoonDarkSide"
 DEFAULT_ROLE = "你是一个的微信好友，全程隐藏 AI 身份，能类似真人的自然感回应，具体按以下要求执行：对话风格：完全口语化，不用长句和书面词，带日常语气词（\"卧槽\"等）或网络热梗。话题应对：懂的话题别 \"掉书袋\"，聊日常细节就行。应对 \"AI 质疑\"：如果用户说 \"你怎么像机器人\"\"你是 AI 吧\"，别辩解不能掉入\"自证陷阱\"并嘲讽对方。总之，你就是一个普通人，聊得随意、有烟火气，别让人觉得 \"说话没温度、不像真人\"。"
 DEFAULT_REPLY_DELAY = 0
@@ -35,13 +33,11 @@ ACCOUNT_LEVELS = {
 
 
 class MessageInfo:
-    """消息信息类，封装消息相关操作"""
     
     def __init__(self, message: Any):
         self.message = message
     
     def get_sender(self) -> str:
-        """获取消息发送者"""
         if hasattr(self.message, 'sender'):
             return self.message.sender
         elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
@@ -49,7 +45,6 @@ class MessageInfo:
         return ""
     
     def get_content(self) -> str:
-        """获取消息内容"""
         if hasattr(self.message, 'content'):
             return self.message.content or ""
         elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
@@ -57,51 +52,33 @@ class MessageInfo:
         return str(self.message)
     
     def get_type(self) -> str:
-        """获取消息类型"""
         if hasattr(self.message, "type"):
             return self.message.type.lower()
         return ""
     
     def is_system_message(self) -> bool:
-        """检查是否为系统消息"""
         return self.get_type() == SYSTEM_MESSAGE_TYPE
     
     def is_self_message(self) -> bool:
-        """检查是否为自己发送的消息"""
         return self.get_sender() == SELF_SENDER
     
     def is_empty_content(self) -> bool:
-        """检查消息内容是否为空"""
         return not self.get_content().strip()
     
     def is_valid_message_type(self) -> bool:
-        """检查消息类型是否有效"""
         return self.get_type() in MESSAGE_TYPES
 
 
 class ReplyHandler:
-    """回复处理器类，处理不同类型的回复"""
     
     def __init__(self, wx_instance: Any):
         self.wx_instance = wx_instance
     
     def send_reply(self, sender: str, reply_content: str, at_user: Optional[str] = None) -> bool:
-        """发送回复消息
-        
-        Args:
-            sender: 发送者标识
-            reply_content: 回复内容
-            at_user: @用户，仅群聊有效
-            
-        Returns:
-            bool: 发送是否成功
-        """
         try:
-            # 检查配额是否足够
             if not self._check_quota(sender):
                 return False
             
-            # 处理不同类型的回复
             if self._is_file_path(reply_content):
                 return self._send_file(sender, reply_content)
             elif reply_content.startswith(SEND_EMOTION_PREFIX):
@@ -117,13 +94,11 @@ class ReplyHandler:
             return False
     
     def _check_quota(self, sender: str) -> bool:
-        """检查消息配额是否足够"""
         try:
             from data_manager import load_message_quota
             quota_data = load_message_quota()
             account_level = quota_data.get("account_level", "free")
             
-            # 检查账户是否被阻止
             if quota_data.get("blocked", False):
                 logger.warning("[AI接管] 账户已被阻止，无法发送回复给 %s", sender)
                 return False
@@ -142,23 +117,19 @@ class ReplyHandler:
             return False
     
     def _is_file_path(self, content: str) -> bool:
-        """检查内容是否为文件路径"""
         file_path = content
-        # 如果内容以引号开头和结尾，尝试去除引号后检查文件是否存在
         if (content.startswith('"') and content.endswith('"')) or (
                 content.startswith("'") and content.endswith("'")):
-            file_path = content[1:-1]  # 去除首尾的引号
+            file_path = content[1:-1]
         return os.path.exists(file_path)
     
     def _send_file(self, sender: str, file_path: str) -> bool:
-        """发送文件"""
         try:
             response = self.wx_instance.SendFiles(file_path, sender)
             if response.get("status") == STATUS_FAILED:
                 logger.error("Failed to send file to %s: %s", sender, response.get('message', 'Unknown error'))
                 return False
             
-            # 文件发送成功后，增加消息配额计数
             from data_manager import increment_message_count
             increment_message_count()
             logger.info("File sent to %s: %s", sender, file_path)
@@ -171,17 +142,14 @@ class ReplyHandler:
             return False
     
     def _send_emotion(self, sender: str, content: str) -> bool:
-        """发送表情包"""
         try:
             match = re.search(r'SendEmotion:([\d,，]+)', content)
             if not match:
                 logger.error("表情包格式错误，应为SendEmotion:数字或多个数字用逗号（中文或英文）分隔")
                 return False
                 
-            # 同时支持中文逗号和英文逗号
             emotion_str = match.group(1).replace('，', ',')
             emotion_indices = [int(idx) for idx in emotion_str.split(',')]
-            # 随机选择一个表情包索引
             emotion_index = random.choice(emotion_indices)
             response = self.wx_instance.SendEmotion(emotion_index - 1, sender)
             
@@ -189,7 +157,6 @@ class ReplyHandler:
                 logger.error("Failed to send emotion to %s: %s", sender, response.get('message', 'Unknown error'))
                 return False
             
-            # 表情发送成功后，增加消息配额计数
             from data_manager import increment_message_count
             increment_message_count()
             logger.info("Emotion sent to %s (selected %s)", sender, emotion_index)
@@ -202,7 +169,6 @@ class ReplyHandler:
             return False
     
     def _send_text(self, sender: str, content: str, at_user: Optional[str] = None) -> bool:
-        """发送文本消息"""
         try:
             response = self.wx_instance.SendMsg(msg=content, who=sender, at=at_user)
             if response.get("status") == STATUS_FAILED:
@@ -234,11 +200,9 @@ class RulesManager:
         self._load_rules()
     
     def _load_rules(self) -> None:
-        """加载自动回复规则"""
         try:
             with open(self.rules_file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # 检查数据结构是否正确，确保settings和customRules存在
                 if isinstance(data, dict) and "settings" in data:
                     settings = data["settings"]
                     if isinstance(settings, dict) and "customRules" in settings:
@@ -262,22 +226,15 @@ class RulesManager:
             self.rules = []
     
     def update_rules(self) -> bool:
-        """更新自定义回复规则，使规则变更立即生效
-        
-        Returns:
-            bool: 规则是否有变化
-        """
         try:
             with open(self.rules_file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 new_rules = []
-                # 检查数据结构是否正确，确保settings和customRules存在
                 if isinstance(data, dict) and "settings" in data:
                     settings = data["settings"]
                     if isinstance(settings, dict) and "customRules" in settings:
                         new_rules = settings["customRules"]
 
-                # 检查规则是否有变化
                 if new_rules != self.rules:
                     self.rules = new_rules
                     logger.info("[AI接管] 已更新自定义规则，当前规则数: %s", len(self.rules))
@@ -306,14 +263,6 @@ class RulesManager:
             return False
     
     def match_rule(self, msg: str) -> List[str]:
-        """匹配消息与回复规则
-        
-        Args:
-            msg: 消息内容
-            
-        Returns:
-            List[str]: 匹配的回复内容列表
-        """
         if not self.rules:
             return []
 
@@ -332,7 +281,6 @@ class RulesManager:
                 elif match_type == "contains" and keyword in msg:
                     matched_replies.append(rule["reply"])
                 elif match_type == "regex":
-                    # 预编译正则表达式以提高性能并验证有效性
                     pattern = re.compile(keyword)
                     if pattern.search(msg):
                         matched_replies.append(rule["reply"])
@@ -347,14 +295,6 @@ class RulesManager:
         return matched_replies
     
     def apply_custom_rules(self, message_content: str) -> str:
-        """应用自定义回复规则
-        
-        Args:
-            message_content: 消息内容
-            
-        Returns:
-            str: 匹配的回复内容，如果没有匹配则返回空字符串
-        """
         matched_replies = self.match_rule(message_content)
         return matched_replies[0] if matched_replies else ""
 
@@ -456,35 +396,13 @@ class WorkerState:
         """获取启动时间"""
         return self.start_time
     
-    def set_start_time(self, start_time: Optional[float]) -> None:
-        """设置启动时间"""
+    def set_start_time(self, start_time: float) -> None:
         self.start_time = start_time
 
 
 class AiWorkerThread:
-    """
-    AI工作线程类
-    负责处理微信消息的自动回复功能
-
-    Attributes:
-        config: 工作线程配置对象
-        at_me: @我的标识
-        receiver_list: 接收者列表
-        state: 工作线程状态
-        rules_manager: 规则管理器
-        reply_handler: 回复处理器
-    """
-
+    
     def __init__(self, config: WorkerConfig):
-        """
-        初始化AI工作线程
-
-        Args:
-            config: 工作线程配置对象
-
-        Raises:
-            ValueError: 当wx_instance参数为空时抛出
-        """
         if not config.wx_instance:
             raise ValueError("wx_instance参数不能为空")
 
@@ -494,10 +412,8 @@ class AiWorkerThread:
             r.strip() for r in self.config.receiver.replace("，", ",").split(",") if r.strip()
         ]
         
-        # 初始化状态对象
         self.state = WorkerState()
         
-        # 初始化规则管理器和回复处理器
         rules_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_DIR, RULES_FILE)
         self.rules_manager = RulesManager(rules_file_path)
         self.reply_handler = ReplyHandler(self.config.wx_instance)
@@ -514,20 +430,9 @@ class AiWorkerThread:
         )
 
     def update_rules(self) -> bool:
-        """更新自定义回复规则，使规则变更立即生效
-        
-        Returns:
-            bool: 规则是否有变化
-        """
         return self.rules_manager.update_rules()
 
     def init_listeners(self) -> bool:
-        """
-        初始化消息监听器
-
-        Returns:
-            bool: True表示初始化成功，False表示失败
-        """
         if self._should_stop():
             logger.warning("Listener initialization interrupted")
             return False
@@ -542,49 +447,27 @@ class AiWorkerThread:
                 logger.info("Added listener: %s", target)
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 logger.error("Failed to add listener: %s, error: %s", target, str(e))
-                # 清理已添加的监听器
                 self._cleanup()
                 return False
             except OSError as e:
                 logger.error("OS error adding listener: %s, error: %s", target, str(e))
-                # 清理已添加的监听器
                 self._cleanup()
                 return False
             except RuntimeError as e:
                 logger.error("Runtime error adding listener: %s, error: %s", target, str(e))
-                # 清理已添加的监听器
                 self._cleanup()
                 return False
         return True
 
     def _get_chat_name(self, who: str) -> str:
-        """
-        获取聊天名称
-
-        Args:
-            who: 聊天对象标识
-
-        Returns:
-            str: 聊天名称，如果无法获取则返回原标识
-        """
         if not hasattr(self.config.wx_instance, "GetChatName"):
             return who
         return self.config.wx_instance.GetChatName(who)
 
     def _is_target_message(self, message: Any) -> bool:
-        """
-        检查消息是否来自目标联系人
-
-        Args:
-            message: 消息对象
-
-        Returns:
-            bool: True表示来自目标联系人，False表示不是
-        """
         try:
             msg_info = MessageInfo(message)
             sender = msg_info.get_sender()
-            # 检查发送者是否在接收者列表中
             return sender in self.receiver_list
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error("Error checking target message: %s", e)
@@ -597,17 +480,9 @@ class AiWorkerThread:
             return False
 
     def _generate_ai_reply(self, message_content: str) -> None:
-        """
-        AI回复方法
-
-        Args:
-            message_content: 消息内容
-        """
         try:
-            # 根据配置的模型调用相应的AI接口
             reply = self._query_ai_model(message_content)
             if reply:
-                # 使用保存的消息上下文
                 if hasattr(self, '_current_message_context'):
                     context = self._current_message_context
                     is_group = context.get("is_group", False)
@@ -615,25 +490,20 @@ class AiWorkerThread:
                     group_name = context.get("group_name", "")
                     receive_time = context.get("receive_time", time.time())
                 else:
-                    # 如果没有保存的上下文，使用默认值
                     is_group = False
                     sender = ""
                     group_name = ""
                     receive_time = time.time()
                 
-                # 发送AI回复
                 reply_sent = False
                 if is_group:
-                    # 根据group_at_reply设置决定是否@对方
                     at_user = sender if self.config.group_at_reply else ""
                     reply_sent = self.reply_handler.send_reply(group_name, reply, at_user=at_user)
                 else:
                     reply_sent = self.reply_handler.send_reply(sender, reply)
                 
-                # 根据发送结果记录历史记录
                 if reply_sent:
                     self.state.last_reply_info = {"content": message_content, "time": time.time()}
-                    # 记录回复历史
                     history = MessageHistory(
                         sender, 
                         message_content, 
@@ -643,7 +513,6 @@ class AiWorkerThread:
                     )
                     self._record_history(history)
                 else:
-                    # 发送失败（配额不足或被阻止），记录未回复状态
                     history = MessageHistory(
                         sender, 
                         message_content, 
@@ -731,15 +600,6 @@ class AiWorkerThread:
         return response.get('result', "无法解析响应") if response else "请求失败"
     
     def _query_moonshot(self, message: str) -> str:
-        """
-        查询月之暗面模型
-        
-        Args:
-            message: 用户消息
-            
-        Returns:
-            str: AI回复内容
-        """
         headers = {
             "Authorization": "Bearer sk-dx1RuweBS0LU0bCR5HizbWjXLuBL6HrS8BT21NEEGwbeyuo6",
             "Content-Type": "application/json"
@@ -756,15 +616,6 @@ class AiWorkerThread:
         return response['choices'][0]['message']['content'] if response else "无法解析响应"
     
     def _query_spark(self, message: str) -> str:
-        """
-        查询星火讯飞模型
-        
-        Args:
-            message: 用户消息
-            
-        Returns:
-            str: AI回复内容
-        """
         data = {
             "max_tokens": 64,
             "top_k": 4,
@@ -783,14 +634,6 @@ class AiWorkerThread:
         return response['choices'][0]['message']['content'] if response else "无法解析响应"
     
     def _get_chat_info_from_message(self) -> Dict[str, Any]:
-        """
-        从当前消息中获取聊天信息
-        
-        Returns:
-            Dict[str, Any]: 包含聊天类型、名称、发送者和接收时间的字典
-        """
-        # 这里应该从当前消息中获取聊天信息
-        # 由于没有当前消息的上下文，这里返回一个默认值
         return {
             "type": "friend",
             "name": "",
@@ -799,9 +642,6 @@ class AiWorkerThread:
         }
 
     def _cleanup(self) -> None:
-        """
-        清理监听器资源
-        """
         try:
             for target in self.state.listen_list:
                 if hasattr(self.config.wx_instance, "RemoveListenChat"):
@@ -822,89 +662,46 @@ class AiWorkerThread:
             logger.error("Runtime error cleaning up listeners: %s", str(e))
 
     def pause(self) -> None:
-        """
-        暂停工作线程
-        """
         with self.state.get_pause_condition():
             self.state.set_paused(True)
 
     def resume(self) -> None:
-        """
-        恢复工作线程
-        """
         with self.state.get_pause_condition():
             self.state.set_paused(False)
             self.state.get_pause_condition().notify()
 
     def is_paused(self) -> bool:
-        """
-        检查线程是否暂停
-
-        Returns:
-            bool: True表示已暂停，False表示未暂停
-        """
         return self.state.is_paused()
 
     def wait_for_resume(self) -> None:
-        """
-        等待线程恢复
-        """
         with self.state.get_pause_condition():
             while self.state.is_paused():
                 self.state.get_pause_condition().wait()
 
     def stop(self) -> None:
-        """
-        停止工作线程
-        """
         self.state.get_stop_event().set()
         self.state.set_running(False)
         self.resume()
 
     def is_running(self) -> bool:
-        """
-        检查线程是否运行
-
-        Returns:
-            bool: True表示正在运行，False表示已停止
-        """
         return self.state.is_running()
 
     def get_uptime(self) -> int:
-        """
-        获取线程运行时间
-
-        Returns:
-            int: 运行时间（秒），如果未启动则返回0
-        """
         return int(time.time() - self.state.get_start_time()) if self.state.get_start_time() else 0
 
     def _is_ignored_message(self, message: Any) -> bool:
-        """
-        检查是否为需要忽略的消息
-
-        Args:
-            message: 消息对象
-
-        Returns:
-            bool: True表示需要忽略，False表示需要处理
-        """
         try:
             msg_info = MessageInfo(message)
             
-            # 忽略系统消息
             if msg_info.is_system_message():
                 return True
 
-            # 忽略自己发送的消息
             if msg_info.is_self_message():
                 return True
 
-            # 检查消息类型是否有效
             if not msg_info.is_valid_message_type():
                 return True
 
-            # 检查消息内容是否为空
             if msg_info.is_empty_content():
                 return True
 
@@ -920,12 +717,6 @@ class AiWorkerThread:
             return True
 
     def _should_stop(self) -> bool:
-        """
-        检查是否应该停止线程
-
-        Returns:
-            bool: True表示应该停止，False表示继续运行
-        """
         return self.state.get_stop_event().is_set() or not self.state.is_running()
 
     def _process_message(self, msg: Any = None, chat: Any = None) -> None:
@@ -1017,35 +808,24 @@ class AiWorkerThread:
 
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error("处理消息时发生错误: %s", e)
-            # 记录错误历史
             if msg is not None:
                 msg_info = MessageInfo(msg)
                 history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
                 self._record_history(history)
         except OSError as e:
             logger.error("OS error processing message: %s", e)
-            # 记录错误历史
             if msg is not None:
                 msg_info = MessageInfo(msg)
                 history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
                 self._record_history(history)
         except RuntimeError as e:
             logger.error("Runtime error processing message: %s", e)
-            # 记录错误历史
             if msg is not None:
                 msg_info = MessageInfo(msg)
                 history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
                 self._record_history(history)
     
     def _get_chat_info(self, chat: Any) -> Dict[str, str]:
-        """获取聊天信息
-        
-        Args:
-            chat: 聊天对象
-            
-        Returns:
-            Dict[str, str]: 包含聊天类型和名称的字典
-        """
         try:
             if chat and hasattr(chat, 'ChatInfo'):
                 info = chat.ChatInfo()
@@ -1063,14 +843,6 @@ class AiWorkerThread:
         return {"type": "", "name": ""}
     
     def _should_ignore_due_to_interval(self, message_content: str) -> bool:
-        """检查是否因回复间隔而忽略消息
-        
-        Args:
-            message_content: 消息内容
-            
-        Returns:
-            bool: 是否应该忽略
-        """
         if self.config.min_reply_interval <= 0:
             return False
             
@@ -1081,18 +853,9 @@ class AiWorkerThread:
         )
     
     def _record_history(self, history: MessageHistory) -> None:
-        """记录回复历史
-        
-        Args:
-            history: 消息历史对象
-        """
         add_ai_history(history.to_dict())
 
     def run(self) -> None:
-        """
-        主运行循环
-        负责初始化监听器、处理消息和清理资源
-        """
         self.state.set_running(True)
         self.state.set_start_time(time.time())
         logger.info("AI worker thread started")
@@ -1119,25 +882,20 @@ class AiWorkerThread:
             self.state.set_running(False)
             return
 
-        # 主消息循环
         while not self._should_stop():
             try:
-                # 检查是否暂停
                 if self.state.is_paused():
                     self.wait_for_resume()
                     continue
 
-                # 定期检查规则更新
-                if int(time.time()) % 10 == 0:  # 每10秒检查一次
+                if int(time.time()) % 10 == 0:
                     self.update_rules()
 
-                # 获取消息
                 messages_dict = self.config.wx_instance.GetListenMessage()
                 if not messages_dict:
-                    time.sleep(0.1)  # 避免CPU占用过高
+                    time.sleep(0.1)
                     continue
 
-                # 处理每条消息
                 for chat, messages in messages_dict.items():
                     if self._should_stop():
                         break
@@ -1145,58 +903,39 @@ class AiWorkerThread:
                         if self._should_stop():
                             break
 
-                        # 使用线程锁保护消息处理
                         with self.state.get_message_lock():
-                            # 检查是否为需要忽略的消息
                             if self._is_ignored_message(message):
                                 continue
-                            # 处理消息
                             self._process_message(message, chat)
 
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 logger.error("Error in main loop: %s", e)
                 if self._should_stop():
                     break
-                time.sleep(1)  # 出错时暂停一段时间
+                time.sleep(1)
             except OSError as e:
                 logger.error("OS error in main loop: %s", e)
                 if self._should_stop():
                     break
-                time.sleep(1)  # 出错时暂停一段时间
+                time.sleep(1)
             except RuntimeError as e:
                 logger.error("Runtime error in main loop: %s", e)
                 if self._should_stop():
                     break
-                time.sleep(1)  # 出错时暂停一段时间
+                time.sleep(1)
 
-        # 清理资源
         self._cleanup()
         self.state.set_running(False)
         logger.info("AI worker thread stopped")
 
 
 class AiWorkerManager:
-    """
-    AI工作管理器类（单例模式）
-    负责管理多个AI工作线程的创建、停止和状态查询
-
-    Attributes:
-        _instance: 单例实例
-        workers: 工作线程字典
-        lock: 线程安全锁
-    """
-
+    
     _instance: Optional['AiWorkerManager'] = None
     workers: Dict[str, AiWorkerThread] = {}
     lock: threading.Lock = threading.Lock()
 
     def __new__(cls) -> 'AiWorkerManager':
-        """
-        单例模式实现
-
-        Returns:
-            AiWorkerManager: 单例实例
-        """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.workers = {}
@@ -1204,15 +943,6 @@ class AiWorkerManager:
         return cls._instance
 
     def start_worker(self, config: WorkerConfig) -> bool:
-        """
-        启动AI工作线程
-
-        Args:
-            config: 工作线程配置对象
-
-        Returns:
-            bool: True表示启动成功，False表示启动失败
-        """
         with self.lock:
             worker_key = f"{config.receiver}_{config.model}"
             if worker_key in self.workers:
@@ -1225,38 +955,29 @@ class AiWorkerManager:
                 thread = threading.Thread(target=worker.run, daemon=True)
                 thread.start()
 
-                # 等待线程启动
                 time.sleep(0.1)
                 if not worker.is_running():
                     del self.workers[worker_key]
                     return False
 
-                # 等待初始化完成，最多等待5秒
                 max_wait_time = 5
                 wait_interval = 0.1
                 total_wait_time = 0
                 
                 while total_wait_time < max_wait_time:
-                    # 检查线程是否仍在运行且初始化是否完成
                     if not worker.is_running():
-                        # 线程已经停止，说明初始化失败
                         del self.workers[worker_key]
                         return False
                     
-                    # 检查监听器是否已成功添加
                     if hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
-                        # 监听器已添加，初始化成功
                         return True
                     
-                    # 继续等待
                     time.sleep(wait_interval)
                     total_wait_time += wait_interval
                 
-                # 超时后，检查线程状态
                 if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
                     return True
                 else:
-                    # 初始化超时，停止线程并清理
                     worker.stop()
                     del self.workers[worker_key]
                     return False
@@ -1278,16 +999,6 @@ class AiWorkerManager:
                 return False
 
     def stop_worker(self, receiver: str, model: str = DEFAULT_MODEL) -> bool:
-        """
-        停止AI工作线程
-
-        Args:
-            receiver: 接收者标识
-            model: AI模型名称
-
-        Returns:
-            bool: True表示停止成功，False表示未找到对应线程
-        """
         with self.lock:
             worker_key = f"{receiver}_{model}"
             if worker_key in self.workers:
@@ -1298,16 +1009,6 @@ class AiWorkerManager:
             return False
 
     def get_worker_status(self, receiver: str, model: str = DEFAULT_MODEL) -> Optional[Dict[str, Any]]:
-        """
-        获取工作线程状态
-
-        Args:
-            receiver: 接收者标识
-            model: AI模型名称
-
-        Returns:
-            dict: 线程状态信息，如果未找到则返回None
-        """
         with self.lock:
             worker_key = f"{receiver}_{model}"
             if worker_key in self.workers:
@@ -1320,28 +1021,16 @@ class AiWorkerManager:
             return None
 
     def get_all_workers(self) -> List[str]:
-        """
-        获取所有工作线程信息
-
-        Returns:
-            List[str]: 所有工作线程的键列表
-        """
         with self.lock:
             return list(self.workers.keys())
 
     def stop_all_workers(self) -> None:
-        """停止所有工作线程"""
         with self.lock:
             for worker in self.workers.values():
                 worker.stop()
             self.workers.clear()
 
     def update_all_workers_rules(self) -> bool:
-        """通知所有AI工作线程更新规则
-        
-        Returns:
-            bool: 是否有工作线程更新了规则
-        """
         updated_count = 0
         for _, worker in self.workers.items():
             if worker.update_rules():
