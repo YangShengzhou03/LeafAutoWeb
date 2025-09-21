@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import re
@@ -58,12 +59,12 @@ def get_daily_messages_file(chat_name: str) -> str:
         chat_name: 聊天名称
         
     Returns:
-        str: 文件路径，格式：chat_date/群聊名_YYYY-MM-DD.txt
+        str: 文件路径，格式：chat_date/群聊名_YYYY-MM-DD.csv
     """
     date_str = datetime.now().strftime("%Y-%m-%d")
     # 清理文件名中的非法字符
     safe_chat_name = re.sub(r'[\\/:*?"<>|]', '_', chat_name)
-    filename = f"{safe_chat_name}_{date_str}.txt"
+    filename = f"{safe_chat_name}_{date_str}.csv"
     return os.path.join(CHAT_DATE_DIR, filename)
 
 
@@ -237,8 +238,9 @@ class GroupWorkerThread:
         
         # 初始化敏感词列表
         self.sensitive_words = self.config.sensitive_words or []
-
-
+        
+        # 初始化正则规则列表
+        self.regex_rules = self._load_regex_rules()
 
         logger.info(
             "Group worker thread initialized: receiver=%s, record_interval=%ss",
@@ -333,28 +335,76 @@ class GroupWorkerThread:
 
     def _append_to_daily_file(self, content: str, chat_name: str) -> None:
         """
-        将内容追加到按天存储的消息文件
+        将内容追加到按天存储的消息文件（CSV格式）
         
         Args:
-            content: 要追加的内容
+            content: 要追加的内容（格式：[时间] 发送者: {sender} | 群聊: {chat_name} | 内容: {message_content}）
             chat_name: 聊天名称
         """
         try:
             daily_file = get_daily_messages_file(chat_name)
             
-            # 确保目录存在（CHAT_DATE_DIR已在文件顶部创建）
-            # 检查文件是否存在，不存在则创建文件
-            if not os.path.exists(daily_file):
-                # 创建新文件并写入内容
-                with open(daily_file, 'w', encoding='utf-8') as f:
-                    f.write(content + '\n')
-                logger.info(f"创建新的按天存储文件: {daily_file}")
+            # 解析消息内容
+            # 格式示例：[2025-09-21 10:30:25] 发送者: 张三 | 群聊: 测试群 | 内容: 你好
+            import re
+            pattern = r'\[(.*?)\] 发送者: (.*?) \| 群聊: (.*?) \| 内容: (.*)'
+            match = re.match(pattern, content)
+            
+            if match:
+                time_str, sender, chat_type, message_content = match.groups()
+                
+                # 准备CSV行数据
+                row_data = {
+                    '时间': time_str,
+                    '发送者': sender,
+                    '聊天类型': chat_type,
+                    '聊天名称': chat_name,
+                    '消息内容': message_content
+                }
+                
+                # 检查文件是否存在
+                file_exists = os.path.exists(daily_file)
+                
+                # 写入CSV文件
+                with open(daily_file, 'a', encoding='utf-8', newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=['时间', '发送者', '聊天类型', '聊天名称', '消息内容'])
+                    
+                    # 如果文件不存在，写入表头
+                    if not file_exists:
+                        writer.writeheader()
+                        logger.info(f"创建新的按天存储CSV文件: {daily_file}")
+                    
+                    # 写入数据行
+                    writer.writerow(row_data)
             else:
-                # 文件已存在，追加内容
-                with open(daily_file, 'a', encoding='utf-8') as f:
-                    f.write(content + '\n')
+                # 如果格式不匹配，使用原始内容作为消息内容
+                row_data = {
+                    '时间': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    '发送者': '未知',
+                    '聊天类型': '未知',
+                    '聊天名称': chat_name,
+                    '消息内容': content
+                }
+                
+                # 检查文件是否存在
+                file_exists = os.path.exists(daily_file)
+                
+                # 写入CSV文件
+                with open(daily_file, 'a', encoding='utf-8', newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=['时间', '发送者', '聊天类型', '聊天名称', '消息内容'])
+                    
+                    # 如果文件不存在，写入表头
+                    if not file_exists:
+                        writer.writeheader()
+                        logger.info(f"创建新的按天存储CSV文件: {daily_file}")
+                    
+                    # 写入数据行
+                    writer.writerow(row_data)
+                    
         except IOError as e:
-            logger.error(f"写入按天存储文件失败: {e}")
+            logger.error(f"写入按天存储CSV文件失败: {e}")
+        except Exception as e:
+            logger.error(f"处理消息内容失败: {e}")
 
     def _check_sensitive_words(self, content: str) -> bool:
         """
@@ -374,6 +424,106 @@ class GroupWorkerThread:
             if re.search(re.escape(word), content, re.IGNORECASE):
                 return True
         return False
+
+    def _load_regex_rules(self) -> List[Dict[str, str]]:
+        """加载正则规则列表
+        
+        Returns:
+            List[Dict[str, str]]: 正则规则列表
+        """
+        try:
+            if os.path.exists(regex_config_file):
+                with open(regex_config_file, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                    # 提取rules数组
+                    return config_data.get("rules", [])
+            return []
+        except Exception as e:
+            logger.error(f"加载正则规则失败: {e}")
+            return []
+
+    def _match_regex_rules(self, message_content: str) -> List[Dict[str, str]]:
+        """使用正则规则匹配消息内容
+        
+        Args:
+            message_content: 消息内容
+            
+        Returns:
+            List[Dict[str, str]]: 匹配到的规则和提取的内容列表
+        """
+        matched_rules = []
+        
+        for rule in self.regex_rules:
+            pattern = rule.get("pattern", "")
+            if not pattern:
+                continue
+                
+            try:
+                # 使用正则表达式匹配
+                match = re.search(pattern, message_content)
+                if match:
+                    # 提取匹配的内容
+                    extracted_content = match.group(1) if len(match.groups()) > 0 else match.group(0)
+                    matched_rules.append({
+                        "pattern": pattern,
+                        "original_message": rule.get("originalMessage", ""),
+                        "extracted_content": extracted_content,
+                        "full_match": match.group(0)
+                    })
+            except re.error as e:
+                logger.error(f"正则表达式错误 '{pattern}': {e}")
+            except Exception as e:
+                logger.error(f"正则匹配时发生错误: {e}")
+        
+        return matched_rules
+
+    def _save_matched_content(self, matched_data: Dict[str, Any], chat_name: str) -> None:
+        """保存匹配到的内容到collect目录（CSV格式）
+        
+        Args:
+            matched_data: 匹配到的数据
+            chat_name: 聊天名称
+        """
+        try:
+            # 创建collect目录
+            collect_dir = os.path.join(CHAT_DATE_DIR, "collect")
+            if not os.path.exists(collect_dir):
+                os.makedirs(collect_dir)
+            
+            # 生成文件名：群聊名_YYYY-MM-DD.csv
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            filename = f"{chat_name}_{date_str}.csv"
+            filepath = os.path.join(collect_dir, filename)
+            
+            # 检查文件是否存在，如果不存在则写入表头
+            file_exists = os.path.exists(filepath)
+            
+            # 准备CSV行数据
+            row_data = {
+                '时间': matched_data['time'],
+                '发送者': matched_data['sender'],
+                '群聊': chat_name,
+                '原始消息': matched_data['original_message'],
+                '匹配规则': matched_data['pattern'],
+                '提取内容': matched_data['extracted_content'],
+                '完整匹配': matched_data['full_match']
+            }
+            
+            # 写入CSV文件
+            with open(filepath, 'a', encoding='utf-8', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=['时间', '发送者', '群聊', '原始消息', '匹配规则', '提取内容', '完整匹配'])
+                
+                # 如果文件不存在，写入表头
+                if not file_exists:
+                    writer.writeheader()
+                
+                # 写入数据行
+                writer.writerow(row_data)
+                
+            logger.info(f"[正则匹配] 已保存匹配内容到CSV文件: {filepath}")
+            
+        except Exception as e:
+            logger.error(f"保存匹配内容到CSV失败: {e}")
 
     def _process_message(self, msg: Any = None, chat: Any = None) -> None:
         """
@@ -408,6 +558,23 @@ class GroupWorkerThread:
             # 2. 存储消息到按天文件
             message_entry = f"[{time_str}] 发送者: {sender} | 群聊: {chat_name if is_group else '私聊'} | 内容: {message_content}"
             self._append_to_daily_file(message_entry, chat_name)
+            
+            # 3. 正则匹配消息内容
+            matched_rules = self._match_regex_rules(message_content)
+            if matched_rules:
+                for matched_rule in matched_rules:
+                    # 保存匹配到的内容到collect目录
+                    matched_data = {
+                        "time": time_str,
+                        "sender": sender,
+                        "original_message": matched_rule["original_message"],
+                        "pattern": matched_rule["pattern"],
+                        "extracted_content": matched_rule["extracted_content"],
+                        "full_match": matched_rule["full_match"]
+                    }
+                    self._save_matched_content(matched_data, chat_name)
+                    
+                    logger.info(f"[正则匹配] 匹配到规则: {matched_rule['pattern']}, 提取内容: {matched_rule['extracted_content']}")
             
             logger.debug(f"[消息存储] 已保存消息到按天文件: {message_entry[:100]}")
 
@@ -1305,13 +1472,13 @@ def get_available_groups() -> tuple:
         collect_dir = os.path.join(os.path.dirname(__file__), "chat_date", "collect")
         if os.path.exists(collect_dir):
             # 获取所有Excel文件
-            excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.xlsx')]
+            excel_files = [f for f in os.listdir(collect_dir) if f.endswith('.txt')]
             
             for file_name in excel_files:
-                # 解析文件名格式：群名_日期.xlsx
+                # 解析文件名格式：群名_日期.txt
                 if '_' in file_name:
                     # 移除文件扩展名
-                    base_name = file_name.replace('.xlsx', '')
+                    base_name = file_name.replace('.txt', '')
                     # 分割群名和日期
                     parts = base_name.split('_')
                     if len(parts) >= 2:
@@ -1395,3 +1562,7 @@ def get_group_dates(group_name: str) -> tuple:
     except Exception as e:
         logger.error(f"获取群组 '{group_name}' 的日期列表失败: {str(e)}")
         return False, f"获取日期列表失败: {str(e)}"
+
+
+# 正则规则配置文件
+regex_config_file = os.path.join(data_dir, "regex_rules.json")
