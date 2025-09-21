@@ -486,12 +486,7 @@ class GroupWorkerThread:
             
             # 写入CSV文件
             with open(filepath, 'a', encoding='utf-8', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                
-                # 如果文件不存在，写入表头
-                if not file_exists:
-                    writer.writeheader()
-                
+                writer = csv.DictWriter(f, fieldnames=fieldnames)                
                 # 写入数据行
                 writer.writerow(row_data)
                 
@@ -884,10 +879,8 @@ class GroupWorkerManager:
                         with open(group_manage_config_file, 'r', encoding='utf-8') as f:
                             config = json.load(f)
                         
-                        config["management_enabled"] = False
-                        config["data_collection_enabled"] = False
-                        config["sentiment_monitoring_enabled"] = False
-                        
+                        config["group"] = self.config.receiver
+
                         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
                             json.dump(config, f, ensure_ascii=False, indent=2)
                 except Exception as e:
@@ -914,9 +907,9 @@ class GroupWorkerManager:
 
     def stop_all_workers(self) -> None:
         with self.lock:
-            for worker in self.workers.values():
-                worker.stop()
-            self.workers.clear()
+            receivers = list(self.workers.keys())
+            for receiver in receivers:
+                self.stop_worker(receiver)
 
     def update_all_workers_rules(self) -> bool:
         updated_count = 0

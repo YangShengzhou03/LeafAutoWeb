@@ -1694,7 +1694,7 @@ function saveRegexRulesAPI(rules) {
 }
 
 .filter-select {
-  min-width: 180px;
+  max-width: 150px;
   margin-bottom: 0;
 }
 
