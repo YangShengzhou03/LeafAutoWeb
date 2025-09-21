@@ -887,49 +887,6 @@ const getContentClass = (type) => {
   return `content-${type.toLowerCase()}`
 }
 
-// 提取内容的逻辑函数
-const extractContent = (message) => {
-  // 如果直接传入的是提取内容字符串，直接返回
-  if (typeof message === 'string' && message.trim()) {
-    return message
-  }
-  
-  // 如果传入的是消息对象，尝试获取提取内容
-  if (typeof message === 'object' && message !== null) {
-    // 优先使用extractedContent字段
-    if (message.extractedContent && message.extractedContent.trim()) {
-      return message.extractedContent
-    }
-    
-    // 其次使用extracted_content字段
-    if (message.extracted_content && message.extracted_content.trim()) {
-      return message.extracted_content
-    }
-    
-    // 如果都没有，尝试从content字段提取
-    if (message.content && typeof message.content === 'string') {
-      let extracted = ''
-      
-      // 匹配姓名
-      const nameMatch = message.content.match(/我叫([^，,。；;\s]+)/)
-      if (nameMatch && nameMatch[1]) {
-        extracted += nameMatch[1]
-      }
-
-      // 匹配年龄
-      const ageMatch = message.content.match(/我(\d+)岁/)
-      if (ageMatch && ageMatch[1]) {
-        if (extracted) extracted += '，'
-        extracted += `${ageMatch[1]}岁`
-      }
-      
-      return extracted || '无提取内容'
-    }
-  }
-  
-  return '无提取内容'
-}
-
 const autoLearnPattern = () => {
   if (!originalMessage.value.trim()) {
     ElMessage.warning('请先输入原始消息内容')

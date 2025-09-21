@@ -1279,59 +1279,36 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
         tuple: (success, data/error)
     """
     try:
-        # 获取聊天数据目录 - 尝试多个可能的路径
-        possible_paths = [
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "chat_date"),  # 项目根目录下的chat_date
-            os.path.join(os.path.dirname(__file__), "chat_date"),  # 当前文件目录下的chat_date
-            CHAT_DATE_DIR  # 使用已定义的常量
-        ]
+        # 只使用collect目录下的数据
+        collect_dir = os.path.join(CHAT_DATE_DIR, "collect")
         
-        chat_date_dir = None
-        for path in possible_paths:
-            if os.path.exists(path):
-                chat_date_dir = path
-                print(f"找到聊天数据目录: {chat_date_dir}")
-                break
-        
-        if not chat_date_dir:
-            print(f"尝试的路径: {possible_paths}")
+        if not os.path.exists(collect_dir):
             return False, "没有聊天数据目录"
         
         # 收集要返回的消息数据
         collected_data = []
         
-        # 遍历目录及其子目录中的CSV文件
-        for root, dirs, files in os.walk(chat_date_dir):
-            print(f"扫描目录: {root}")
-            for file_name in files:
-                if not file_name.endswith('.csv'):
-                    continue
-                    
+        # 只遍历collect目录中的CSV文件
+        print(f"扫描目录: {collect_dir}")
+        for file_name in os.listdir(collect_dir):
+            if not file_name.endswith('.csv'):
+                continue
+                
+            # 检查文件名是否包含群名
+            if group_name and not file_name.startswith(group_name):
+                continue
+                
+            # 从文件名中提取日期
+            # 文件名格式: 群名_YYYY-MM-DD.csv
+            if group_name:
                 # 检查文件名是否包含群名
-                if group_name and not file_name.startswith(group_name):
-                    continue
-                    
-                # 从文件名中提取日期
-                # 文件名格式: 群名_YYYY-MM-DD.csv
-                if group_name:
-                    # 检查文件名是否包含群名
-                    if file_name.startswith(group_name + "_"):
-                        # 提取日期部分
-                        date_part = file_name[len(group_name + "_"):-4]  # 去掉群名前缀和.csv后缀
-                        file_date_str = date_part
-                        print(f"处理文件: {file_name}, 提取的日期: {file_date_str}")
-                    else:
-                        # 尝试使用正则表达式匹配文件名中的日期
-                        import re
-                        date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
-                        if date_match:
-                            file_date_str = date_match.group(1)
-                            print(f"处理文件: {file_name}, 通过正则提取的日期: {file_date_str}")
-                        else:
-                            print(f"文件名格式不符合预期: {file_name}")
-                            continue
+                if file_name.startswith(group_name + "_"):
+                    # 提取日期部分
+                    date_part = file_name[len(group_name + "_"):-4]  # 去掉群名前缀和.csv后缀
+                    file_date_str = date_part
+                    print(f"处理文件: {file_name}, 提取的日期: {file_date_str}")
                 else:
-                    # 如果没有指定群名，尝试使用正则表达式提取日期
+                    # 尝试使用正则表达式匹配文件名中的日期
                     import re
                     date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
                     if date_match:
@@ -1340,34 +1317,45 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
                     else:
                         print(f"文件名格式不符合预期: {file_name}")
                         continue
-                
-                # 检查日期是否在指定范围内
-                if start_date is not None and file_date_str is not None and file_date_str < start_date:
+            else:
+                # 如果没有指定群名，尝试使用正则表达式提取日期
+                import re
+                date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
+                if date_match:
+                    file_date_str = date_match.group(1)
+                    print(f"处理文件: {file_name}, 通过正则提取的日期: {file_date_str}")
+                else:
+                    print(f"文件名格式不符合预期: {file_name}")
                     continue
-                if end_date is not None and file_date_str is not None and file_date_str > end_date:
-                    continue
-                
-                file_path = os.path.join(root, file_name)
-                print(f"读取文件路径: {file_path}")
-                
-                # 读取CSV文件
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    csv_reader = csv.DictReader(f)
-                    for row in csv_reader:
-                        # 确保数据包含所需字段
+            
+            # 检查日期是否在指定范围内
+            if start_date is not None and file_date_str is not None and file_date_str < start_date:
+                continue
+            if end_date is not None and file_date_str is not None and file_date_str > end_date:
+                continue
+            
+            file_path = os.path.join(collect_dir, file_name)
+            print(f"读取文件路径: {file_path}")
+            
+            # 读取CSV文件 - collect目录下的文件格式不同
+            with open(file_path, 'r', encoding='utf-8') as f:
+                csv_reader = csv.reader(f)
+                for row in csv_reader:
+                    if len(row) >= 4:  # 确保行有足够的列
+                        # collect目录下的文件格式：时间,发送者,群聊,消息内容,正则表达式,提取结果,原始消息
                         processed_row = {
-                            'time': row.get('time', ''),
-                            'sender': row.get('sender', ''),
-                            'group': row.get('chatName', row.get('group', '')),
-                            'content': row.get('message', row.get('content', '')),
+                            'time': row[0] if len(row) > 0 else '',
+                            'sender': row[1] if len(row) > 1 else '',
+                            'group': row[2] if len(row) > 2 else '',
+                            'content': row[3] if len(row) > 3 else '',
                             'type': '文本',
-                            'extractedContent': '',
-                            'extracted_content': ''
+                            'extractedContent': row[5] if len(row) > 5 else '',  # 使用提取结果
+                            'extracted_content': row[5] if len(row) > 5 else ''
                         }
                         
-                        # 尝试从内容中提取信息
-                        content = processed_row['content']
-                        if content:
+                        # 如果没有提取结果，尝试从内容中提取
+                        if not processed_row['extractedContent'] and processed_row['content']:
+                            content = processed_row['content']
                             # 匹配姓名
                             name_match = re.search(r'我叫([^，,。；;\s]+)', content)
                             # 匹配年龄
@@ -1378,8 +1366,9 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
                                 if age_match and age_match.group(1):
                                     extracted_parts.append(f"{age_match.group(1)}岁")
                                 
-                                processed_row['extractedContent'] = '，'.join(extracted_parts)
-                                processed_row['extracted_content'] = '，'.join(extracted_parts)
+                                extracted_content = '，'.join(extracted_parts)
+                                processed_row['extractedContent'] = extracted_content
+                                processed_row['extracted_content'] = extracted_content
                         
                         collected_data.append(processed_row)
         
