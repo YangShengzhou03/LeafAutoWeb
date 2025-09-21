@@ -530,14 +530,13 @@ class GroupWorkerThread:
                 '时间': matched_data['time'],
                 '发送者': matched_data['sender'],
                 '群聊': chat_name,
-                '原始消息': matched_data['original_message'],
+                '原始消息': matched_data['full_match'],
                 '匹配规则': matched_data['pattern'],
-                '提取内容': extracted_content_str,  # 将所有提取内容放在一个单元格中
-                '完整匹配': matched_data['full_match']
+                '提取内容': extracted_content_str,
             }
             
             # 固定表头
-            fieldnames = ['时间', '发送者', '群聊', '原始消息', '匹配规则', '提取内容', '完整匹配']
+            fieldnames = ['时间', '发送者', '群聊', '原始消息', '匹配规则', '提取内容']
             
             # 写入CSV文件
             with open(filepath, 'a', encoding='utf-8', newline='') as f:
@@ -553,6 +552,7 @@ class GroupWorkerThread:
             logger.info(f"[正则匹配] 已保存匹配内容到CSV文件: {filepath}")
             
         except Exception as e:
+            print(e)
             logger.error(f"保存匹配内容到CSV失败: {e}")
 
     def _process_message(self, msg: Any = None, chat: Any = None) -> None:
@@ -597,7 +597,7 @@ class GroupWorkerThread:
                     matched_data = {
                         "time": time_str,
                         "sender": sender,
-                        "original_message": matched_rule["original_message"],
+                        "full_match": matched_rule["full_match"],
                         "pattern": matched_rule["pattern"],
                         "extracted_content": matched_rule["extracted_content"],
                         "extracted_contents": matched_rule.get("extracted_contents", [])

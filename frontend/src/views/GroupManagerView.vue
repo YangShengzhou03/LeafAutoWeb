@@ -224,13 +224,7 @@
               <el-table-column prop="type" label="提取数据" min-width="120">
                 <template #default="{ row }">
                   <div class="extracted-content-status">
-                    <el-icon class="success-icon" v-if="row.extractedContent && row.extractedContent !== '无提取内容'">
-                      <Check />
-                    </el-icon>
-                    <el-icon class="warning-icon" v-else>
-                      <InfoFilled />
-                    </el-icon>
-                    <span>{{ row.extractedContent || '无提取内容' }}</span>
+                    <span>{{ formatExtractedContent(row.extractedContent) || '无提取内容' }}</span>
                   </div>
                 </template>
               </el-table-column>
@@ -238,9 +232,6 @@
                 <template #default="{ row }">
                   <el-button type="primary" link @click.stop="viewMessageDetail(row)" class="detail-btn">
                     详情
-                  </el-button>
-                  <el-button type="danger" link @click.stop="deleteCollectedMessage(row)" class="delete-btn">
-                    删除
                   </el-button>
                 </template>
               </el-table-column>
@@ -343,6 +334,10 @@
         </el-descriptions-item>
 
         <el-descriptions-item label="提取内容">
+          <div class="detail-content">{{ formatExtractedContent(selectedMessage.extractedContent) || '无提取内容' }}</div>
+        </el-descriptions-item>
+
+        <el-descriptions-item label="消息类型">
           <el-tag :type="getMessageTypeTag(selectedMessage.type)" size="mid">
             {{ selectedMessage.type }}
           </el-tag>
@@ -365,7 +360,7 @@ import axios from 'axios'
 import {
   Plus, Key, Refresh, Clock, Document,
   QuestionFilled, InfoFilled, MagicStick, Picture,
-  Message, Microphone, VideoCamera, Delete, Check, Download
+  Message, Microphone, VideoCamera, Delete, Download
 } from '@element-plus/icons-vue'
 
 // 响应式数据
@@ -782,31 +777,6 @@ const viewMessageDetail = (row) => {
   messageDetailVisible.value = true
 }
 
-
-
-// 删除已收集的消息
-const deleteCollectedMessage = (row) => {
-  ElMessageBox.confirm(
-    '确定要删除这条消息记录吗？',
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    if (Array.isArray(collectedData.value)) {
-      const index = collectedData.value.findIndex(item => item.time === row.time && item.sender === row.sender)
-      if (index !== -1) {
-        collectedData.value.splice(index, 1)
-        ElMessage.success('消息记录已删除')
-      }
-    }
-  }).catch(() => {
-    // 用户取消删除
-  })
-}
-
 // 导出收集的数据
 const exportCollectedData = async () => {
   exportLoading.value = true
@@ -859,6 +829,61 @@ const exportCollectedData = async () => {
 // 工具函数
 const getAvatarUrl = (sender) => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sender)}`
+}
+
+// 格式化提取内容，将列表格式转换为"XX，XX，XX"格式
+const formatExtractedContent = (content) => {
+  if (!content) return ''
+  
+  // 如果是数组，直接处理
+  if (Array.isArray(content)) {
+    return content.join('，')
+  }
+  
+  // 如果是字符串，尝试解析为数组
+  if (typeof content === 'string') {
+    // 尝试解析JSON数组格式
+    if (content.startsWith('[') && content.endsWith(']')) {
+      try {
+        const parsedArray = JSON.parse(content)
+        if (Array.isArray(parsedArray)) {
+          return parsedArray.join('，')
+        }
+      } catch (e) {
+        // 解析失败，继续其他处理
+      }
+    }
+    
+    // 尝试匹配类似 ['杨圣洲', '23', '醋'] 的格式
+    const match = content.match(/\['(.*?)'\]/g)
+    if (match) {
+      try {
+        // 提取所有引号内的内容
+        const values = []
+        const regex = /'([^']*)'/g
+        let result
+        while ((result = regex.exec(content)) !== null) {
+          values.push(result[1])
+        }
+        return values.join('，')
+      } catch (e) {
+        // 解析失败，返回原始内容
+      }
+    }
+    
+    // 尝试按逗号分割
+    if (content.includes(',')) {
+      return content.split(',').map(item => item.trim()).join('，')
+    }
+    
+    // 尝试按顿号分割
+    if (content.includes('、')) {
+      return content.split('、').map(item => item.trim()).join('，')
+    }
+  }
+  
+  // 其他情况，直接返回原始内容
+  return content
 }
 
 const getMessageIcon = (type) => {

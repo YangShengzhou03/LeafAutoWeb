@@ -12,8 +12,8 @@
   "group": "快乐群",
   "version": "1.0",
   "快乐群": {
-    "enabled": true,
-    "start_time": "2025-09-21T15:13:13.901801",
+    "enabled": false,
+    "start_time": "2025-09-21T15:32:48.461004",
     "settings": {
       "data_collection_enabled": false,
       "monitoring_enabled": false,
@@ -29,7 +29,7 @@
       ],
       "min_reply_interval": 0
     },
-    "stop_time": "2025-09-21T13:28:21.780705"
+    "stop_time": "2025-09-21T15:34:35.392708"
   },
   "selected_group": "快乐群"
 }
