@@ -1025,36 +1025,38 @@ def api_stop_group_management():
     # 调用group_manager的stop_worker方法停止群聊管理
     success = group_manager.stop_worker(group_name)
     
+    # 即使没有找到对应的工作线程，也更新配置文件状态
+    # 因为可能存在配置状态与实际运行状态不一致的情况
+    import json
+    import os
+    from group_manager import group_manage_config_file
+    
+    try:
+        if os.path.exists(group_manage_config_file):
+            with open(group_manage_config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # 更新群聊配置
+            if group_name in config:
+                config[group_name]["enabled"] = False
+                config[group_name]["stop_time"] = datetime.now().isoformat()
+            
+            # 如果所有工作线程都已停止，更新全局管理状态
+            if len(group_manager.workers) == 0:
+                config["management_enabled"] = False
+            
+            # 保存更新后的配置
+            with open(group_manage_config_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"更新配置文件失败: {e}")
+        # 配置文件更新失败，但仍然返回成功（因为主要目的是停止管理）
+    
     if success:
-        # 更新配置文件中的管理状态
-        import json
-        import os
-        from group_manager import group_manage_config_file
-        
-        try:
-            if os.path.exists(group_manage_config_file):
-                with open(group_manage_config_file, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                
-                # 更新群聊配置
-                if group_name in config:
-                    config[group_name]["enabled"] = False
-                    config[group_name]["stop_time"] = datetime.now().isoformat()
-                
-                # 如果所有工作线程都已停止，更新全局管理状态
-                if len(group_manager.workers) == 0:
-                    config["management_enabled"] = False
-                
-                # 保存更新后的配置
-                with open(group_manage_config_file, 'w', encoding='utf-8') as f:
-                    json.dump(config, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.error(f"更新配置文件失败: {e}")
-            # 即使配置文件更新失败，但工作线程停止成功，仍然返回成功
-        
         return jsonify({"success": True, "message": f"已成功停止管理群聊: {group_name}"}), 200
     else:
-        return jsonify({"success": False, "error": "未找到对应群聊的管理线程"}), 400
+        # 即使没有找到工作线程，也返回成功，因为配置状态已经更新
+        return jsonify({"success": True, "message": f"群聊 {group_name} 的管理状态已更新（未找到运行中的工作线程）"}), 200
 
 # 舆情监控API
 @app.route("/api/group/start-monitoring", methods=["POST"])
