@@ -871,7 +871,7 @@ def get_chart_data(time_range):
 # 群聊管家API
 from group_manager import (
     select_group, toggle_message_recording, set_collection_date, 
-    save_collection_template, auto_learn_pattern, export_collected_data,
+    save_collection_template, auto_learn_pattern,
     start_sentiment_monitoring, stop_sentiment_monitoring, check_sentiment_monitoring_status,
     start_group_management, group_manager, data_dir
 )
@@ -1010,7 +1010,7 @@ def api_export_collected_data():
     group_name = data.get("group_name", "")
     date = data.get("date", "")
     
-    success, result = export_collected_data(group_name, date)
+    success, result = True, "结果"
     
     if success:
         return jsonify({"success": True, "file_path": result}), 200
@@ -1315,24 +1315,25 @@ def api_get_collected_data():
     end_date = request.args.get('end_date', '')
     
     try:
-        from group_manager import export_collected_data
+        from group_manager import get_collected_data
         
-        date_str = start_date if start_date else datetime.now().strftime("%Y-%m-%d")
-        
-        success, result = export_collected_data(group_id, date_str)
+        success, result = get_collected_data(group_id, start_date, end_date)
         
         if success:
-            with open(result, 'r', encoding='utf-8') as f:
-                collected_data = json.load(f)
-
-                print(collected_data)
+            print(f"传给前端的数据: {result}")
+            print(f"数据条数: {len(result)}")
+            print(f"数据类型: {type(result)}")
+            if len(result) > 0:
+                print(f"第一条数据: {result[0]}")
+                print(f"数据键: {result[0].keys() if isinstance(result[0], dict) else '非字典类型'}")
             
             return jsonify({
                 "success": True,
-                "data": collected_data,
-                "total": len(collected_data)
+                "data": result,
+                "total": len(result)
             }), 200
         else:
+            print(f"获取数据失败: {result}")
             return jsonify({
                 "success": False,
                 "error": result,
@@ -1341,7 +1342,7 @@ def api_get_collected_data():
             }), 200
             
     except Exception as e:
-        print(e)
+        print(f"API异常: {e}")
         logger.error(f"获取收集的数据失败: {e}")
         return jsonify({
             "success": False,

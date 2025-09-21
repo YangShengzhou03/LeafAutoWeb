@@ -1271,58 +1271,110 @@ def auto_learn_pattern(group_name: str) -> tuple:
         logger.error(f"自动学习模式失败: {str(e)}")
         return False, f"操作失败: {str(e)}"
 
-def export_collected_data(group_name: str, date: str) -> tuple:
-    """导出收集的数据
+def get_collected_data(group_name: str, start_date: str = None, end_date: str = None) -> tuple:
+    """获取收集的数据
     
     Args:
         group_name: 群聊名称
-        date: 日期字符串 (YYYY-MM-DD)，如果为空则导出所有数据
+        start_date: 开始日期字符串 (YYYY-MM-DD)，如果为空则从最早日期开始
+        end_date: 结束日期字符串 (YYYY-MM-DD)，如果为空则到最新日期结束
         
     Returns:
-        tuple: (success, file_path/error)
+        tuple: (success, data/error)
     """
     try:
-        # 获取群消息目录
-        group_messages_dir = os.path.join(messages_dir, group_name)
-        if not os.path.exists(group_messages_dir):
-            return False, "该群聊没有消息记录"
+        # 获取聊天数据目录 - 尝试多个可能的路径
+        possible_paths = [
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "chat_date"),  # 项目根目录下的chat_date
+            os.path.join(os.path.dirname(__file__), "chat_date"),  # 当前文件目录下的chat_date
+            CHAT_DATE_DIR  # 使用已定义的常量
+        ]
         
-        # 收集要导出的消息
-        exported_messages = []
-        message_files = [f for f in os.listdir(group_messages_dir) if f.endswith('.json')]
+        chat_date_dir = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                chat_date_dir = path
+                print(f"找到聊天数据目录: {chat_date_dir}")
+                break
         
-        for file_name in message_files:
-            # 如果指定了日期，只导出对应日期的文件
-            if date and not file_name.startswith(date):
-                continue
-            
-            file_path = os.path.join(group_messages_dir, file_name)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                messages = json.load(f)
-                exported_messages.extend(messages)
+        if not chat_date_dir:
+            print(f"尝试的路径: {possible_paths}")
+            return False, "没有聊天数据目录"
         
-        if not exported_messages:
-            if date:
-                return False, f"未找到{date}的消息记录"
-            else:
-                return False, "未找到消息记录"
+        # 收集要返回的消息数据
+        collected_data = []
         
-        # 创建导出文件
-        export_dir = os.path.join(data_dir, "exports")
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
+        # 遍历目录及其子目录中的CSV文件
+        for root, dirs, files in os.walk(chat_date_dir):
+            print(f"扫描目录: {root}")
+            for file_name in files:
+                if not file_name.endswith('.csv'):
+                    continue
+                    
+                # 检查文件名是否包含群名
+                if group_name and not file_name.startswith(group_name):
+                    continue
+                    
+                # 从文件名中提取日期
+                # 文件名格式: 群名_YYYY-MM-DD.csv
+                if group_name:
+                    # 检查文件名是否包含群名
+                    if file_name.startswith(group_name + "_"):
+                        # 提取日期部分
+                        date_part = file_name[len(group_name + "_"):-4]  # 去掉群名前缀和.csv后缀
+                        file_date_str = date_part
+                        print(f"处理文件: {file_name}, 提取的日期: {file_date_str}")
+                    else:
+                        # 尝试使用正则表达式匹配文件名中的日期
+                        import re
+                        date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
+                        if date_match:
+                            file_date_str = date_match.group(1)
+                            print(f"处理文件: {file_name}, 通过正则提取的日期: {file_date_str}")
+                        else:
+                            print(f"文件名格式不符合预期: {file_name}")
+                            continue
+                else:
+                    # 如果没有指定群名，尝试使用正则表达式提取日期
+                    import re
+                    date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_name)
+                    if date_match:
+                        file_date_str = date_match.group(1)
+                        print(f"处理文件: {file_name}, 通过正则提取的日期: {file_date_str}")
+                    else:
+                        print(f"文件名格式不符合预期: {file_name}")
+                        continue
+                
+                # 检查日期是否在指定范围内
+                if start_date is not None and file_date_str < start_date:
+                    continue
+                if end_date is not None and file_date_str > end_date:
+                    continue
+                
+                file_path = os.path.join(root, file_name)
+                print(f"读取文件路径: {file_path}")
+                
+                # 读取CSV文件
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    csv_reader = csv.DictReader(f)
+                    for row in csv_reader:
+                        collected_data.append(row)
         
-        export_filename = f"{group_name}_messages_{date if date else datetime.now().strftime('%Y-%m-%d')}.json"
-        export_path = os.path.join(export_dir, export_filename)
+        if not collected_data:
+            date_range = ""
+            if start_date and end_date:
+                date_range = f" ({start_date} 至 {end_date})"
+            elif start_date:
+                date_range = f" (从 {start_date} 开始)"
+            elif end_date:
+                date_range = f" (至 {end_date} 结束)"
+                
+            return False, f"未找到{group_name}{date_range}的聊天记录"
         
-        # 保存导出文件
-        with open(export_path, 'w', encoding='utf-8') as f:
-            json.dump(exported_messages, f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"已导出{group_name}的消息数据到: {export_path}")
-        return True, export_path
+        logger.info(f"已获取{group_name}的聊天数据，共{len(collected_data)}条记录")
+        return True, collected_data
     except Exception as e:
-        logger.error(f"导出数据失败: {str(e)}")
+        logger.error(f"获取聊天数据失败: {str(e)}")
         return False, f"操作失败: {str(e)}"
 
 def start_group_management(group_name: str, settings: dict) -> tuple:
