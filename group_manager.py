@@ -53,14 +53,6 @@ SELF_SENDER = "Self"
 
 # 获取按天存储的消息文件路径
 def get_daily_messages_file(chat_name: str) -> str:
-    """获取按天存储的消息文件路径
-    
-    Args:
-        chat_name: 聊天名称
-        
-    Returns:
-        str: 文件路径，格式：chat_date/群聊名_YYYY-MM-DD.csv
-    """
     date_str = datetime.now().strftime("%Y-%m-%d")
     # 清理文件名中的非法字符
     safe_chat_name = re.sub(r'[\\/:*?"<>|]', '_', chat_name)
@@ -69,8 +61,6 @@ def get_daily_messages_file(chat_name: str) -> str:
 
 
 class MessageInfo:
-    """消息信息类，封装消息相关操作"""
-    
     def __init__(self, message: Any):
         self.message = message
     
@@ -203,17 +193,6 @@ class WorkerState:
 
 
 class GroupWorkerThread:
-    """
-    群聊管理工作线程类
-    负责处理群聊消息的存储功能，不需要回复消息
-
-    Attributes:
-        config: 工作线程配置对象
-        at_me: @我的标识
-        receiver_list: 接收者列表
-        state: 工作线程状态
-    """
-
     def __init__(self, config: WorkerConfig):
         """
         初始化群聊管理工作线程
@@ -858,27 +837,11 @@ class GroupWorkerThread:
 
 
 class GroupWorkerManager:
-    """
-    群聊管理工作管理器类（单例模式）
-    负责管理多个群聊管理工作线程的创建、停止和状态查询
-
-    Attributes:
-        _instance: 单例实例
-        workers: 工作线程字典
-        lock: 线程安全锁
-    """
-
     _instance: Optional['GroupWorkerManager'] = None
     workers: Dict[str, GroupWorkerThread] = {}
     lock: threading.Lock = threading.Lock()
 
     def __new__(cls) -> 'GroupWorkerManager':
-        """
-        单例模式实现
-
-        Returns:
-            GroupWorkerManager: 单例实例
-        """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.workers = {}
@@ -886,15 +849,6 @@ class GroupWorkerManager:
         return cls._instance
 
     def start_worker(self, config: WorkerConfig) -> bool:
-        """
-        启动群聊管理工作线程
-
-        Args:
-            config: 工作线程配置对象
-
-        Returns:
-            bool: True表示启动成功，False表示启动失败
-        """
         with self.lock:
             worker_key = f"{config.receiver}_group"
             if worker_key in self.workers:
@@ -997,15 +951,6 @@ class GroupWorkerManager:
             return False
 
     def get_worker_status(self, receiver: str) -> Optional[Dict[str, Any]]:
-        """
-        获取工作线程状态
-
-        Args:
-            receiver: 接收者标识
-
-        Returns:
-            dict: 线程状态信息，如果未找到则返回None
-        """
         with self.lock:
             worker_key = f"{receiver}_group"
             if worker_key in self.workers:
@@ -1018,12 +963,6 @@ class GroupWorkerManager:
             return None
 
     def get_all_workers(self) -> List[str]:
-        """
-        获取所有工作线程信息
-
-        Returns:
-            List[str]: 所有工作线程的键列表
-        """
         with self.lock:
             return list(self.workers.keys())
 
@@ -1069,14 +1008,6 @@ def get_wechat_instance():
 
 # 群聊管理相关功能实现
 def select_group(group_name: str) -> tuple:
-    """选择要管理的群聊
-    
-    Args:
-        group_name: 群聊名称
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 首先验证群组是否在可用群组列表中
         success, available_groups = get_available_groups()
@@ -1105,15 +1036,6 @@ def select_group(group_name: str) -> tuple:
         return False, f"选择群聊失败: {str(e)}"
 
 def toggle_message_recording(group_name: str, enabled: bool) -> tuple:
-    """开启/关闭群消息记录
-    
-    Args:
-        group_name: 群聊名称
-        enabled: 是否开启
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 加载配置
         config = {}
@@ -1145,15 +1067,6 @@ def toggle_message_recording(group_name: str, enabled: bool) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def set_collection_date(group_name: str, date: str) -> tuple:
-    """设置收集日期
-    
-    Args:
-        group_name: 群聊名称
-        date: 日期字符串 (YYYY-MM-DD)
-        
-    Returns:
-        tuple: (success, result/error)
-    """
     try:
         # 验证日期格式
         datetime.strptime(date, "%Y-%m-%d")
@@ -1182,15 +1095,6 @@ def set_collection_date(group_name: str, date: str) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def save_collection_template(group_name: str, template: str) -> tuple:
-    """保存收集模板
-    
-    Args:
-        group_name: 群聊名称
-        template: 模板内容
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 加载配置
         config = {}
@@ -1214,14 +1118,6 @@ def save_collection_template(group_name: str, template: str) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def auto_learn_pattern(group_name: str) -> tuple:
-    """自动学习模式，建立正则表达式
-    
-    Args:
-        group_name: 群聊名称
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 获取群消息目录
         group_messages_dir = os.path.join(messages_dir, group_name)
@@ -1268,16 +1164,6 @@ def auto_learn_pattern(group_name: str) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def get_collected_data(group_name: str, start_date: str = None, end_date: str = None) -> tuple:
-    """获取收集的数据
-    
-    Args:
-        group_name: 群聊名称
-        start_date: 开始日期字符串 (YYYY-MM-DD)，如果为空则从最早日期开始
-        end_date: 结束日期字符串 (YYYY-MM-DD)，如果为空则到最新日期结束
-        
-    Returns:
-        tuple: (success, data/error)
-    """
     try:
         # 只使用collect目录下的数据
         collect_dir = os.path.join(CHAT_DATE_DIR, "collect")
@@ -1390,15 +1276,6 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
         return False, f"操作失败: {str(e)}"
 
 def start_group_management(group_name: str, settings: dict) -> tuple:
-    """开始群聊管理，并保存设置到group_manage.json文件
-    
-    Args:
-        group_name: 群聊名称
-        settings: 管理设置，包含记录配置等
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 1. 保存群聊管理配置到group_manage.json
         config = {}
@@ -1450,15 +1327,6 @@ def start_group_management(group_name: str, settings: dict) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def start_sentiment_monitoring(group_name: str, sensitive_words: str) -> tuple:
-    """开始舆情监控
-    
-    Args:
-        group_name: 群聊名称
-        sensitive_words: 敏感词列表，用逗号分隔
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 加载配置
         config = {}
@@ -1490,14 +1358,6 @@ def start_sentiment_monitoring(group_name: str, sensitive_words: str) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def stop_sentiment_monitoring(group_name: str) -> tuple:
-    """停止舆情监控
-    
-    Args:
-        group_name: 群聊名称
-        
-    Returns:
-        tuple: (success, message/error)
-    """
     try:
         # 加载配置
         if not os.path.exists(monitoring_config_file):
@@ -1525,14 +1385,6 @@ def stop_sentiment_monitoring(group_name: str) -> tuple:
         return False, f"操作失败: {str(e)}"
 
 def check_sentiment_monitoring_status(group_name: str) -> tuple:
-    """检查舆情监控状态
-    
-    Args:
-        group_name: 群聊名称
-        
-    Returns:
-        tuple: (success, status_info/error)
-    """
     try:
         # 加载配置
         if not os.path.exists(monitoring_config_file):
@@ -1558,13 +1410,6 @@ def check_sentiment_monitoring_status(group_name: str) -> tuple:
 
 
 def get_available_groups() -> tuple:
-    """获取可用群组列表
-    
-    从chat_date/collect目录获取群名和对应的日期信息
-    
-    Returns:
-        tuple: (success, groups_list/error)
-    """
     try:
         groups = []
         
@@ -1600,14 +1445,6 @@ def get_available_groups() -> tuple:
 
 
 def get_group_dates(group_name: str) -> tuple:
-    """获取指定群组的日期列表
-    
-    Args:
-        group_name: 群聊名称
-        
-    Returns:
-        tuple: (success, dates_list/error)
-    """
     try:
         dates = []
         
