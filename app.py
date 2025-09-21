@@ -1,16 +1,3 @@
-"""
-Flask应用主模块
-
-提供微信消息自动化管理系统的RESTful API接口，包括任务管理、AI设置、微信状态监控等功能。
-
-主要功能：
-- 定时任务管理API
-- AI自动回复配置API  
-- 微信状态监控API
-- 前后端路由转发
-"""
-import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -597,12 +584,6 @@ def get_wechat_status():
 @app.route("/api/ai-takeover/start", methods=["POST"])
 @handle_api_errors
 def start_ai_takeover():
-    """
-    启动AI接管功能
-
-    Returns:
-        Response: 启动结果信息
-    """
     data = request.json
     contact_person = data.get("contactPerson", "")
     ai_persona = data.get("aiPersona", "你是一个的微信好友，全程隐藏 AI "
@@ -1326,12 +1307,9 @@ if __name__ == "__main__":
     start_task_scheduler()
     app.run(debug=args.debug, host=args.host, port=args.port)
 
-# 获取收集的数据API
 @app.route("/api/group/get-collected-data", methods=["GET"])
 @handle_api_errors
 def api_get_collected_data():
-    print("收到请求")
-    """获取收集的数据"""
     group_id = request.args.get('group_id', '')
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
@@ -1339,13 +1317,11 @@ def api_get_collected_data():
     try:
         from group_manager import export_collected_data
         
-        # 如果没有指定日期，使用当前日期
         date_str = start_date if start_date else datetime.now().strftime("%Y-%m-%d")
         
         success, result = export_collected_data(group_id, date_str)
         
         if success:
-            # 读取导出的数据文件
             with open(result, 'r', encoding='utf-8') as f:
                 collected_data = json.load(f)
 
@@ -1374,20 +1350,16 @@ def api_get_collected_data():
             "total": 0
         }), 500
 
-# 获取正则规则API
 @app.route("/api/group/get-regex-rules", methods=["GET"])
 @handle_api_errors
 def api_get_regex_rules():
-    """获取正则规则列表"""
     try:
-        # 从配置文件读取正则规则
         regex_config_file = os.path.join(data_dir, "regex_rules.json")
         
         regex_rules = []
         if os.path.exists(regex_config_file):
             with open(regex_config_file, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
-                # 提取rules数组
                 regex_rules = config_data.get("rules", [])
         
         return jsonify({
@@ -1403,20 +1375,16 @@ def api_get_regex_rules():
             "rules": []
         }), 500
 
-# 获取敏感词API
 @app.route("/api/group/get-sensitive-words", methods=["GET"])
 @handle_api_errors
 def api_get_sensitive_words():
-    """获取敏感词列表"""
     try:
-        # 从配置文件读取敏感词
         sensitive_config_file = os.path.join(data_dir, "sensitive_words.json")
         
         sensitive_words = []
         if os.path.exists(sensitive_config_file):
             with open(sensitive_config_file, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
-                # 提取words数组
                 sensitive_words = config_data.get("words", [])
                 print(sensitive_words)
         
@@ -1434,16 +1402,12 @@ def api_get_sensitive_words():
             "words": []
         }), 500
 
-# 保存敏感词API
 @app.route("/api/group/save-sensitive-words", methods=["POST"])
 @handle_api_errors
 def api_save_sensitive_words():
-    """保存敏感词列表"""
     try:
         data = request.json
         words = data.get("words", [])
-
-        print(words)
         
         if not isinstance(words, list):
             return jsonify({
@@ -1451,7 +1415,6 @@ def api_save_sensitive_words():
                 "error": "words参数必须是一个数组"
             }), 400
         
-        # 保存到配置文件
         sensitive_config_file = os.path.join(data_dir, "sensitive_words.json")
         config_data = {"words": words}
         
@@ -1465,18 +1428,15 @@ def api_save_sensitive_words():
         }), 200
         
     except Exception as e:
-        print(f"保存敏感词失败: {e}")
         logger.error(f"保存敏感词失败: {e}")
         return jsonify({
             "success": False,
             "error": f"保存敏感词失败: {e}"
         }), 500
 
-# 保存正则规则API
 @app.route("/api/group/save-regex-rules", methods=["POST"])
 @handle_api_errors
 def api_save_regex_rules():
-    """保存正则规则列表"""
     try:
         data = request.json
         rules = data.get("rules", [])
@@ -1487,7 +1447,6 @@ def api_save_regex_rules():
                 "error": "rules参数必须是一个数组"
             }), 400
         
-        # 保存到配置文件
         regex_config_file = os.path.join(data_dir, "regex_rules.json")
         config_data = {"rules": rules}
         
@@ -1507,17 +1466,13 @@ def api_save_regex_rules():
             "error": f"保存正则规则失败: {e}"
         }), 500
 
-# 获取可用群组API
 @app.route("/api/group/get-available-groups", methods=["GET"])
 @handle_api_errors
 def api_get_available_groups():
-    """获取可用群组列表"""
     try:
         from group_manager import get_available_groups
         
         success, groups = get_available_groups()
-
-        print(success, groups)
         
         if success:
             return jsonify({
@@ -1539,11 +1494,9 @@ def api_get_available_groups():
                 "groups": []
             }), 500
 
-# 获取群组日期API
 @app.route("/api/group/get-group-dates", methods=["GET"])
 @handle_api_errors
 def api_get_group_dates():
-    """获取指定群组的日期列表"""
     try:
         group_name = request.args.get("group_name", "")
         
@@ -1578,10 +1531,8 @@ def api_get_group_dates():
             "dates": []
         }), 500
 
-# 文件下载API
 @app.route("/api/download-file", methods=["GET"])
 def download_file():
-    """下载文件API"""
     try:
         file_path = request.args.get("file_path", "")
         
@@ -1591,7 +1542,6 @@ def download_file():
                 "error": "文件路径不能为空"
             }), 400
         
-        # 安全检查：确保文件路径在允许的目录内
         allowed_dirs = [
             os.path.join(os.getcwd(), "chat_date"),
             os.path.join(os.getcwd(), "data")
@@ -1617,7 +1567,6 @@ def download_file():
                 "error": "文件不存在"
             }), 404
         
-        # 返回文件下载
         return send_file(
             file_abs_path,
             as_attachment=True,

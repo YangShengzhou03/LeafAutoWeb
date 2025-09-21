@@ -1,22 +1,9 @@
-"""
-数据管理模块
-
-负责管理应用程序的所有数据存储和加载，包括：
-- 任务数据管理
-- AI设置管理
-- 首页数据管理
-- 回复历史管理
-- 消息配额管理
-
-提供线程安全的数据访问接口，支持JSON文件持久化存储。
-"""
-
 import datetime
 import json
 import os
 import threading
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 from logging_config import get_logger
 

@@ -191,9 +191,7 @@ class ReplyHandler:
             return False
 
 
-class RulesManager:
-    """规则管理器类，负责加载和更新回复规则"""
-    
+class RulesManager:    
     def __init__(self, rules_file_path: str):
         self.rules_file_path = rules_file_path
         self.rules: List[Dict[str, str]] = []
@@ -299,9 +297,7 @@ class RulesManager:
         return matched_replies[0] if matched_replies else ""
 
 
-class WorkerConfig:
-    """工作线程配置类，用于减少参数数量"""
-    
+class WorkerConfig:    
     def __init__(
         self,
         wx_instance: Any,
@@ -323,9 +319,7 @@ class WorkerConfig:
         self.min_reply_interval = min_reply_interval
 
 
-class MessageHistory:
-    """消息历史记录类，用于减少参数数量"""
-    
+class MessageHistory:    
     def __init__(self, sender: str, message: str, reply: str, 
                  status: str, response_time: float):
         self.sender = sender
@@ -338,7 +332,6 @@ class MessageHistory:
         self.time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典格式"""
         return {
             "sender": self.sender,
             "message": self.message,
@@ -351,9 +344,7 @@ class MessageHistory:
         }
 
 
-class WorkerState:
-    """工作线程状态类，用于减少实例属性数量"""
-    
+class WorkerState:    
     def __init__(self):
         self.listen_list: List[str] = []
         self.last_reply_info = {"content": "", "time": 0}
@@ -365,35 +356,27 @@ class WorkerState:
         self.start_time: Optional[float] = None
     
     def get_message_lock(self) -> threading.Lock:
-        """获取消息锁"""
         return self._message_lock
     
     def get_stop_event(self) -> threading.Event:
-        """获取停止事件"""
         return self._stop_event
     
     def is_running(self) -> bool:
-        """检查是否正在运行"""
         return self._is_running
     
     def set_running(self, running: bool) -> None:
-        """设置运行状态"""
         self._is_running = running
     
     def is_paused(self) -> bool:
-        """检查是否暂停"""
         return self._paused
     
     def set_paused(self, paused: bool) -> None:
-        """设置暂停状态"""
         self._paused = paused
     
     def get_pause_condition(self) -> threading.Condition:
-        """获取暂停条件"""
         return self._pause_cond
     
     def get_start_time(self) -> Optional[float]:
-        """获取启动时间"""
         return self.start_time
     
     def set_start_time(self, start_time: float) -> None:
@@ -525,15 +508,6 @@ class AiWorkerThread:
             logger.error("生成AI回复失败: %s", e)
     
     def _query_ai_model(self, message: str) -> str:
-        """
-        查询AI模型获取回复
-        
-        Args:
-            message: 用户消息
-            
-        Returns:
-            str: AI回复内容
-        """
         model = self.config.model
         
         if model == "wenxin":
@@ -569,16 +543,6 @@ class AiWorkerThread:
             return None
     
     def _query_wenxin(self, message: str) -> str:
-        """
-        查询文心一言模型
-        
-        Args:
-            message: 用户消息
-            
-        Returns:
-            str: AI回复内容
-        """
-
         def _get_access_token():
             response = self._query_api(
                 "https://aip.baidubce.com/oauth/2.0/token",
@@ -720,79 +684,56 @@ class AiWorkerThread:
         return self.state.get_stop_event().is_set() or not self.state.is_running()
 
     def _process_message(self, msg: Any = None, chat: Any = None) -> None:
-        """
-        处理接收到的消息
-        
-        Args:
-            msg: 消息内容
-            chat: 消息窗口
-        """
         try:
             if msg is None:
                 return
                 
-            # 获取聊天信息
             chat_info = self._get_chat_info(chat)
             is_group = chat_info["type"] == "group"
             group_name = chat.who
 
-            # 记录消息接收时间戳
             receive_time = time.time()
 
-            # 获取消息内容
             msg_info = MessageInfo(msg)
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
 
-            # 检查only_at功能（仅针对群聊有效）
             if self.config.only_at and is_group:
                 if self.at_me not in message_content:
                     logger.debug("[AI接管] 群聊消息未包含@我，忽略消息: %s", message_content)
                     return
                 message_content = message_content.replace(self.at_me, "").strip()
 
-            # 检查最小回复间隔（仅对相同内容的消息）
             if self._should_ignore_due_to_interval(message_content):
                 logger.info("[AI接管] 相同内容未达到最小回复间隔，忽略消息: %s", message_content)
-                # 记录被阻止的历史记录
                 history = MessageHistory(sender, message_content, "", "blocked", 0)
                 self._record_history(history)
                 return
 
-            # 应用回复延迟
             if self.config.reply_delay > 0:
                 time.sleep(self.config.reply_delay)
 
-            # 应用自定义规则
             custom_reply = self.rules_manager.apply_custom_rules(message_content)
             if custom_reply:
 
-                # 发送自定义回复
                 reply_sent = False
                 if is_group:
-                    # 根据group_at_reply设置决定是否@对方
                     at_user = sender if self.config.group_at_reply else ""
                     reply_sent = self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
                 else:
                     reply_sent = self.reply_handler.send_reply(sender, custom_reply)
                 
-                # 根据发送结果记录历史记录
                 if reply_sent:
                     self.state.last_reply_info = {"content": message_content, "time": time.time()}
-                    # 计算实际响应时间
                     actual_response_time = round(time.time() - receive_time, 2)
-                    # 记录回复历史（使用实际响应时间）
                     history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
                     self._record_history(history)
                 else:
-                    # 发送失败（配额不足或被阻止），记录未回复状态
                     history = MessageHistory(sender, message_content, custom_reply, "not_replied", 0)
                     self._record_history(history)
                 return
 
-            # 如果没有匹配的自定义规则，则使用AI模型生成回复
             if self.config.model != "disabled":
-                # 保存当前消息的上下文，以便在_generate_ai_reply方法中使用
                 self._current_message_context = {
                     "sender": sender,
                     "message_content": message_content,
