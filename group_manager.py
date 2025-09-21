@@ -519,6 +519,12 @@ class GroupWorkerThread:
             # 检查文件是否存在，如果不存在则写入表头
             file_exists = os.path.exists(filepath)
             
+            # 获取提取内容列表
+            extracted_contents = matched_data.get('extracted_contents', [])
+            
+            # 将提取内容列表转换为字符串表示，例如：[项目1, 项目2, 项目3]
+            extracted_content_str = str(extracted_contents)
+            
             # 准备CSV行数据
             row_data = {
                 '时间': matched_data['time'],
@@ -526,21 +532,12 @@ class GroupWorkerThread:
                 '群聊': chat_name,
                 '原始消息': matched_data['original_message'],
                 '匹配规则': matched_data['pattern'],
+                '提取内容': extracted_content_str,  # 将所有提取内容放在一个单元格中
                 '完整匹配': matched_data['full_match']
             }
             
-            # 添加提取内容列（如果有多个提取内容，分别放在不同列）
-            extracted_contents = matched_data.get('extracted_contents', [])
-            for i, content in enumerate(extracted_contents, 1):
-                row_data[f'提取内容{i}'] = content
-            
-            # 动态构建表头
-            fieldnames = ['时间', '发送者', '群聊', '原始消息', '匹配规则', '完整匹配']
-            max_extracted_columns = max(len(extracted_contents) for _ in range(1))  # 当前行的提取内容数量
-            
-            # 添加提取内容列名
-            for i in range(1, max_extracted_columns + 1):
-                fieldnames.append(f'提取内容{i}')
+            # 固定表头
+            fieldnames = ['时间', '发送者', '群聊', '原始消息', '匹配规则', '提取内容', '完整匹配']
             
             # 写入CSV文件
             with open(filepath, 'a', encoding='utf-8', newline='') as f:
@@ -603,8 +600,7 @@ class GroupWorkerThread:
                         "original_message": matched_rule["original_message"],
                         "pattern": matched_rule["pattern"],
                         "extracted_content": matched_rule["extracted_content"],
-                        "extracted_contents": matched_rule.get("extracted_contents", []),  # 传递提取内容列表
-                        "full_match": matched_rule["full_match"]
+                        "extracted_contents": matched_rule.get("extracted_contents", [])
                     }
                     self._save_matched_content(matched_data, chat_name)
                     
@@ -1346,9 +1342,9 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
                         continue
                 
                 # 检查日期是否在指定范围内
-                if start_date is not None and file_date_str < start_date:
+                if start_date is not None and file_date_str is not None and file_date_str < start_date:
                     continue
-                if end_date is not None and file_date_str > end_date:
+                if end_date is not None and file_date_str is not None and file_date_str > end_date:
                     continue
                 
                 file_path = os.path.join(root, file_name)
@@ -1358,7 +1354,34 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
                 with open(file_path, 'r', encoding='utf-8') as f:
                     csv_reader = csv.DictReader(f)
                     for row in csv_reader:
-                        collected_data.append(row)
+                        # 确保数据包含所需字段
+                        processed_row = {
+                            'time': row.get('time', ''),
+                            'sender': row.get('sender', ''),
+                            'group': row.get('chatName', row.get('group', '')),
+                            'content': row.get('message', row.get('content', '')),
+                            'type': '文本',
+                            'extractedContent': '',
+                            'extracted_content': ''
+                        }
+                        
+                        # 尝试从内容中提取信息
+                        content = processed_row['content']
+                        if content:
+                            # 匹配姓名
+                            name_match = re.search(r'我叫([^，,。；;\s]+)', content)
+                            # 匹配年龄
+                            age_match = re.search(r'我(\d+)岁', content)
+                            
+                            if name_match and name_match.group(1):
+                                extracted_parts = [name_match.group(1)]
+                                if age_match and age_match.group(1):
+                                    extracted_parts.append(f"{age_match.group(1)}岁")
+                                
+                                processed_row['extractedContent'] = '，'.join(extracted_parts)
+                                processed_row['extracted_content'] = '，'.join(extracted_parts)
+                        
+                        collected_data.append(processed_row)
         
         if not collected_data:
             date_range = ""

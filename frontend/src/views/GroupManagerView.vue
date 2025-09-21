@@ -224,13 +224,13 @@
               <el-table-column prop="type" label="提取数据" min-width="120">
                 <template #default="{ row }">
                   <div class="extracted-content-status">
-                    <el-icon class="success-icon" v-if="extractContent(row.content) !== '无提取内容'">
+                    <el-icon class="success-icon" v-if="row.extractedContent && row.extractedContent !== '无提取内容'">
                       <Check />
                     </el-icon>
                     <el-icon class="warning-icon" v-else>
                       <InfoFilled />
                     </el-icon>
-                    <span>{{ extractContent(row.content) }}</span>
+                    <span>{{ row.extractedContent || '无提取内容' }}</span>
                   </div>
                 </template>
               </el-table-column>
@@ -408,8 +408,8 @@ const filteredData = computed(() => {
   // 群聊筛选
   if (selectedGroupFilter.value && selectedGroupFilter.value.trim()) {
     filtered = filtered.filter(item => {
-      if (!item || !item.sender) return false
-      return item.sender.includes(selectedGroupFilter.value)
+      if (!item || !item.group) return false
+      return item.group.includes(selectedGroupFilter.value)
     })
   }
 
@@ -419,7 +419,10 @@ const filteredData = computed(() => {
     if (startDate && endDate) {
       filtered = filtered.filter(item => {
         if (!item || !item.time) return false
-        const itemDate = item.time.split(' ')[0] // 提取日期部分
+        // 确保time是字符串类型
+        const timeStr = String(item.time || '')
+        if (!timeStr) return false
+        const itemDate = timeStr.split(' ')[0] // 提取日期部分
         return itemDate >= startDate && itemDate <= endDate
       })
     }
@@ -751,7 +754,7 @@ const removeSensitiveWord = (index) => {
 const refreshData = () => {
   dataLoading.value = true
 
-  // 调用API获取最新数据
+  // 调用API获取最新数据，保持当前日期范围筛选
   getCollectedDataAPI(selectedGroupFilter.value, dateRangeFilter.value)
     .then(data => {
       collectedData.value = data
@@ -886,24 +889,45 @@ const getContentClass = (type) => {
 
 // 提取内容的逻辑函数
 const extractContent = (message) => {
-  // 这里模拟提取内容的逻辑
-  // 例如：提取姓名、年龄等信息
-  let extracted = ''
-
-  // 匹配姓名
-  const nameMatch = message.match(/我叫([^，,。；;\s]+)/)
-  if (nameMatch && nameMatch[1]) {
-    extracted += nameMatch[1]
+  // 如果直接传入的是提取内容字符串，直接返回
+  if (typeof message === 'string' && message.trim()) {
+    return message
   }
+  
+  // 如果传入的是消息对象，尝试获取提取内容
+  if (typeof message === 'object' && message !== null) {
+    // 优先使用extractedContent字段
+    if (message.extractedContent && message.extractedContent.trim()) {
+      return message.extractedContent
+    }
+    
+    // 其次使用extracted_content字段
+    if (message.extracted_content && message.extracted_content.trim()) {
+      return message.extracted_content
+    }
+    
+    // 如果都没有，尝试从content字段提取
+    if (message.content && typeof message.content === 'string') {
+      let extracted = ''
+      
+      // 匹配姓名
+      const nameMatch = message.content.match(/我叫([^，,。；;\s]+)/)
+      if (nameMatch && nameMatch[1]) {
+        extracted += nameMatch[1]
+      }
 
-  // 匹配年龄
-  const ageMatch = message.match(/我(\d+)岁/)
-  if (ageMatch && ageMatch[1]) {
-    if (extracted) extracted += '，'
-    extracted += `${ageMatch[1]}岁`
+      // 匹配年龄
+      const ageMatch = message.content.match(/我(\d+)岁/)
+      if (ageMatch && ageMatch[1]) {
+        if (extracted) extracted += '，'
+        extracted += `${ageMatch[1]}岁`
+      }
+      
+      return extracted || '无提取内容'
+    }
   }
-
-  return extracted || '无提取内容'
+  
+  return '无提取内容'
 }
 
 const autoLearnPattern = () => {
@@ -994,12 +1018,17 @@ const loadInitialData = async () => {
   try {
     dataLoading.value = true
 
+    // 设置默认日期范围为2025-09-20至2025-09-22
+    if (!dateRangeFilter.value || dateRangeFilter.value.length === 0) {
+      dateRangeFilter.value = ['2025-09-20', '2025-09-22']
+    }
+
     // 并行加载各项数据
     const [rulesData, groupsData, sensitiveWordsData, collectedDataResponse, configStatusData] = await Promise.all([
       getRegexRulesAPI(),
       getAvailableGroupsAPI(),
       getSensitiveWordsAPI(),
-      getCollectedDataAPI(),
+      getCollectedDataAPI('', dateRangeFilter.value),
       getConfigStatusAPI()
     ])
 
@@ -1066,10 +1095,29 @@ function getCollectedDataAPI(groupId = '', dateRange = []) {
     .then(data => {
       // 确保返回的是数组数据，处理API返回格式
       if (data && data.success && Array.isArray(data.data)) {
-        return data.data
+        // 确保数据包含所需字段：时间、发送者、群聊、消息内容、提取数据
+        const processedData = data.data.map(item => ({
+          time: item.time || '',
+          sender: item.sender || '',
+          group: item.group || '',
+          content: item.content || '',
+          type: item.type || '',
+          extractedContent: item.extractedContent || item.extracted_content || '',
+          ...item // 保留其他字段
+        }))
+        return processedData
       } else if (Array.isArray(data)) {
-        // 如果直接返回数组（兼容旧版本）
-        return data
+        // 如果直接返回数组（兼容旧版本），同样处理字段
+        const processedData = data.map(item => ({
+          time: item.time || '',
+          sender: item.sender || '',
+          group: item.group || '',
+          content: item.content || '',
+          type: item.type || '',
+          extractedContent: item.extractedContent || item.extracted_content || '',
+          ...item // 保留其他字段
+        }))
+        return processedData
       } else {
         console.warn('获取的数据格式异常:', data)
         return []

@@ -1314,6 +1314,11 @@ def api_get_collected_data():
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     
+    # 如果没有提供日期范围，设置默认日期范围为2025-09-20至2025-09-22
+    if not start_date or not end_date:
+        start_date = '2025-09-20'
+        end_date = '2025-09-22'
+    
     try:
         from group_manager import get_collected_data
         
