@@ -10,51 +10,38 @@ from typing import Any, Dict, List, Optional
 
 from logging_config import get_logger
 
-# Initialize logger
 logger = get_logger(__name__)
 
-# 数据存储路径
 data_dir = os.path.join(os.path.dirname(__file__), "data")
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
-# 消息记录目录
 messages_dir = os.path.join(data_dir, "messages")
 if not os.path.exists(messages_dir):
     os.makedirs(messages_dir)
 
-# 群聊管理配置
 group_manage_config_file = os.path.join(data_dir, "group_manage.json")
 
-# 数据收集配置
 collection_config_file = os.path.join(data_dir, "collection_config.json")
 
-# 舆情监控配置
 monitoring_config_file = os.path.join(data_dir, "monitoring_config.json")
 
-
-
-# 记录目录
 RECORDING_DIR = os.path.join(data_dir, "recordings")
 if not os.path.exists(RECORDING_DIR):
     os.makedirs(RECORDING_DIR)
 
-# 聊天记录目录（按天存储）
 CHAT_DATE_DIR = os.path.join(os.path.dirname(__file__), "chat_date")
 if not os.path.exists(CHAT_DATE_DIR):
     os.makedirs(CHAT_DATE_DIR)
 
-# Constants
 DATA_DIR = "data"
 MESSAGE_TYPES = ["friend", "group"]
 SYSTEM_MESSAGE_TYPE = "sys"
 SELF_SENDER = "Self"
 
 
-# 获取按天存储的消息文件路径
 def get_daily_messages_file(chat_name: str) -> str:
     date_str = datetime.now().strftime("%Y-%m-%d")
-    # 清理文件名中的非法字符
     safe_chat_name = re.sub(r'[\\/:*?"<>|]', '_', chat_name)
     filename = f"{safe_chat_name}_{date_str}.csv"
     return os.path.join(CHAT_DATE_DIR, filename)
@@ -65,7 +52,6 @@ class MessageInfo:
         self.message = message
     
     def get_sender(self) -> str:
-        """获取消息发送者"""
         if hasattr(self.message, 'sender'):
             return self.message.sender
         elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
@@ -73,7 +59,6 @@ class MessageInfo:
         return ""
     
     def get_content(self) -> str:
-        """获取消息内容"""
         if hasattr(self.message, 'content'):
             return self.message.content or ""
         elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
@@ -81,30 +66,24 @@ class MessageInfo:
         return str(self.message)
     
     def get_type(self) -> str:
-        """获取消息类型"""
         if hasattr(self.message, "type"):
             return self.message.type.lower()
         return ""
     
     def is_system_message(self) -> bool:
-        """检查是否为系统消息"""
         return self.get_type() == SYSTEM_MESSAGE_TYPE
     
     def is_self_message(self) -> bool:
-        """检查是否为自己发送的消息"""
         return self.get_sender() == SELF_SENDER
     
     def is_empty_content(self) -> bool:
-        """检查消息内容是否为空"""
         return not self.get_content().strip()
     
     def is_valid_message_type(self) -> bool:
-        """检查消息类型是否有效"""
         return self.get_type() in MESSAGE_TYPES
 
 
 class WorkerConfig:
-    """工作线程配置类，用于减少参数数量"""
     
     def __init__(
         self,
@@ -120,7 +99,6 @@ class WorkerConfig:
 
 
 class MessageHistory:
-    """消息历史记录类，用于记录消息"""
     
     def __init__(self, sender: str, message: str, chat_name: str):
         self.sender = sender
@@ -131,7 +109,6 @@ class MessageHistory:
         self.time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典格式"""
         return {
             "sender": self.sender,
             "message": self.message,
@@ -143,7 +120,6 @@ class MessageHistory:
 
 
 class WorkerState:
-    """工作线程状态类，用于减少实例属性数量"""
     
     def __init__(self):
         self.listen_list: List[str] = []
@@ -156,39 +132,30 @@ class WorkerState:
         self.start_time: Optional[float] = None
     
     def get_message_lock(self) -> threading.Lock:
-        """获取消息锁"""
         return self._message_lock
     
     def get_stop_event(self) -> threading.Event:
-        """获取停止事件"""
         return self._stop_event
     
     def is_running(self) -> bool:
-        """检查是否正在运行"""
         return self._is_running
     
     def set_running(self, running: bool) -> None:
-        """设置运行状态"""
         self._is_running = running
     
     def is_paused(self) -> bool:
-        """检查是否暂停"""
         return self._paused
     
     def set_paused(self, paused: bool) -> None:
-        """设置暂停状态"""
         self._paused = paused
     
     def get_pause_condition(self) -> threading.Condition:
-        """获取暂停条件"""
         return self._pause_cond
     
     def get_start_time(self) -> Optional[float]:
-        """获取启动时间"""
         return self.start_time
     
     def set_start_time(self, start_time: Optional[float]) -> None:
-        """设置启动时间"""
         self.start_time = start_time
 
 
@@ -861,38 +828,29 @@ class GroupWorkerManager:
                 thread = threading.Thread(target=worker.run, daemon=True)
                 thread.start()
 
-                # 等待线程启动
                 time.sleep(0.1)
                 if not worker.is_running():
                     del self.workers[worker_key]
                     return False
 
-                # 等待初始化完成，最多等待5秒
                 max_wait_time = 5
                 wait_interval = 0.1
                 total_wait_time = 0
                 
                 while total_wait_time < max_wait_time:
-                    # 检查线程是否仍在运行且初始化是否完成
                     if not worker.is_running():
-                        # 线程已经停止，说明初始化失败
                         del self.workers[worker_key]
                         return False
                     
-                    # 检查监听器是否已成功添加
                     if hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
-                        # 监听器已添加，初始化成功
                         return True
                     
-                    # 继续等待
                     time.sleep(wait_interval)
                     total_wait_time += wait_interval
                 
-                # 超时后，检查线程状态
                 if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
                     return True
                 else:
-                    # 初始化超时，停止线程并清理
                     worker.stop()
                     del self.workers[worker_key]
                     return False
@@ -914,15 +872,6 @@ class GroupWorkerManager:
                 return False
 
     def stop_worker(self, receiver: str) -> bool:
-        """
-        停止群聊管理工作线程
-
-        Args:
-            receiver: 接收者标识
-
-        Returns:
-            bool: True表示停止成功，False表示未找到对应线程
-        """
         with self.lock:
             worker_key = f"{receiver}_group"
             if worker_key in self.workers:
@@ -930,18 +879,15 @@ class GroupWorkerManager:
                 worker.stop()
                 del self.workers[worker_key]
                 
-                # 更新配置文件中的管理状态
                 try:
                     if os.path.exists(group_manage_config_file):
                         with open(group_manage_config_file, 'r', encoding='utf-8') as f:
                             config = json.load(f)
                         
-                        # 无论工作线程是否存在，都设置management_enabled为false
                         config["management_enabled"] = False
                         config["data_collection_enabled"] = False
                         config["sentiment_monitoring_enabled"] = False
                         
-                        # 保存更新后的配置
                         with open(group_manage_config_file, 'w', encoding='utf-8') as f:
                             json.dump(config, f, ensure_ascii=False, indent=2)
                 except Exception as e:
@@ -967,18 +913,12 @@ class GroupWorkerManager:
             return list(self.workers.keys())
 
     def stop_all_workers(self) -> None:
-        """停止所有工作线程"""
         with self.lock:
             for worker in self.workers.values():
                 worker.stop()
             self.workers.clear()
 
     def update_all_workers_rules(self) -> bool:
-        """通知所有工作线程更新规则
-        
-        Returns:
-            bool: 是否有工作线程更新了规则
-        """
         updated_count = 0
         for _, worker in self.workers.items():
             if worker.update_rules():
@@ -998,15 +938,12 @@ group_manager = GroupWorkerManager()
 default_wx_instance = None
 
 def set_wechat_instance(wx_instance):
-    """设置微信实例"""
     global default_wx_instance
     default_wx_instance = wx_instance
 
 def get_wechat_instance():
-    """获取微信实例"""
     return default_wx_instance
 
-# 群聊管理相关功能实现
 def select_group(group_name: str) -> tuple:
     try:
         # 首先验证群组是否在可用群组列表中
@@ -1228,33 +1165,16 @@ def get_collected_data(group_name: str, start_date: str = None, end_date: str = 
                 csv_reader = csv.reader(f)
                 for row in csv_reader:
                     if len(row) >= 4:  # 确保行有足够的列
-                        # collect目录下的文件格式：时间,发送者,群聊,消息内容,正则表达式,提取结果,原始消息
+                        # collect目录下的文件格式：时间,发送者,群聊,原始消息,匹配规则,提取内容
                         processed_row = {
                             'time': row[0] if len(row) > 0 else '',
                             'sender': row[1] if len(row) > 1 else '',
                             'group': row[2] if len(row) > 2 else '',
                             'content': row[3] if len(row) > 3 else '',
                             'type': '文本',
-                            'extractedContent': row[5] if len(row) > 5 else '',  # 使用提取结果
+                            'extractedContent': row[5] if len(row) > 5 else '',  # 使用提取内容
                             'extracted_content': row[5] if len(row) > 5 else ''
                         }
-                        
-                        # 如果没有提取结果，尝试从内容中提取
-                        if not processed_row['extractedContent'] and processed_row['content']:
-                            content = processed_row['content']
-                            # 匹配姓名
-                            name_match = re.search(r'我叫([^，,。；;\s]+)', content)
-                            # 匹配年龄
-                            age_match = re.search(r'我(\d+)岁', content)
-                            
-                            if name_match and name_match.group(1):
-                                extracted_parts = [name_match.group(1)]
-                                if age_match and age_match.group(1):
-                                    extracted_parts.append(f"{age_match.group(1)}岁")
-                                
-                                extracted_content = '，'.join(extracted_parts)
-                                processed_row['extractedContent'] = extracted_content
-                                processed_row['extracted_content'] = extracted_content
                         
                         collected_data.append(processed_row)
         
@@ -1500,6 +1420,7 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
     """
     try:
         import re
+        import json
         from openpyxl import Workbook
         from openpyxl.utils import get_column_letter
         from openpyxl.styles import Font, PatternFill, Alignment
@@ -1529,8 +1450,21 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
         for item in data:
             extracted_content = item.get('extractedContent', '') or item.get('extracted_content', '')
             if extracted_content:
-                # 分割提取内容
-                items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                # 处理列表格式的提取内容
+                items = []
+                if isinstance(extracted_content, str) and extracted_content.startswith('[') and extracted_content.endswith(']'):
+                    try:
+                        # 尝试解析为列表
+                        items = json.loads(extracted_content)
+                        if not isinstance(items, list):
+                            items = [items]
+                    except json.JSONDecodeError:
+                        # 如果解析失败，按逗号分割
+                        items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                else:
+                    # 按逗号分割
+                    items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                
                 max_extracted_items = max(max_extracted_items, len(items))
         
         # 添加提取内容的列头
@@ -1557,9 +1491,24 @@ def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_d
             # 提取内容分列
             extracted_content = item.get('extractedContent', '') or item.get('extracted_content', '')
             if extracted_content:
-                items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                # 处理列表格式的提取内容
+                items = []
+                if isinstance(extracted_content, str) and extracted_content.startswith('[') and extracted_content.endswith(']'):
+                    try:
+                        # 尝试解析为列表
+                        items = json.loads(extracted_content)
+                        if not isinstance(items, list):
+                            items = [items]
+                    except json.JSONDecodeError:
+                        # 如果解析失败，按逗号分割
+                        items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                else:
+                    # 按逗号分割
+                    items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                    
+                # 写入提取内容到对应的列
                 for col_idx, extracted_item in enumerate(items, 6):  # 从第6列开始
-                    ws.cell(row=row_num, column=col_idx, value=extracted_item)
+                    ws.cell(row=row_num, column=col_idx, value=str(extracted_item))
         
         # 自动调整列宽
         for column in ws.columns:

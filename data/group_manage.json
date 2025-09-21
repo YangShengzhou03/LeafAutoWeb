@@ -6,8 +6,8 @@
       "sensitive_words": []
     }
   },
-  "management_enabled": true,
-  "data_collection_enabled": true,
+  "management_enabled": false,
+  "data_collection_enabled": false,
   "sentiment_monitoring_enabled": false,
   "group": "快乐群",
   "version": "1.0",

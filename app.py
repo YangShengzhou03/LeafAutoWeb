@@ -13,7 +13,6 @@ from data_manager import (add_ai_history, add_task, clear_tasks, delete_task,
 from logging_config import get_logger
 
 
-# 辅助函数：根据原始消息和目标内容生成基于结构的正则表达式
 def generate_structure_based_regex(original_message, target_items):
     """生成能够捕获相似结构但不同内容的正则表达式"""
     try:
