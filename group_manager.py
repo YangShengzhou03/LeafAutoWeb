@@ -1486,5 +1486,116 @@ def get_group_dates(group_name: str) -> tuple:
         return False, f"获取日期列表失败: {str(e)}"
 
 
+def export_collected_data_to_xlsx(group_name: str, start_date: str = None, end_date: str = None) -> tuple:
+    """
+    导出收集的数据为xlsx格式文件，提取内容按每个内容单独一列展示
+    
+    Args:
+        group_name: 群聊名称
+        start_date: 开始日期 (YYYY-MM-DD)
+        end_date: 结束日期 (YYYY-MM-DD)
+        
+    Returns:
+        tuple: (success: bool, file_path: str)
+    """
+    try:
+        import re
+        from openpyxl import Workbook
+        from openpyxl.utils import get_column_letter
+        from openpyxl.styles import Font, PatternFill, Alignment
+        
+        # 创建工作簿和工作表
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "收集数据"
+        
+        # 设置表头样式
+        header_font = Font(bold=True)
+        header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        # 设置表头
+        headers = ["时间", "发送者", "群聊", "消息内容", "消息类型"]
+        # 添加提取内容的列（动态）
+        extracted_headers = []
+        
+        # 先获取数据以确定提取内容的列数
+        success, data = get_collected_data(group_name, start_date, end_date)
+        if not success:
+            return False, data
+            
+        # 分析提取内容，确定需要多少列
+        max_extracted_items = 0
+        for item in data:
+            extracted_content = item.get('extractedContent', '') or item.get('extracted_content', '')
+            if extracted_content:
+                # 分割提取内容
+                items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                max_extracted_items = max(max_extracted_items, len(items))
+        
+        # 添加提取内容的列头
+        for i in range(max_extracted_items):
+            extracted_headers.append(f"提取内容{i+1}")
+        
+        # 写入完整的表头
+        all_headers = headers + extracted_headers
+        for col_num, header in enumerate(all_headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # 写入数据
+        for row_num, item in enumerate(data, 2):
+            # 基本信息
+            ws.cell(row=row_num, column=1, value=item.get('time', ''))
+            ws.cell(row=row_num, column=2, value=item.get('sender', ''))
+            ws.cell(row=row_num, column=3, value=item.get('group', ''))
+            ws.cell(row=row_num, column=4, value=item.get('content', ''))
+            ws.cell(row=row_num, column=5, value=item.get('type', ''))
+            
+            # 提取内容分列
+            extracted_content = item.get('extractedContent', '') or item.get('extracted_content', '')
+            if extracted_content:
+                items = [item.strip() for item in extracted_content.split('，') if item.strip()]
+                for col_idx, extracted_item in enumerate(items, 6):  # 从第6列开始
+                    ws.cell(row=row_num, column=col_idx, value=extracted_item)
+        
+        # 自动调整列宽
+        for column in ws.columns:
+            max_length = 0
+            column_letter = get_column_letter(column[0].column)
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)  # 最大宽度限制为50
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # 保存文件
+        export_dir = os.path.join(os.path.dirname(__file__), "chat_date", "export")
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+            
+        # 生成文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if group_name:
+            file_name = f"{group_name}_导出数据_{timestamp}.xlsx"
+        else:
+            file_name = f"全部群聊_导出数据_{timestamp}.xlsx"
+            
+        file_path = os.path.join(export_dir, file_name)
+        wb.save(file_path)
+        
+        logger.info(f"数据已导出为xlsx文件: {file_path}")
+        return True, file_path
+        
+    except Exception as e:
+        logger.error(f"导出数据为xlsx失败: {str(e)}")
+        return False, f"导出失败: {str(e)}"
+
+
 # 正则规则配置文件
 regex_config_file = os.path.join(data_dir, "regex_rules.json")

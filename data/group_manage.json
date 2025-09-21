@@ -6,14 +6,14 @@
       "sensitive_words": []
     }
   },
-  "management_enabled": false,
-  "data_collection_enabled": false,
+  "management_enabled": true,
+  "data_collection_enabled": true,
   "sentiment_monitoring_enabled": false,
   "group": "快乐群",
   "version": "1.0",
   "快乐群": {
-    "enabled": false,
-    "start_time": "2025-09-21T15:32:48.461004",
+    "enabled": true,
+    "start_time": "2025-09-21T16:07:46.898938",
     "settings": {
       "data_collection_enabled": false,
       "monitoring_enabled": false,

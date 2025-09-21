@@ -809,7 +809,7 @@ const exportCollectedData = async () => {
       // 创建下载链接
       const downloadLink = document.createElement('a')
       downloadLink.href = `/api/download-file?file_path=${encodeURIComponent(result.file_path)}`
-      downloadLink.download = result.file_path.split('/').pop() || 'collected_data.csv'
+      downloadLink.download = result.file_path.split('/').pop() || 'collected_data.xlsx'
       document.body.appendChild(downloadLink)
       downloadLink.click()
       document.body.removeChild(downloadLink)

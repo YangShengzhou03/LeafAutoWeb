@@ -1005,12 +1005,22 @@ def api_auto_learn_pattern_from_content():
 @app.route("/api/group/export-collected-data", methods=["POST"])
 @handle_api_errors
 def api_export_collected_data():
-    """导出收集的数据"""
+    """导出收集的数据为xlsx格式"""
     data = request.json
     group_name = data.get("group_name", "")
-    date = data.get("date", "")
+    date_range = data.get("date", "")
     
-    success, result = True, "结果"
+    # 解析日期范围
+    start_date = None
+    end_date = None
+    if date_range and '_' in date_range:
+        dates = date_range.split('_')
+        if len(dates) == 2:
+            start_date, end_date = dates[0], dates[1]
+    
+    # 调用group_manager中的导出函数
+    from group_manager import export_collected_data_to_xlsx
+    success, result = export_collected_data_to_xlsx(group_name, start_date, end_date)
     
     if success:
         return jsonify({"success": True, "file_path": result}), 200
