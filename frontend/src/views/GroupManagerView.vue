@@ -1029,11 +1029,6 @@ const loadInitialData = async () => {
       groupManagementStatus.value = configData.management_status !== undefined ? configData.management_status : groupManagementStatus.value
       dataCollectionEnabled.value = configData.data_collection_enabled !== undefined ? configData.data_collection_enabled : dataCollectionEnabled.value
       monitoringEnabled.value = configData.monitoring_enabled !== undefined ? configData.monitoring_enabled : monitoringEnabled.value
-      
-      // 设置选择的群聊名称
-      if (configData.selected_group) {
-        contactPerson.value = configData.selected_group
-      }
     }
     
   } catch (error) {
