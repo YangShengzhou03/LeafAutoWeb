@@ -25,6 +25,12 @@ if not os.path.exists(messages_dir):
 # 群聊管理配置
 group_manage_config_file = os.path.join(data_dir, "group_manage.json")
 
+# 数据收集配置
+collection_config_file = os.path.join(data_dir, "collection_config.json")
+
+# 舆情监控配置
+monitoring_config_file = os.path.join(data_dir, "monitoring_config.json")
+
 
 
 # 记录目录
