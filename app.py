@@ -1387,7 +1387,6 @@ def api_get_sensitive_words():
             with open(sensitive_config_file, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
                 sensitive_words = config_data.get("words", [])
-                print(sensitive_words)
         
         return jsonify({
             "success": True,
@@ -1395,7 +1394,6 @@ def api_get_sensitive_words():
         }), 200
         
     except Exception as e:
-        print(f"获取敏感词失败: {e}")
         logger.error(f"获取敏感词失败: {e}")
         return jsonify({
             "success": False,
