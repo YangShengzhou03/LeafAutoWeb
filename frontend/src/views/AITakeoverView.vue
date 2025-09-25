@@ -268,7 +268,7 @@
                 :type="row.status === 'replied' ? 'success' : row.status === 'blocked' ? 'warning' : 'danger'" 
                 size="small" 
                 class="status-tag">
-                {{ row.status === 'replied' ? '已回复' : row.status === 'blocked' ? '被阻止' : '未回复' }}
+                {{ row.status === 'replied' ? '已回复' : row.status === 'blocked' ? '未回复' : '被阻止' }}
               </el-tag>
             </template>
           </el-table-column>
