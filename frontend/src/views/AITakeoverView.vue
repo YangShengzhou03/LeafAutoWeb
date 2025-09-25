@@ -554,6 +554,10 @@ const filteredHistory = computed(() => {
       const matchesStatus = filterStatus.value === 'all' || item.status === filterStatus.value
       return matchesSearch && matchesStatus
     })
+    .sort((a, b) => {
+      // 按时间倒序排序，最新的在最前面
+      return new Date(b.time) - new Date(a.time)
+    })
 })
 
 

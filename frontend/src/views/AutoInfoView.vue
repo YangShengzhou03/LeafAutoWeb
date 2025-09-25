@@ -125,7 +125,7 @@
           </div>
         </template>
 
-        <el-table v-if="tasks.length > 0" :data="sortedTasks" style="width: 100%" stripe fit
+        <el-table v-if="tasks.length > 0" :data="paginatedTasks" style="width: 100%" stripe fit
           :row-class-name="tableRowClassName">
           <el-table-column prop="recipient" label="接收者" min-width="20px" />
           <el-table-column prop="messageContent" label="内容" min-width="20px">
@@ -176,6 +176,19 @@
             </template>
           </el-table-column>
         </el-table>
+
+        <!-- 分页组件 -->
+        <div v-if="tasks.length > 0" class="pagination-container">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="tasks.length"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
 
         <el-empty v-else description="快创建您的第一个自动信息任务">
         </el-empty>
@@ -237,6 +250,10 @@ const rules = {
 const tasks = ref([])
 const isSchedulerRunning = ref(false)
 
+// 分页相关变量
+const currentPage = ref(1)
+const pageSize = ref(10)
+
 const repeatOptions = [
   { label: '不重复', value: 'none' },
   { label: '每天', value: 'daily' },
@@ -264,6 +281,23 @@ const defaultDateTime = computed(() => {
 const sortedTasks = computed(() => {
   return [...tasks.value].sort((a, b) => new Date(a.sendTime) - new Date(b.sendTime))
 })
+
+// 分页后的任务列表
+const paginatedTasks = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value
+  const endIndex = startIndex + pageSize.value
+  return sortedTasks.value.slice(startIndex, endIndex)
+})
+
+// 分页事件处理
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize
+  currentPage.value = 1 // 重置到第一页
+}
+
+const handleCurrentChange = (newPage) => {
+  currentPage.value = newPage
+}
 
 const resetForm = () => {
   taskForm.value?.resetFields()
@@ -989,6 +1023,42 @@ onMounted(() => {
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+/* 分页样式 */
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.pagination-container .el-pagination {
+  background-color: white;
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-container .el-pagination .btn-prev,
+.pagination-container .el-pagination .btn-next,
+.pagination-container .el-pagination .number {
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.pagination-container .el-pagination .btn-prev:hover,
+.pagination-container .el-pagination .btn-next:hover,
+.pagination-container .el-pagination .number:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.pagination-container .el-pagination .number.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
 @media (max-width: 768px) {
   .card-header {
     flex-direction: column;
@@ -1007,6 +1077,15 @@ onMounted(() => {
 
   .el-button-group .el-button {
     flex: 1;
+  }
+  
+  .pagination-container {
+    padding: 12px 8px;
+  }
+  
+  .pagination-container .el-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 </style>
