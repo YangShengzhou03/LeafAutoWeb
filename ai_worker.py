@@ -7,7 +7,7 @@ import time
 import uuid
 import httpx
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from data_manager import add_ai_history
 from logging_config import get_logger
@@ -88,7 +88,8 @@ class MessageInfo:
         try:
             msg_time = self.get_timestamp()
             current_time = time.time()
-            return (current_time - msg_time) > max_age_seconds
+            age_seconds = current_time - msg_time
+            return age_seconds > max_age_seconds
         except (ValueError, TypeError, AttributeError, KeyError):
             # 如果无法获取时间戳，默认认为不过时
             return False
@@ -419,8 +420,11 @@ class WorkerState:
     def set_processing_message(self, message_content: str) -> bool:
         """设置正在处理的消息内容，返回是否设置成功"""
         with self._processing_lock:
+            # 检查是否已有消息正在处理
             if self._processing_message is not None:
                 return False  # 已有消息正在处理
+            
+            # 设置正在处理的消息内容和开始时间
             self._processing_message = message_content
             self._processing_start_time = time.time()
             return True
@@ -428,6 +432,7 @@ class WorkerState:
     def clear_processing_message(self) -> None:
         """清除正在处理的消息状态"""
         with self._processing_lock:
+            # 清除正在处理的消息内容和开始时间
             self._processing_message = None
             self._processing_start_time = 0
     
@@ -444,6 +449,7 @@ class WorkerState:
     def set_latest_message(self, message_content: str) -> None:
         """设置最新消息"""
         with self._processing_lock:
+            # 设置最新消息内容和时间戳
             self._latest_message = message_content
             self._latest_message_time = time.time()
     
@@ -455,6 +461,7 @@ class WorkerState:
     def clear_latest_message(self) -> None:
         """清除最新消息"""
         with self._processing_lock:
+            # 清除最新消息内容和时间戳
             self._latest_message = None
             self._latest_message_time = 0
 
@@ -525,10 +532,15 @@ class AiWorkerThread:
         return self.config.wx_instance.GetChatName(who)
 
     def _is_target_message(self, message: Any) -> bool:
+        """检查消息是否来自目标用户或群组"""
         try:
             msg_info = MessageInfo(message)
             sender = msg_info.get_sender()
-            return sender in self.receiver_list
+            # 检查发送者是否在接收列表中
+            if sender in self.receiver_list:
+                return True
+            # 消息不是来自目标用户或群组
+            return False
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error("Error checking target message: %s", e)
             return False
@@ -673,34 +685,21 @@ class AiWorkerThread:
         }
         response = self._query_api("https://spark-api-open.xf-yun.com/v1/chat/completions", data, header)
         return response['choices'][0]['message']['content'] if response else "无法解析响应"
-    
-    def _get_chat_info_from_message(self) -> Dict[str, Any]:
-        return {
-            "type": "friend",
-            "name": "",
-            "sender": "",
-            "receive_time": time.time()
-        }
 
     def _cleanup(self) -> None:
+        """清理资源"""
         try:
-            for target in self.state.listen_list:
-                if hasattr(self.config.wx_instance, "RemoveListenChat"):
-                    try:
-                        self.config.wx_instance.RemoveListenChat(who=target)
-                    except (ValueError, TypeError, AttributeError, KeyError) as e:
-                        logger.error("Failed to remove listener for %s: %s", target, e)
-                    except OSError as e:
-                        logger.error("OS error removing listener for %s: %s", target, e)
-                    except RuntimeError as e:
-                        logger.error("Runtime error removing listener for %s: %s", target, e)
-            self.state.listen_list.clear()
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("清理监听时出错: %s", str(e))
-        except OSError as e:
-            logger.error("OS error cleaning up listeners: %s", str(e))
-        except RuntimeError as e:
-            logger.error("Runtime error cleaning up listeners: %s", str(e))
+            # 取消所有定时器
+            for timer in self.timers:
+                timer.cancel()
+            self.timers.clear()
+            
+            # 清理消息监听器
+            if hasattr(self, 'message_listener') and self.message_listener:
+                self.message_listener.cleanup()
+                
+        except Exception as e:
+            logger.error(f"清理资源时出错: {e}")
 
     def pause(self) -> None:
         with self.state.get_pause_condition():
@@ -720,7 +719,11 @@ class AiWorkerThread:
                 self.state.get_pause_condition().wait()
 
     def stop(self) -> None:
+        """停止工作线程"""
+        # 设置停止事件
         self.state.get_stop_event().set()
+        # 清理资源
+        self._cleanup()
         self.state.set_running(False)
         self.resume()
 
@@ -819,8 +822,7 @@ class AiWorkerThread:
             try:
                 # 执行延迟
                 if self.config.reply_delay > 0:
-                    print("进入延迟等待阶段")
-                    print(f"[AI接管] 在等待{self.config.reply_delay}秒后发送回复")
+                    logger.debug("[AI接管] 进入延迟等待阶段，在等待%s秒后发送回复", self.config.reply_delay)
                     time.sleep(self.config.reply_delay)
 
                 # 检查延迟期间是否有更新的消息
@@ -833,7 +835,7 @@ class AiWorkerThread:
 
                 custom_reply = self.rules_manager.apply_custom_rules(message_content)
                 if custom_reply:
-                    print(f"[AI接管] 发送自定义回复: {custom_reply}")
+                    logger.debug("[AI接管] 发送自定义回复: %s", custom_reply)
                     reply_sent = False
                     if is_group:
                         at_user = sender if self.config.group_at_reply else ""
@@ -908,14 +910,19 @@ class AiWorkerThread:
         return {"type": "", "name": ""}
     
     def _should_ignore_due_to_interval(self, message_content: str) -> bool:
+        # 如果最小回复间隔设置为0或负数，则不忽略任何消息
         if self.config.min_reply_interval <= 0:
             return False
             
         current_time = time.time()
-        return (
-            message_content == self.state.last_reply_info["content"] and
-            current_time - self.state.last_reply_info["time"] < self.config.min_reply_interval
-        )
+        last_content = self.state.last_reply_info["content"]
+        last_time = self.state.last_reply_info["time"]
+        
+        # 如果消息内容与上次回复内容相同，且距离上次回复时间小于最小回复间隔，则忽略该消息
+        is_same_content = message_content == last_content
+        is_within_interval = (current_time - last_time) < self.config.min_reply_interval
+        
+        return is_same_content and is_within_interval
     
     def _record_history(self, history: MessageHistory) -> None:
         add_ai_history(history.to_dict())
@@ -962,7 +969,11 @@ class AiWorkerThread:
                     continue
 
                 # 检查是否有消息正在处理，如果有则跳过整个消息批次
-                if self.state.is_processing():
+                # 但当delay=0且min_interval=0时，不跳过消息批次，允许处理所有消息
+                should_skip_batch = self.state.is_processing() and (
+                    self.config.reply_delay > 0 or self.config.min_reply_interval > 0
+                )
+                if should_skip_batch:
                     logger.debug("[AI接管] 有消息正在处理中，跳过当前消息批次")
                     time.sleep(0.1)
                     continue
@@ -970,27 +981,42 @@ class AiWorkerThread:
                 for chat, messages in messages_dict.items():
                     if self._should_stop():
                         break
-                    print(messages)
                     
-                    # 对消息按时间戳排序，获取最新的消息
-                    try:
-                        # 只处理每个聊天中的最新一条消息
-                        latest_message = max(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
-                    except (ValueError, TypeError, AttributeError, KeyError):
-                        # 如果获取最新消息失败，使用第一条消息
-                        latest_message = messages[0] if messages else None
-                    
-                    if latest_message is None:
-                        continue
+                    # 当delay=0且min_interval=0时，处理所有消息
+                    if self.config.reply_delay == 0 and self.config.min_reply_interval == 0:
+                        # 对消息按时间戳排序，按顺序处理所有消息
+                        try:
+                            sorted_messages = sorted(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
+                        except (ValueError, TypeError, AttributeError, KeyError):
+                            # 如果排序失败，使用原始顺序
+                            sorted_messages = messages
                         
-                    print(latest_message)
-                    if self._should_stop():
-                        break
+                        for message in sorted_messages:
+                            if self._should_stop():
+                                break
 
-                    with self.state.get_message_lock():
-                        if self._is_ignored_message(latest_message):
+                            with self.state.get_message_lock():
+                                if self._is_ignored_message(message):
+                                    continue
+                                self._process_message(message, chat)
+                    else:
+                        # 否则只处理每个聊天中的最新一条消息
+                        try:
+                            latest_message = max(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
+                        except (ValueError, TypeError, AttributeError, KeyError):
+                            # 如果获取最新消息失败，使用第一条消息
+                            latest_message = messages[0] if messages else None
+                        
+                        if latest_message is None:
                             continue
-                        self._process_message(latest_message, chat)
+                            
+                        if self._should_stop():
+                            break
+
+                        with self.state.get_message_lock():
+                            if self._is_ignored_message(latest_message):
+                                continue
+                            self._process_message(latest_message, chat)
 
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 logger.error("Error in main loop: %s", e)
@@ -1027,23 +1053,29 @@ class AiWorkerManager:
         return cls._instance
 
     def start_worker(self, config: WorkerConfig) -> bool:
+        """启动新的AI工作线程"""
         with self.lock:
             worker_key = f"{config.receiver}_{config.model}"
+            # 检查工作线程是否已存在
             if worker_key in self.workers:
                 return False
 
+            # 创建新的工作线程
             worker = AiWorkerThread(config)
             self.workers[worker_key] = worker
 
             try:
+                # 启动工作线程
                 thread = threading.Thread(target=worker.run, daemon=True)
                 thread.start()
 
+                # 等待线程启动
                 time.sleep(0.1)
                 if not worker.is_running():
                     del self.workers[worker_key]
                     return False
 
+                # 等待监听器初始化完成
                 max_wait_time = 5
                 wait_interval = 0.1
                 total_wait_time = 0
@@ -1059,6 +1091,7 @@ class AiWorkerManager:
                     time.sleep(wait_interval)
                     total_wait_time += wait_interval
                 
+                # 最终检查
                 if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
                     return True
                 else:
@@ -1067,62 +1100,82 @@ class AiWorkerManager:
                     return False
 
             except (ValueError, TypeError, AttributeError, KeyError) as e:
+                # 清理资源并记录错误
                 if worker_key in self.workers:
                     del self.workers[worker_key]
                 logger.error("Failed to start worker: %s", e)
                 return False
             except OSError as e:
+                # 清理资源并记录错误
                 if worker_key in self.workers:
                     del self.workers[worker_key]
                 logger.error("OS error starting worker: %s", e)
                 return False
             except RuntimeError as e:
+                # 清理资源并记录错误
                 if worker_key in self.workers:
                     del self.workers[worker_key]
                 logger.error("Runtime error starting worker: %s", e)
                 return False
 
     def stop_worker(self, receiver: str, model: str = DEFAULT_MODEL) -> bool:
+        """停止指定的工作线程"""
         with self.lock:
             worker_key = f"{receiver}_{model}"
             if worker_key in self.workers:
+                # 获取并停止工作线程
                 worker = self.workers[worker_key]
                 worker.stop()
+                # 从工作线程字典中移除
                 del self.workers[worker_key]
                 return True
+            # 工作线程不存在
             return False
 
     def get_worker_status(self, receiver: str, model: str = DEFAULT_MODEL) -> Optional[Dict[str, Any]]:
+        """获取指定工作线程的状态"""
         with self.lock:
             worker_key = f"{receiver}_{model}"
             if worker_key in self.workers:
+                # 获取工作线程状态信息
                 worker = self.workers[worker_key]
                 return {
                     "running": worker.is_running(),
                     "uptime": worker.get_uptime(),
                     "paused": worker.is_paused(),
                 }
+            # 工作线程不存在
             return None
 
     def get_all_workers(self) -> List[str]:
+        """获取所有工作线程的键名列表"""
         with self.lock:
+            # 返回所有工作线程的键名列表
             return list(self.workers.keys())
 
     def stop_all_workers(self) -> None:
+        """停止所有工作线程"""
+        logger.info("正在停止所有AI工作线程")
+        # 停止所有工作线程
         with self.lock:
             for worker in self.workers.values():
                 worker.stop()
+            # 清空工作线程字典
             self.workers.clear()
 
     def update_all_workers_rules(self) -> bool:
+        """通知所有工作线程更新规则"""
+        # 统计需要更新规则的工作线程数量
         updated_count = 0
         for _, worker in self.workers.items():
             if worker.update_rules():
                 updated_count += 1
 
+        # 记录更新日志
         if updated_count > 0:
             logger.info("[AI接管] 已通知 %s 个AI工作线程更新规则", updated_count)
         else:
             logger.debug("[AI接管] 没有工作线程需要更新规则")
 
+        # 返回是否有工作线程需要更新规则
         return updated_count > 0

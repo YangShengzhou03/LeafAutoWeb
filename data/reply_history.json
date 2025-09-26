@@ -1,8 +1,8 @@
 {
-  "total_replies": 94,
-  "successful_replies": 40,
+  "total_replies": 109,
+  "successful_replies": 55,
   "failed_replies": 54,
-  "average_response_time": 12.06,
+  "average_response_time": 9.91,
   "history": [
     {
       "sender": "小羊",
@@ -943,6 +943,156 @@
       "timestamp": "2025-09-26T23:21:44.918418",
       "id": "a8a258d9-ae69-4b13-825d-7aa5835809f1",
       "time": "2025-09-26 23:21:44"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 2.11,
+      "timestamp": "2025-09-26T23:24:43.789118",
+      "id": "f6e65abf-7699-4a6d-82e5-07fafc5cb625",
+      "time": "2025-09-26 23:24:43"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 1.82,
+      "timestamp": "2025-09-26T23:24:45.628618",
+      "id": "32af8b00-b209-416e-b87b-49f56c30cfbf",
+      "time": "2025-09-26 23:24:45"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 1.95,
+      "timestamp": "2025-09-26T23:24:47.605546",
+      "id": "a2a73932-4cdc-42a1-a4de-cae47ba79f5d",
+      "time": "2025-09-26 23:24:47"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 1.8,
+      "timestamp": "2025-09-26T23:24:49.429577",
+      "id": "13702df4-f954-4451-bc0d-653c008344e3",
+      "time": "2025-09-26 23:24:49"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 1.79,
+      "timestamp": "2025-09-26T23:25:18.804840",
+      "id": "31fd7100-4aa9-4275-962f-7b96f156638b",
+      "time": "2025-09-26 23:25:18"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 1.98,
+      "timestamp": "2025-09-26T23:25:20.810728",
+      "id": "1e63bb5e-5c19-45bb-a34e-28ddd8413a57",
+      "time": "2025-09-26 23:25:20"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 1.9,
+      "timestamp": "2025-09-26T23:25:22.726657",
+      "id": "57d5bb84-a632-4731-af2a-a5a693f46349",
+      "time": "2025-09-26 23:25:22"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 2.78,
+      "timestamp": "2025-09-26T23:39:00.488117",
+      "id": "8736051a-9987-49a1-bc24-bd5bd466ef70",
+      "time": "2025-09-26 23:39:00"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 1.81,
+      "timestamp": "2025-09-26T23:39:02.315406",
+      "id": "c2ef7cd6-35aa-499f-abb7-979125c732e9",
+      "time": "2025-09-26 23:39:02"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 3.27,
+      "timestamp": "2025-09-26T23:39:05.612640",
+      "id": "e65e9337-6b5e-4355-8d96-6ac96e6a41ce",
+      "time": "2025-09-26 23:39:05"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 1.83,
+      "timestamp": "2025-09-26T23:39:07.471468",
+      "id": "2d0fabc1-7669-4ea1-9d32-fcc2ae2e63c7",
+      "time": "2025-09-26 23:39:07"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 3.62,
+      "timestamp": "2025-09-26T23:39:11.129359",
+      "id": "2f45f780-712d-4e92-a77b-b26642e0ded1",
+      "time": "2025-09-26 23:39:11"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 1.82,
+      "timestamp": "2025-09-26T23:39:12.975904",
+      "id": "96aa8270-eb23-41aa-bae7-2f2d872fe0e0",
+      "time": "2025-09-26 23:39:12"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 17.18,
+      "timestamp": "2025-09-26T23:41:52.365957",
+      "id": "913468be-a4e5-459b-984e-f651d183b524",
+      "time": "2025-09-26 23:41:52"
+    },
+    {
+      "sender": "小羊",
+      "message": "542121",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 16.89,
+      "timestamp": "2025-09-26T23:42:09.280336",
+      "id": "7a221374-65e5-4713-8422-a0cf22bd1e5d",
+      "time": "2025-09-26 23:42:09"
     }
   ]
 }
