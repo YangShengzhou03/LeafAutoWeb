@@ -5,9 +5,10 @@ import re
 import threading
 import time
 import uuid
-import httpx
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 from data_manager import add_ai_history
 from logging_config import get_logger
@@ -334,7 +335,7 @@ class WorkerConfig:
         group_at_reply: bool = False,
         reply_delay: int = DEFAULT_REPLY_DELAY,
         min_reply_interval: int = DEFAULT_MIN_REPLY_INTERVAL,
-        max_message_age: int = 30,  # 新增：消息最大时效（秒），默认30秒
+        max_message_age: int = 30,
     ):
         self.wx_instance = wx_instance
         self.receiver = receiver
@@ -344,7 +345,7 @@ class WorkerConfig:
         self.group_at_reply = group_at_reply
         self.reply_delay = reply_delay
         self.min_reply_interval = min_reply_interval
-        self.max_message_age = max_message_age  # 新增：消息最大时效配置
+        self.max_message_age = max_message_age
 
 
 class MessageHistory:    
