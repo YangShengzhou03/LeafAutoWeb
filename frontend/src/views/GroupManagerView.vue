@@ -999,9 +999,21 @@ const loadInitialData = async () => {
   try {
     dataLoading.value = true
 
-    // 设置默认日期范围为2025-09-20至2025-09-22
+    // 设置默认日期范围为昨天到今天
     if (!dateRangeFilter.value || dateRangeFilter.value.length === 0) {
-      dateRangeFilter.value = ['2025-09-20', '2025-09-22']
+      const today = new Date()
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+      
+      // 格式化日期为 YYYY-MM-DD
+      const formatDate = (date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+      
+      dateRangeFilter.value = [formatDate(yesterday), formatDate(today)]
     }
 
     // 并行加载各项数据

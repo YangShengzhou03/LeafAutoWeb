@@ -1,3 +1,9 @@
 {
-  "rules": []
+  "rules": [
+    {
+      "originalMessage": "我叫李四，爱吃屎。",
+      "pattern": "^我叫(.*?)，爱吃(.*?)。$",
+      "extractedContent": "李四, 屎"
+    }
+  ]
 }

@@ -6,7 +6,27 @@
       "sensitive_words": []
     }
   },
-  "management_enabled": false,
+  "management_enabled": true,
   "data_collection_enabled": false,
-  "sentiment_monitoring_enabled": false
+  "sentiment_monitoring_enabled": false,
+  "快乐群": {
+    "enabled": true,
+    "start_time": "2025-09-27T01:12:27.765780",
+    "settings": {
+      "data_collection_enabled": false,
+      "monitoring_enabled": false,
+      "sensitive_words": [
+        "作弊器",
+        "外挂程序",
+        "刷金币",
+        "破解版",
+        "色情服务",
+        "特殊服务",
+        "兼职刷单"
+      ],
+      "min_reply_interval": 0
+    },
+    "stop_time": "2025-09-27T01:11:41.130209"
+  },
+  "group": "快乐群"
 }

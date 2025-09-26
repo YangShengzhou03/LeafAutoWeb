@@ -26,6 +26,8 @@ collection_config_file = os.path.join(data_dir, "collection_config.json")
 
 monitoring_config_file = os.path.join(data_dir, "monitoring_config.json")
 
+regex_config_file = os.path.join(data_dir, "regex_rules.json")
+
 RECORDING_DIR = os.path.join(data_dir, "recordings")
 if not os.path.exists(RECORDING_DIR):
     os.makedirs(RECORDING_DIR)
@@ -301,19 +303,19 @@ class GroupWorkerThread:
             daily_file = get_daily_messages_file(chat_name)
             
             # 解析消息内容
-            # 格式示例：[2025-09-21 10:30:25] 发送者: 张三 | 群聊: 测试群 | 内容: 你好
+            # 格式示例：[2025-09-21 10:30:25] Sender: 张三 | Group: 测试群 | Content: 你好
             import re
-            pattern = r'\[(.*?)\] 发送者: (.*?) \| 群聊: (.*?) \| 内容: (.*)'
+            pattern = r'\[(.*?)\] Sender: (.*?) \| (Group|Private chat): (.*?) \| Content: (.*)'
             match = re.match(pattern, content)
             
             if match:
-                time_str, sender, chat_type, message_content = match.groups()
+                time_str, sender, chat_type, chat_name_from_content, message_content = match.groups()
                 
                 # 准备CSV行数据
                 row_data = {
                     '时间': time_str,
                     '发送者': sender,
-                    '聊天类型': chat_type,
+                    '聊天类型': '群聊' if chat_type == 'Group' else '私聊',
                     '聊天名称': chat_name,
                     '消息内容': message_content
                 }
