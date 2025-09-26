@@ -720,10 +720,7 @@ class AiWorkerThread:
                 self.state.get_pause_condition().wait()
 
     def stop(self) -> None:
-        """停止工作线程"""
-        # 设置停止事件
         self.state.get_stop_event().set()
-        # 清理资源
         self._cleanup()
         self.state.set_running(False)
         self.resume()
@@ -750,7 +747,6 @@ class AiWorkerThread:
             if msg_info.is_empty_content():
                 return True
 
-            # 检查消息是否过时（使用配置中的最大消息时效）
             if msg_info.is_outdated(max_age_seconds=self.config.max_message_age):
                 logger.debug("[AI接管] 消息已过时，忽略处理: %s", msg_info.get_content())
                 return True
@@ -784,7 +780,6 @@ class AiWorkerThread:
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
             
-            # 再次检查消息是否过时（防止在排队处理过程中变旧）
             if msg_info.is_outdated(max_age_seconds=self.config.max_message_age):
                 logger.debug("[AI接管] 消息在处理前已过时，忽略处理: %s", message_content)
                 history = MessageHistory(sender, message_content, "", "outdated", 0)
@@ -797,23 +792,19 @@ class AiWorkerThread:
                     return
                 message_content = message_content.replace(self.at_me, "").strip()
 
-            # 检查是否有消息正在处理
             if self.state.is_processing():
-                # 如果有消息正在处理，记录最新消息但不处理
                 self.state.set_latest_message(message_content)
                 logger.info("[AI接管] 有消息正在处理中，忽略新消息: %s", message_content)
                 history = MessageHistory(sender, message_content, "", "blocked_processing", 0)
                 self._record_history(history)
                 return
 
-            # 检查是否应该忽略消息（基于最小回复间隔）
             if self._should_ignore_due_to_interval(message_content):
                 logger.info("[AI接管] 相同内容未达到最小回复间隔，忽略消息: %s", message_content)
                 history = MessageHistory(sender, message_content, "", "blocked", 0)
                 self._record_history(history)
                 return
 
-            # 设置正在处理的消息状态
             if not self.state.set_processing_message(message_content):
                 logger.info("[AI接管] 已有消息正在处理，忽略新消息: %s", message_content)
                 history = MessageHistory(sender, message_content, "", "blocked_processing", 0)
@@ -821,15 +812,12 @@ class AiWorkerThread:
                 return
 
             try:
-                # 执行延迟
                 if self.config.reply_delay > 0:
                     logger.debug("[AI接管] 进入延迟等待阶段，在等待%s秒后发送回复", self.config.reply_delay)
                     time.sleep(self.config.reply_delay)
 
-                # 检查延迟期间是否有更新的消息
                 latest_msg = self.state.get_latest_message()
                 if latest_msg is not None and latest_msg != message_content:
-                    # 有更新的消息，处理最新消息
                     logger.info("[AI接管] 延迟期间收到新消息，处理最新消息: %s", latest_msg)
                     message_content = latest_msg
                     self.state.clear_latest_message()
@@ -870,7 +858,6 @@ class AiWorkerThread:
             except Exception as e:
                 logger.error("处理消息时发生异常: %s", e)
             finally:
-                # 无论处理成功与否，都要清除处理状态和最新消息
                 self.state.clear_processing_message()
                 self.state.clear_latest_message()
 
@@ -911,7 +898,6 @@ class AiWorkerThread:
         return {"type": "", "name": ""}
     
     def _should_ignore_due_to_interval(self, message_content: str) -> bool:
-        # 如果最小回复间隔设置为0或负数，则不忽略任何消息
         if self.config.min_reply_interval <= 0:
             return False
             
@@ -919,7 +905,6 @@ class AiWorkerThread:
         last_content = self.state.last_reply_info["content"]
         last_time = self.state.last_reply_info["time"]
         
-        # 如果消息内容与上次回复内容相同，且距离上次回复时间小于最小回复间隔，则忽略该消息
         is_same_content = message_content == last_content
         is_within_interval = (current_time - last_time) < self.config.min_reply_interval
         
@@ -981,13 +966,10 @@ class AiWorkerThread:
                     if self._should_stop():
                         break
                     
-                    # 当delay=0且min_interval=0时，处理所有消息
                     if self.config.reply_delay == 0 and self.config.min_reply_interval == 0:
-                        # 对消息按时间戳排序，按顺序处理所有消息
                         try:
                             sorted_messages = sorted(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
                         except (ValueError, TypeError, AttributeError, KeyError):
-                            # 如果排序失败，使用原始顺序
                             sorted_messages = messages
                         
                         for message in sorted_messages:
@@ -999,11 +981,9 @@ class AiWorkerThread:
                                     continue
                                 self._process_message(message, chat)
                     else:
-                        # 否则只处理每个聊天中的最新一条消息
                         try:
                             latest_message = max(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
                         except (ValueError, TypeError, AttributeError, KeyError):
-                            # 如果获取最新消息失败，使用第一条消息
                             latest_message = messages[0] if messages else None
                         
                         if latest_message is None:
@@ -1052,29 +1032,23 @@ class AiWorkerManager:
         return cls._instance
 
     def start_worker(self, config: WorkerConfig) -> bool:
-        """启动新的AI工作线程"""
         with self.lock:
             worker_key = f"{config.receiver}_{config.model}"
-            # 检查工作线程是否已存在
             if worker_key in self.workers:
                 return False
 
-            # 创建新的工作线程
             worker = AiWorkerThread(config)
             self.workers[worker_key] = worker
 
             try:
-                # 启动工作线程
                 thread = threading.Thread(target=worker.run, daemon=True)
                 thread.start()
 
-                # 等待线程启动
                 time.sleep(0.1)
                 if not worker.is_running():
                     del self.workers[worker_key]
                     return False
 
-                # 等待监听器初始化完成
                 max_wait_time = 5
                 wait_interval = 0.1
                 total_wait_time = 0
@@ -1090,7 +1064,6 @@ class AiWorkerManager:
                     time.sleep(wait_interval)
                     total_wait_time += wait_interval
                 
-                # 最终检查
                 if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
                     return True
                 else:
@@ -1099,82 +1072,63 @@ class AiWorkerManager:
                     return False
 
             except (ValueError, TypeError, AttributeError, KeyError) as e:
-                # 清理资源并记录错误
                 if worker_key in self.workers:
                     del self.workers[worker_key]
                 logger.error("Failed to start worker: %s", e)
                 return False
             except OSError as e:
-                # 清理资源并记录错误
                 if worker_key in self.workers:
                     del self.workers[worker_key]
                 logger.error("OS error starting worker: %s", e)
                 return False
             except RuntimeError as e:
-                # 清理资源并记录错误
                 if worker_key in self.workers:
                     del self.workers[worker_key]
                 logger.error("Runtime error starting worker: %s", e)
                 return False
 
     def stop_worker(self, receiver: str, model: str = DEFAULT_MODEL) -> bool:
-        """停止指定的工作线程"""
         with self.lock:
             worker_key = f"{receiver}_{model}"
             if worker_key in self.workers:
-                # 获取并停止工作线程
                 worker = self.workers[worker_key]
                 worker.stop()
-                # 从工作线程字典中移除
                 del self.workers[worker_key]
                 return True
-            # 工作线程不存在
             return False
 
     def get_worker_status(self, receiver: str, model: str = DEFAULT_MODEL) -> Optional[Dict[str, Any]]:
-        """获取指定工作线程的状态"""
         with self.lock:
             worker_key = f"{receiver}_{model}"
             if worker_key in self.workers:
-                # 获取工作线程状态信息
                 worker = self.workers[worker_key]
                 return {
                     "running": worker.is_running(),
                     "uptime": worker.get_uptime(),
                     "paused": worker.is_paused(),
                 }
-            # 工作线程不存在
             return None
 
     def get_all_workers(self) -> List[str]:
-        """获取所有工作线程的键名列表"""
         with self.lock:
-            # 返回所有工作线程的键名列表
             return list(self.workers.keys())
 
     def stop_all_workers(self) -> None:
-        """停止所有工作线程"""
         logger.info("正在停止所有AI工作线程")
-        # 停止所有工作线程
         with self.lock:
             for worker in self.workers.values():
                 worker.stop()
-            # 清空工作线程字典
             self.workers.clear()
 
     def update_all_workers_rules(self) -> bool:
-        """通知所有工作线程更新规则"""
-        # 统计需要更新规则的工作线程数量
         updated_count = 0
         for _, worker in self.workers.items():
             if worker.update_rules():
                 updated_count += 1
 
-        # 记录更新日志
         if updated_count > 0:
             logger.info("[AI接管] 已通知 %s 个AI工作线程更新规则", updated_count)
         else:
             logger.debug("[AI接管] 没有工作线程需要更新规则")
 
-        # 返回是否有工作线程需要更新规则
         return updated_count > 0
