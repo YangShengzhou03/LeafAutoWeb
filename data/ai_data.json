@@ -1,6 +1,6 @@
 {
   "settings": {
-    "aiStatus": true,
+    "aiStatus": false,
     "onlyAtTrigger": false,
     "groupAtReply": true,
     "replyDelay": 15,
@@ -23,6 +23,6 @@
       }
     ],
     "onlyAt": false,
-    "updatedAt": "2025-09-26T23:41:01.313716"
+    "updatedAt": "2025-09-26T23:58:21.860972"
   }
 }

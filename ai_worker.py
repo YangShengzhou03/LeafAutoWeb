@@ -484,6 +484,8 @@ class AiWorkerThread:
         rules_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_DIR, RULES_FILE)
         self.rules_manager = RulesManager(rules_file_path)
         self.reply_handler = ReplyHandler(self.config.wx_instance)
+        
+        self.timers = []
 
         logger.info(
             "AI worker thread initialized: receiver=%s, model=%s, role=%s, only_at=%s, group_at_reply=%s, delay=%ss, min_interval=%ss, max_msg_age=%ss",
@@ -688,14 +690,12 @@ class AiWorkerThread:
         return response['choices'][0]['message']['content'] if response else "无法解析响应"
 
     def _cleanup(self) -> None:
-        """清理资源"""
         try:
-            # 取消所有定时器
-            for timer in self.timers:
-                timer.cancel()
-            self.timers.clear()
-            
-            # 清理消息监听器
+            if hasattr(self, 'timers') and self.timers:
+                for timer in self.timers:
+                    timer.cancel()
+                self.timers.clear()
+
             if hasattr(self, 'message_listener') and self.message_listener:
                 self.message_listener.cleanup()
                 
@@ -969,8 +969,6 @@ class AiWorkerThread:
                     time.sleep(0.1)
                     continue
 
-                # 检查是否有消息正在处理，如果有则跳过整个消息批次
-                # 但当delay=0且min_interval=0时，不跳过消息批次，允许处理所有消息
                 should_skip_batch = self.state.is_processing() and (
                     self.config.reply_delay > 0 or self.config.min_reply_interval > 0
                 )

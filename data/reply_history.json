@@ -1,8 +1,8 @@
 {
-  "total_replies": 109,
-  "successful_replies": 55,
+  "total_replies": 111,
+  "successful_replies": 57,
   "failed_replies": 54,
-  "average_response_time": 9.91,
+  "average_response_time": 10.17,
   "history": [
     {
       "sender": "小羊",
@@ -1093,6 +1093,26 @@
       "timestamp": "2025-09-26T23:42:09.280336",
       "id": "7a221374-65e5-4713-8422-a0cf22bd1e5d",
       "time": "2025-09-26 23:42:09"
+    },
+    {
+      "sender": "小羊",
+      "message": "2",
+      "reply": "SendEmotion:2",
+      "status": "replied",
+      "responseTime": 17.2,
+      "timestamp": "2025-09-26T23:51:49.008907",
+      "id": "49c5895c-3f72-4b32-8713-bc25881b403a",
+      "time": "2025-09-26 23:51:49"
+    },
+    {
+      "sender": "小羊",
+      "message": "1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 17.56,
+      "timestamp": "2025-09-26T23:52:06.587536",
+      "id": "f1438868-c5e1-4359-a830-dd8c569add03",
+      "time": "2025-09-26 23:52:06"
     }
   ]
 }
