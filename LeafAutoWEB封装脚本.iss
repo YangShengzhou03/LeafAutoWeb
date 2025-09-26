@@ -35,7 +35,7 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 AppCopyright=© 2025 LeafAutoWeb by YangShengzhou.版权所有
-UninstallDisplayIcon={app}\backend\_internal\resources\icon.ico
+UninstallDisplayIcon={app}\backend\resources\icon.ico
 
 
 [UninstallDelete]
