@@ -167,6 +167,9 @@
           <div class="rule-actions">
             <el-button type="primary" @click="openAddRuleDialog" class="gradient-btn"
               :disabled="isTakeoverLoading">添加规则</el-button>
+            <el-button type="success" @click="importRules" class="gradient-btn"
+              :disabled="isTakeoverLoading">导入规则</el-button>
+            <input type="file" ref="fileInput" style="display: none;" accept=".xlsx" @change="handleFileImport">
           </div>
 
           <el-table v-model:data="formData.customRules" class="rules-table" ref="rulesForm" row-key="id">
@@ -300,10 +303,12 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Loading } from '@element-plus/icons-vue'
+import * as XLSX from 'xlsx'
 
 
 const aiForm = ref(null)
 const rulesForm = ref(null)
+const fileInput = ref(null)
 
 
 const formData = reactive({
@@ -346,46 +351,37 @@ const handleSwitchChange = async (newStatus) => {
       })
 
       const result = await response.json()
-
+      
       if (result.success) {
-        // 使用API返回的状态确保同步
-        formData.aiStatus = Boolean(result.aiStatus ?? true)
-        ElMessage.success('开始监听并自动进行回复')
+        formData.aiStatus = true
+        ElMessage.success('AI接管已启动')
+        // 启动后刷新状态
+await fetchAiSettings() // 使用 fetchAiSettings 替代未定义的 updateTakeoverStatus 来刷新状态
       } else {
-        // 操作失败时恢复开关状态
         formData.aiStatus = false
-        ElMessage.error(`开始接管失败: ${result.error || '未知错误'}`)
+        ElMessage.error(result.error || '启动AI接管失败')
       }
     } else {
       // 发送停止接管请求
       const response = await fetch('http://localhost:5000/api/ai-takeover/stop', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contactPerson: formData.contactPerson,
-          aiModel: formData.aiModel
-        })
+        method: 'POST'
       })
 
       const result = await response.json()
-
+      
       if (result.success) {
-        // 使用API返回的状态确保同步
-        formData.aiStatus = Boolean(result.aiStatus ?? false)
-        ElMessage.warning('已停止消息监听与回复')
+        formData.aiStatus = false
+        ElMessage.success('AI接管已停止')
+        // 停止后刷新状态
+        await fetchAiSettings() // 使用 fetchAiSettings 替代未定义的 updateTakeoverStatus 来刷新状态
       } else {
-        // 操作失败时恢复开关状态
         formData.aiStatus = true
-        ElMessage.error(`停止接管失败: ${result.error || '未知错误'}`)
+        ElMessage.error(result.error || '停止AI接管失败')
       }
     }
   } catch (error) {
-    console.error('AI接管操作失败:', error)
-    // 操作失败时恢复开关状态
-    formData.aiStatus = !newStatus
-    ElMessage.error(`AI接管操作失败: ${error.message || '网络错误'}`)
+    formData.aiStatus = !newStatus  // 恢复之前的状态
+    ElMessage.error(`操作失败: ${error.message}`)
   } finally {
     isTakeoverLoading.value = false
   }
@@ -446,6 +442,95 @@ const openAddRuleDialog = () => {
     reply: ''
   })
   addRuleDialogVisible.value = true
+}
+
+// 导入规则对话框
+const importRules = () => {
+  fileInput.value?.click()
+}
+
+// 处理文件导入
+const handleFileImport = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  try {
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        // 解析Excel文件
+        const data = new Uint8Array(e.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[firstSheetName]
+        const importedData = XLSX.utils.sheet_to_json(worksheet)
+
+        // 验证导入的数据格式
+        if (!Array.isArray(importedData)) {
+          throw new Error('导入的文件格式不正确')
+        }
+
+        // 转换Excel数据为规则格式
+        const validRules = importedData.map(item => {
+          // 处理匹配类型
+          let matchType = 'contains' // 默认包含关键词
+          const matchText = item['匹配类型'] || ''
+          
+          if (matchText.includes('完全匹配')) {
+            matchType = 'equals'
+          } else if (matchText.includes('正则')) {
+            matchType = 'regex'
+          }
+
+          return {
+            id: Date.now() + Math.random(), // 生成唯一ID
+            matchType,
+            keyword: item['关键词'] || '',
+            reply: item['回复内容'] || ''
+          }
+        }).filter(rule => {
+          // 过滤掉缺少必要字段的规则
+          return rule && rule.keyword && rule.reply
+        })
+
+        if (validRules.length === 0) {
+          throw new Error('没有找到有效的规则数据')
+        }
+
+        // 上传到服务器
+        const response = await fetch('http://localhost:5000/api/ai-rules/import', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(validRules)
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          
+          // 处理API返回格式
+          if (data && data.success) {
+            ElMessage.success(`成功导入 ${validRules.length} 条规则`)
+            // 刷新规则列表
+            await fetchAiSettings()
+          } else {
+            throw new Error(data.error || '服务器导入失败')
+          }
+        } else {
+          throw new Error('服务器导入失败')
+        }
+      } catch (error) {
+        ElMessage.error(`导入失败: ${error.message}`)
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  } catch (error) {
+    ElMessage.error(`导入失败: ${error.message}`)
+  }
+
+  // 重置文件输入，以便可以重复选择同一个文件
+  event.target.value = ''
 }
 
 // 添加规则

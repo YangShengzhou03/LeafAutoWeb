@@ -20,9 +20,21 @@
         "keyword": "2",
         "matchType": "contains",
         "reply": "SendEmotion:2"
+      },
+      {
+        "id": 1758905608597.237,
+        "matchType": "contains",
+        "keyword": "测试",
+        "reply": "测试成功"
+      },
+      {
+        "id": 1758905608597.4248,
+        "matchType": "equals",
+        "keyword": "你好",
+        "reply": "你好成功"
       }
     ],
     "onlyAt": false,
-    "updatedAt": "2025-09-26T23:58:21.860972"
+    "updatedAt": "2025-09-27T00:53:28.904617"
   }
 }

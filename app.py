@@ -1,4 +1,5 @@
 import sys
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -444,6 +445,55 @@ def save_ai_settings_route():
     settings_data = request.json
     saved_settings = save_ai_settings(settings_data)
     return jsonify(saved_settings), 200
+
+
+@app.route("/api/ai-rules/import", methods=["POST"])
+def import_ai_rules():
+    """
+    导入AI回复规则
+
+    Request Body:
+        JSON数组包含多个规则信息
+
+    Returns:
+        Response: 导入结果统计信息或错误信息
+    """
+    try:
+        rules_data = request.json
+        if not isinstance(rules_data, list):
+            return jsonify({"error": "请求数据必须是一个规则列表"}), 400
+
+        # 加载现有AI设置
+        ai_data = load_ai_data()
+        
+        # 如果customRules字段不存在，初始化为空数组
+        if "customRules" not in ai_data:
+            ai_data["customRules"] = []
+        
+        # 添加新规则到现有规则中
+        for rule_data in rules_data:
+            # 验证必要字段
+            if not all(key in rule_data for key in ["matchType", "keyword", "reply"]):
+                continue
+                
+            # 生成唯一ID（如果不存在）
+            if "id" not in rule_data or not rule_data["id"]:
+                rule_data["id"] = str(uuid.uuid4())
+                
+            ai_data["customRules"].append(rule_data)
+        
+        # 保存更新后的设置
+        saved_settings = save_ai_settings(ai_data)
+        return jsonify({
+            "success": True,
+            "imported": len(rules_data),
+            "total": len(saved_settings.get("customRules", [])),
+            "message": f"成功导入 {len(rules_data)} 条规则"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"导入AI规则失败: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/ai-history", methods=["GET"])

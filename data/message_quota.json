@@ -1,7 +1,7 @@
 {
   "daily_limit": "unlimited",
-  "used_today": 115,
-  "last_reset_date": "2025-09-26",
+  "used_today": 0,
+  "last_reset_date": "2025-09-27",
   "blocked": false,
   "account_level": "enterprise"
 }
