@@ -265,10 +265,10 @@
           <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
               <el-tag 
-                :type="row.status === 'replied' ? 'success' : row.status === 'blocked' ? 'warning' : 'danger'" 
+                :type="row.status === 'replied' ? 'success' : row.status === 'blocked' ? 'danger' : row.status === 'blocked_processing' ? 'info' : 'warning'" 
                 size="small" 
                 class="status-tag">
-                {{ row.status === 'replied' ? '已回复' : row.status === 'blocked' ? '未回复' : '被阻止' }}
+                {{ row.status === 'replied' ? '已回复' : row.status === 'blocked' ? '被阻止' : row.status === 'blocked_processing' ? '处理中' : '未回复' }}
               </el-tag>
             </template>
           </el-table-column>

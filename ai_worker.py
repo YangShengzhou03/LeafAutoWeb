@@ -354,6 +354,13 @@ class WorkerState:
         self._paused = False
         self._pause_cond = threading.Condition(threading.Lock())
         self.start_time: Optional[float] = None
+        
+        # 处理状态管理属性
+        self._processing_message: Optional[str] = None  # 正在处理的消息内容
+        self._processing_start_time: float = 0  # 开始处理的时间
+        self._processing_lock = threading.Lock()  # 处理状态锁
+        self._latest_message: Optional[str] = None  # 最新的消息内容
+        self._latest_message_time: float = 0  # 最新消息的时间
     
     def get_message_lock(self) -> threading.Lock:
         return self._message_lock
@@ -381,6 +388,48 @@ class WorkerState:
     
     def set_start_time(self, start_time: float) -> None:
         self.start_time = start_time
+    
+    def set_processing_message(self, message_content: str) -> bool:
+        """设置正在处理的消息内容，返回是否设置成功"""
+        with self._processing_lock:
+            if self._processing_message is not None:
+                return False  # 已有消息正在处理
+            self._processing_message = message_content
+            self._processing_start_time = time.time()
+            return True
+    
+    def clear_processing_message(self) -> None:
+        """清除正在处理的消息状态"""
+        with self._processing_lock:
+            self._processing_message = None
+            self._processing_start_time = 0
+    
+    def get_processing_message(self) -> Optional[str]:
+        """获取当前正在处理的消息内容"""
+        with self._processing_lock:
+            return self._processing_message
+    
+    def is_processing(self) -> bool:
+        """检查是否有消息正在处理"""
+        with self._processing_lock:
+            return self._processing_message is not None
+    
+    def set_latest_message(self, message_content: str) -> None:
+        """设置最新消息"""
+        with self._processing_lock:
+            self._latest_message = message_content
+            self._latest_message_time = time.time()
+    
+    def get_latest_message(self) -> Optional[str]:
+        """获取最新消息"""
+        with self._processing_lock:
+            return self._latest_message
+    
+    def clear_latest_message(self) -> None:
+        """清除最新消息"""
+        with self._processing_lock:
+            self._latest_message = None
+            self._latest_message_time = 0
 
 
 class AiWorkerThread:
@@ -704,48 +753,82 @@ class AiWorkerThread:
                     return
                 message_content = message_content.replace(self.at_me, "").strip()
 
+            # 检查是否有消息正在处理
+            if self.state.is_processing():
+                # 如果有消息正在处理，记录最新消息但不处理
+                self.state.set_latest_message(message_content)
+                logger.info("[AI接管] 有消息正在处理中，忽略新消息: %s", message_content)
+                history = MessageHistory(sender, message_content, "", "blocked_processing", 0)
+                self._record_history(history)
+                return
+
+            # 检查是否应该忽略消息（基于最小回复间隔）
             if self._should_ignore_due_to_interval(message_content):
                 logger.info("[AI接管] 相同内容未达到最小回复间隔，忽略消息: %s", message_content)
                 history = MessageHistory(sender, message_content, "", "blocked", 0)
                 self._record_history(history)
                 return
 
-            if self.config.reply_delay > 0:
-                time.sleep(self.config.reply_delay)
-
-            custom_reply = self.rules_manager.apply_custom_rules(message_content)
-            if custom_reply:
-
-                reply_sent = False
-                if is_group:
-                    at_user = sender if self.config.group_at_reply else ""
-                    reply_sent = self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
-                else:
-                    reply_sent = self.reply_handler.send_reply(sender, custom_reply)
-                
-                if reply_sent:
-                    self.state.last_reply_info = {"content": message_content, "time": time.time()}
-                    actual_response_time = round(time.time() - receive_time, 2)
-                    history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
-                    self._record_history(history)
-                else:
-                    history = MessageHistory(sender, message_content, custom_reply, "not_replied", 0)
-                    self._record_history(history)
+            # 设置正在处理的消息状态
+            if not self.state.set_processing_message(message_content):
+                logger.info("[AI接管] 已有消息正在处理，忽略新消息: %s", message_content)
+                history = MessageHistory(sender, message_content, "", "blocked_processing", 0)
+                self._record_history(history)
                 return
 
-            if self.config.model != "disabled":
-                self._current_message_context = {
-                    "sender": sender,
-                    "message_content": message_content,
-                    "receive_time": receive_time,
-                    "is_group": is_group,
-                    "group_name": group_name if is_group else ""
-                }
-                self._generate_ai_reply(message_content)
-                logger.debug("[AI接管] 使用AI模型回复消息: %s", message_content)
-            else:
-                logger.debug("[AI接管] AI模型已禁用，不回复消息: %s", message_content)
-            return
+            try:
+                # 执行延迟
+                if self.config.reply_delay > 0:
+                    print(f"[AI接管] 在等待{self.config.reply_delay}秒后发送回复")
+                    time.sleep(self.config.reply_delay)
+
+                # 检查延迟期间是否有更新的消息
+                latest_msg = self.state.get_latest_message()
+                if latest_msg is not None and latest_msg != message_content:
+                    # 有更新的消息，处理最新消息
+                    logger.info("[AI接管] 延迟期间收到新消息，处理最新消息: %s", latest_msg)
+                    message_content = latest_msg
+                    self.state.clear_latest_message()
+
+                custom_reply = self.rules_manager.apply_custom_rules(message_content)
+                if custom_reply:
+                    print(f"[AI接管] 发送自定义回复: {custom_reply}")
+                    reply_sent = False
+                    if is_group:
+                        at_user = sender if self.config.group_at_reply else ""
+                        reply_sent = self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
+                    else:
+                        reply_sent = self.reply_handler.send_reply(sender, custom_reply)
+                    
+                    if reply_sent:
+                        self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                        actual_response_time = round(time.time() - receive_time, 2)
+                        history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
+                        self._record_history(history)
+                    else:
+                        history = MessageHistory(sender, message_content, custom_reply, "not_replied", 0)
+                        self._record_history(history)
+                    return
+
+                if self.config.model != "disabled":
+                    self._current_message_context = {
+                        "sender": sender,
+                        "message_content": message_content,
+                        "receive_time": receive_time,
+                        "is_group": is_group,
+                        "group_name": group_name if is_group else ""
+                    }
+                    self._generate_ai_reply(message_content)
+                    logger.debug("[AI接管] 使用AI模型回复消息: %s", message_content)
+                else:
+                    logger.debug("[AI接管] AI模型已禁用，不回复消息: %s", message_content)
+                
+            except Exception as e:
+                logger.error("处理消息时发生异常: %s", e)
+            finally:
+                # 无论处理成功与否，都要清除处理状态和最新消息
+                self.state.clear_processing_message()
+                self.state.clear_latest_message()
 
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error("处理消息时发生错误: %s", e)
