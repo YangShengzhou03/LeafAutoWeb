@@ -289,6 +289,14 @@ class TaskScheduler:
                         second=send_time.second,
                         microsecond=0,
                     ) + timedelta(days=1)
+            elif repeat_type == "interval":
+                # 处理每隔多少分钟重复一次的情况
+                repeat_interval = task.get("repeatInterval", 30)  # 默认30分钟
+                # 确保间隔在合理范围内（1分钟到24小时）
+                repeat_interval = max(1, min(1440, int(repeat_interval)))
+                
+                # 计算下一次发送时间
+                new_send_time = send_time + timedelta(minutes=repeat_interval)
             else:
                 return
 

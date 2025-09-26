@@ -54,6 +54,23 @@
                     </el-checkbox>
                   </el-checkbox-group>
                 </el-form-item>
+                <el-form-item v-if="formData.repeatType === 'interval'" prop="repeatInterval" :rules="[{
+                  validator: (_, value, callback) => {
+                    if (formData.repeatType === 'interval' && (!value || value <= 0)) {
+                      callback(new Error('请输入有效的时间间隔'))
+                    } else {
+                      callback()
+                    }
+                  },
+                  trigger: 'blur'
+                }]">
+                  <div class="interval-input-container">
+                    <span class="interval-label">每</span>
+                    <el-input-number v-model="formData.repeatInterval" :min="1" :max="1440" placeholder="间隔时间" style="width: 120px" />
+                    <span class="interval-label">分钟发送一次</span>
+                  </div>
+                  <div class="el-form-item__tip" style="padding-left: 20px;">范围：1-1440分钟（1分钟至24小时）</div>
+                </el-form-item>
                 <div class="el-form-item__tip">像定闹钟一样，选择重复日期</div>
               </el-form-item>
             </el-col>
@@ -144,7 +161,7 @@
           </el-table-column>
           <el-table-column label="重复类型" min-width="20px">
             <template #default="{ row }">
-              {{ getRepeatText(row.repeatType, row.repeatDays) }}
+              {{ getRepeatText(row.repeatType, row.repeatDays, row.repeatInterval) }}
             </template>
           </el-table-column>
           <el-table-column label="状态" min-width="10px" fixed="right">
@@ -209,6 +226,7 @@ const formData = reactive({
   sendTime: '',
   repeatType: 'none',
   repeatDays: [],
+  repeatInterval: 10, // 默认30分钟
   messageContent: '',
   importExpiredTask: '1'
 })
@@ -259,7 +277,8 @@ const repeatOptions = [
   { label: '每天', value: 'daily' },
   { label: '法定工作日', value: 'workday' },
   { label: '法定节假日', value: 'holiday' },
-  { label: '自定义', value: 'custom' }
+  { label: '自定义', value: 'custom' },
+  { label: '间隔循环', value: 'interval' }
 ]
 
 const daysOfWeek = [
@@ -318,6 +337,7 @@ const submitForm = async () => {
     // 创建任务
     const tasksToCreate = [{
       ...formData,
+      repeatInterval: formData.repeatInterval, // 确保间隔分钟数字段被正确传递
       status: 'pending',
       createdAt: new Date().toISOString()
     }]
@@ -380,6 +400,7 @@ const editTask = async (taskId) => {
     formData.sendTime = task.sendTime
     formData.repeatType = task.repeatType
     formData.repeatDays = task.repeatDays
+    formData.repeatInterval = task.repeatInterval || 30 // 默认30分钟
     formData.messageContent = task.messageContent
     // 保持默认的importExpiredTask值不变，因为这是导入时的设置，不是任务本身的属性
 
@@ -512,7 +533,7 @@ const exportTasks = () => {
     '发送时间': formatDateTime(task.sendTime),
     '接收者': task.recipient,
     '内容': task.filePath || task.messageContent,
-    '重复类型': getRepeatText(task.repeatType, task.repeatDays)
+    '重复类型': getRepeatText(task.repeatType, task.repeatDays, task.repeatInterval)
   }))
 
   // 创建工作簿和工作表
@@ -573,6 +594,7 @@ const handleFileImport = async (event) => {
           // 处理重复类型
           let repeatType = 'none'
           let repeatDays = []
+          let repeatInterval = 30 // 默认30分钟
           const repeatText = item['重复类型'] || ''
 
           if (repeatText.includes('每天')) {
@@ -593,6 +615,13 @@ const handleFileImport = async (event) => {
                 repeatDays.push(dayMap[day])
               }
             })
+          } else if (repeatText.includes('每') && repeatText.includes('分钟')) {
+            repeatType = 'interval'
+            // 提取间隔分钟数
+            const intervalMatch = repeatText.match(/每(\d+)分钟/)
+            if (intervalMatch) {
+              repeatInterval = parseInt(intervalMatch[1])
+            }
           }
 
           // 解析发送时间，处理只有分钟的情况
@@ -651,7 +680,8 @@ const handleFileImport = async (event) => {
             sendTime,
             messageContent: item['内容'] || '',
             repeatType,
-            repeatDays
+            repeatDays,
+            repeatInterval
           }
         }).filter(task => {
           // 过滤掉null值（被阻止导入的过期任务）和缺少必要字段的任务
@@ -695,7 +725,7 @@ const handleFileImport = async (event) => {
 
 
 
-const getRepeatText = (repeatType, repeatDays) => {
+const getRepeatText = (repeatType, repeatDays, repeatInterval) => {
   const dayMap = {
     '0': '周日', '1': '周一', '2': '周二', '3': '周三',
     '4': '周四', '5': '周五', '6': '周六'
@@ -707,6 +737,7 @@ const getRepeatText = (repeatType, repeatDays) => {
     case 'workday': return '法定工作日'
     case 'holiday': return '法定节假日'
     case 'custom': return `自定义: ${repeatDays?.map(day => dayMap[day]).join(', ')}`
+    case 'interval': return `每${repeatInterval || 30}分钟`
     default: return '不重复'
   }
 }
@@ -969,6 +1000,19 @@ onMounted(() => {
   background-color: white;
   border-radius: 6px;
   border: 1px solid var(--border-color);
+}
+
+.interval-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.interval-label {
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .el-form-item__tip {
