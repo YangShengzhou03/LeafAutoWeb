@@ -364,7 +364,14 @@ await fetchAiSettings() // 使用 fetchAiSettings 替代未定义的 updateTakeo
     } else {
       // 发送停止接管请求
       const response = await fetch('http://localhost:5000/api/ai-takeover/stop', {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contactPerson: formData.contactPerson,
+          aiModel: formData.aiModel
+        })
       })
 
       const result = await response.json()
