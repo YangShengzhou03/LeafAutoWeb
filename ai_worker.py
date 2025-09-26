@@ -56,6 +56,21 @@ class MessageInfo:
             return self.message.type.lower()
         return ""
     
+    def get_timestamp(self) -> float:
+        """获取消息时间戳，如果没有则返回当前时间"""
+        if hasattr(self.message, 'timestamp'):
+            return float(self.message.timestamp)
+        elif hasattr(self.message, 'time'):
+            return float(self.message.time)
+        elif hasattr(self.message, 'get') and callable(getattr(self.message, 'get')):
+            timestamp = self.message.get("timestamp", 0)
+            if timestamp:
+                return float(timestamp)
+            time_val = self.message.get("time", 0)
+            if time_val:
+                return float(time_val)
+        return time.time()
+    
     def is_system_message(self) -> bool:
         return self.get_type() == SYSTEM_MESSAGE_TYPE
     
@@ -67,6 +82,16 @@ class MessageInfo:
     
     def is_valid_message_type(self) -> bool:
         return self.get_type() in MESSAGE_TYPES
+    
+    def is_outdated(self, max_age_seconds: float = 30.0) -> bool:
+        """检查消息是否过时"""
+        try:
+            msg_time = self.get_timestamp()
+            current_time = time.time()
+            return (current_time - msg_time) > max_age_seconds
+        except (ValueError, TypeError, AttributeError, KeyError):
+            # 如果无法获取时间戳，默认认为不过时
+            return False
 
 
 class ReplyHandler:
@@ -308,6 +333,7 @@ class WorkerConfig:
         group_at_reply: bool = False,
         reply_delay: int = DEFAULT_REPLY_DELAY,
         min_reply_interval: int = DEFAULT_MIN_REPLY_INTERVAL,
+        max_message_age: int = 30,  # 新增：消息最大时效（秒），默认30秒
     ):
         self.wx_instance = wx_instance
         self.receiver = receiver
@@ -317,6 +343,7 @@ class WorkerConfig:
         self.group_at_reply = group_at_reply
         self.reply_delay = reply_delay
         self.min_reply_interval = min_reply_interval
+        self.max_message_age = max_message_age  # 新增：消息最大时效配置
 
 
 class MessageHistory:    
@@ -451,7 +478,7 @@ class AiWorkerThread:
         self.reply_handler = ReplyHandler(self.config.wx_instance)
 
         logger.info(
-            "AI worker thread initialized: receiver=%s, model=%s, role=%s, only_at=%s, group_at_reply=%s, delay=%ss, min_interval=%ss",
+            "AI worker thread initialized: receiver=%s, model=%s, role=%s, only_at=%s, group_at_reply=%s, delay=%ss, min_interval=%ss, max_msg_age=%ss",
             self.config.receiver,
             self.config.model,
             self.config.role,
@@ -459,6 +486,7 @@ class AiWorkerThread:
             self.config.group_at_reply,
             self.config.reply_delay,
             self.config.min_reply_interval,
+            self.config.max_message_age,
         )
 
     def update_rules(self) -> bool:
@@ -718,6 +746,11 @@ class AiWorkerThread:
             if msg_info.is_empty_content():
                 return True
 
+            # 检查消息是否过时（使用配置中的最大消息时效）
+            if msg_info.is_outdated(max_age_seconds=self.config.max_message_age):
+                logger.debug("[AI接管] 消息已过时，忽略处理: %s", msg_info.get_content())
+                return True
+
             return False
         except (ValueError, TypeError, AttributeError, KeyError) as e:
             logger.error("Error checking ignored message: %s", e)
@@ -746,6 +779,13 @@ class AiWorkerThread:
             msg_info = MessageInfo(msg)
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
+            
+            # 再次检查消息是否过时（防止在排队处理过程中变旧）
+            if msg_info.is_outdated(max_age_seconds=self.config.max_message_age):
+                logger.debug("[AI接管] 消息在处理前已过时，忽略处理: %s", message_content)
+                history = MessageHistory(sender, message_content, "", "outdated", 0)
+                self._record_history(history)
+                return
 
             if self.config.only_at and is_group:
                 if self.at_me not in message_content:
@@ -779,6 +819,7 @@ class AiWorkerThread:
             try:
                 # 执行延迟
                 if self.config.reply_delay > 0:
+                    print("进入延迟等待阶段")
                     print(f"[AI接管] 在等待{self.config.reply_delay}秒后发送回复")
                     time.sleep(self.config.reply_delay)
 
@@ -920,17 +961,36 @@ class AiWorkerThread:
                     time.sleep(0.1)
                     continue
 
+                # 检查是否有消息正在处理，如果有则跳过整个消息批次
+                if self.state.is_processing():
+                    logger.debug("[AI接管] 有消息正在处理中，跳过当前消息批次")
+                    time.sleep(0.1)
+                    continue
+
                 for chat, messages in messages_dict.items():
                     if self._should_stop():
                         break
-                    for message in messages:
-                        if self._should_stop():
-                            break
+                    print(messages)
+                    
+                    # 对消息按时间戳排序，获取最新的消息
+                    try:
+                        # 只处理每个聊天中的最新一条消息
+                        latest_message = max(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
+                    except (ValueError, TypeError, AttributeError, KeyError):
+                        # 如果获取最新消息失败，使用第一条消息
+                        latest_message = messages[0] if messages else None
+                    
+                    if latest_message is None:
+                        continue
+                        
+                    print(latest_message)
+                    if self._should_stop():
+                        break
 
-                        with self.state.get_message_lock():
-                            if self._is_ignored_message(message):
-                                continue
-                            self._process_message(message, chat)
+                    with self.state.get_message_lock():
+                        if self._is_ignored_message(latest_message):
+                            continue
+                        self._process_message(latest_message, chat)
 
             except (ValueError, TypeError, AttributeError, KeyError) as e:
                 logger.error("Error in main loop: %s", e)
