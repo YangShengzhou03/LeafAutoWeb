@@ -549,7 +549,6 @@ class AiWorkerThread:
 
     def _cleanup(self) -> None:
         try:
-            # 清理资源
             pass
         except Exception as e:
             logger.error(f"清理资源时出错: {e}")
@@ -637,7 +636,6 @@ class AiWorkerThread:
                 if custom_reply:
                     logger.debug("[AI接管] 根据回复生成规则: %s", custom_reply)
 
-                    # 检查发送的最小回复间隔，未达到直接跳过，达到则进入等待发送阶段。
                     if self._should_ignore_due_to_interval(custom_reply):
                         logger.info("[AI接管] 发送的内容未达到最小回复间隔，不回复: %s", message_content)
                         history = MessageHistory(sender, message_content, "", "skipped_interval", 0)
@@ -663,12 +661,10 @@ class AiWorkerThread:
                     return
 
                 if self.config.model != "disabled":
-                    # 生成AI回复
                     ai_reply = self._generate_ai_reply(message_content)
                     if ai_reply:
                         logger.debug("[AI接管] 生成AI回复: %s", ai_reply)
                         
-                        # 检查发送的最小回复间隔，未达到直接跳过，达到则进入等待发送阶段。
                         if self._should_ignore_due_to_interval(ai_reply):
                             logger.info("[AI接管] 发送的内容未达到最小回复间隔，不回复: %s", message_content)
                             print(f"[AI接管] 发送的内容未达到最小回复间隔，不回复：{message_content}")
@@ -678,7 +674,6 @@ class AiWorkerThread:
                         
                         self.reply_delay()
                         
-                        # 发送AI回复
                         reply_sent = False
                         if is_group:
                             at_user = sender if self.config.group_at_reply else ""
@@ -742,17 +737,13 @@ class AiWorkerThread:
         last_time = self.state.last_reply_info.get("time", 0)
         last_reply_content = self.state.last_reply_info.get("reply_content", "")
         
-        # 检查是否是相同的回复内容
         is_same_reply = reply_content == last_reply_content
         
-        # 如果是不同的回复内容，不需要检查间隔
         if not is_same_reply:
             return False
         
-        # 检查时间间隔
         is_within_interval = (current_time - last_time) < self.config.min_reply_interval
         
-        # 如果在最小间隔时间内，直接跳过，不等待也不发送回复
         if is_within_interval:
             logger.info("[AI接管] 相同回复内容未达到最小回复间隔，跳过回复: %s", reply_content)
             return True
