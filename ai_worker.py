@@ -34,7 +34,6 @@ ACCOUNT_LEVELS = {
 
 
 class MessageInfo:
-    
     def __init__(self, message: Any):
         self.message = message
     
@@ -58,7 +57,6 @@ class MessageInfo:
         return ""
     
     def get_timestamp(self) -> float:
-        """获取消息时间戳，如果没有则返回当前时间"""
         if hasattr(self.message, 'timestamp'):
             return float(self.message.timestamp)
         elif hasattr(self.message, 'time'):
@@ -85,19 +83,16 @@ class MessageInfo:
         return self.get_type() in MESSAGE_TYPES
     
     def is_outdated(self, max_age_seconds: float = 30.0) -> bool:
-        """检查消息是否过时"""
         try:
             msg_time = self.get_timestamp()
             current_time = time.time()
             age_seconds = current_time - msg_time
             return age_seconds > max_age_seconds
         except (ValueError, TypeError, AttributeError, KeyError):
-            # 如果无法获取时间戳，默认认为不过时
             return False
 
 
 class ReplyHandler:
-    
     def __init__(self, wx_instance: Any):
         self.wx_instance = wx_instance
     
@@ -112,12 +107,8 @@ class ReplyHandler:
                 return self._send_emotion(sender, reply_content)
             else:
                 return self._send_text(sender, reply_content, at_user)
-                
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error sending reply to %s: %s", sender, e)
-            return False
         except Exception as e:
-            logger.error("Unexpected error sending reply to %s: %s", sender, e)
+            logger.error("Error sending reply to %s: %s", sender, e)
             return False
     
     def _check_quota(self, sender: str) -> bool:
@@ -136,11 +127,8 @@ class ReplyHandler:
                     logger.warning("[AI接管] 配额已耗尽，无法发送回复给 %s", sender)
                     return False
             return True
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error checking quota: %s", e)
-            return False
         except Exception as e:
-            logger.error("Unexpected error checking quota: %s", e)
+            logger.error("Error checking quota: %s", e)
             return False
     
     def _is_file_path(self, content: str) -> bool:
@@ -161,11 +149,8 @@ class ReplyHandler:
             increment_message_count()
             logger.info("File sent to %s: %s", sender, file_path)
             return True
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error sending file to %s: %s", sender, e)
-            return False
         except Exception as e:
-            logger.error("Unexpected error sending file to %s: %s", sender, e)
+            logger.error("Error sending file to %s: %s", sender, e)
             return False
     
     def _send_emotion(self, sender: str, content: str) -> bool:
@@ -188,11 +173,8 @@ class ReplyHandler:
             increment_message_count()
             logger.info("Emotion sent to %s (selected %s)", sender, emotion_index)
             return True
-        except (ValueError, IndexError, AttributeError, KeyError) as e:
-            logger.error("Error sending emotion to %s: %s", sender, e)
-            return False
         except Exception as e:
-            logger.error("Unexpected error sending emotion to %s: %s", sender, e)
+            logger.error("Error sending emotion to %s: %s", sender, e)
             return False
     
     def _send_text(self, sender: str, content: str, at_user: Optional[str] = None) -> bool:
@@ -202,19 +184,12 @@ class ReplyHandler:
                 logger.error("Failed to send message to %s: %s", sender, response.get('message', 'Unknown error'))
                 return False
             
-            # 消息发送成功后，增加消息配额计数
             from data_manager import increment_message_count
             increment_message_count()
             logger.info("Message sent to %s: %s", sender, content)
             return True
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error sending message to %s: %s", sender, e)
-            return False
-        except OSError as e:
-            logger.error("OS error sending message to %s: %s", sender, e)
-            return False
         except Exception as e:
-            logger.error("Unexpected error sending message to %s: %s", sender, e)
+            logger.error("Error sending message to %s: %s", sender, e)
             return False
 
 
@@ -234,20 +209,8 @@ class RulesManager:
                         self.rules = settings["customRules"]
                         return
                 self.rules = []
-        except FileNotFoundError:
-            logger.warning("Auto-reply rules file not found")
-            self.rules = []
-        except json.JSONDecodeError:
-            logger.error("Auto-reply rules file parsing failed")
-            self.rules = []
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error loading rules: %s", e)
-            self.rules = []
-        except OSError as e:
-            logger.error("OS error loading rules: %s", e)
-            self.rules = []
         except Exception as e:
-            logger.error("Unexpected error loading rules: %s", e)
+            logger.error("Error loading rules: %s", e)
             self.rules = []
     
     def update_rules(self) -> bool:
@@ -267,24 +230,8 @@ class RulesManager:
                 
                 logger.debug("[AI接管] 自定义规则无变化，无需更新")
                 return False
-        except FileNotFoundError:
-            logger.warning("Auto-reply rules file not found")
-            if self.rules:
-                self.rules = []
-                logger.info("[AI接管] 规则文件不存在，已清空自定义规则")
-                return True
-            return False
-        except json.JSONDecodeError:
-            logger.error("Auto-reply rules file parsing failed")
-            return False
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error updating rules: %s", e)
-            return False
-        except OSError as e:
-            logger.error("OS error updating rules: %s", e)
-            return False
         except Exception as e:
-            logger.error("Unexpected error updating rules: %s", e)
+            logger.error("Error updating rules: %s", e)
             return False
     
     def match_rule(self, msg: str) -> List[str]:
@@ -311,12 +258,8 @@ class RulesManager:
                         matched_replies.append(rule["reply"])
             except re.error as e:
                 logger.error("Invalid regular expression '%s': %s", keyword, e)
-            except (ValueError, TypeError, AttributeError, KeyError) as e:
-                logger.error("Error matching rule: %s", e)
-            except OSError as e:
-                logger.error("OS error matching rule: %s", e)
             except Exception as e:
-                logger.error("Unexpected error matching rule: %s", e)
+                logger.error("Error matching rule: %s", e)
         return matched_replies
     
     def apply_custom_rules(self, message_content: str) -> str:
@@ -376,23 +319,18 @@ class MessageHistory:
 class WorkerState:    
     def __init__(self):
         self.listen_list: List[str] = []
-        self.last_reply_info = {"content": "", "time": 0}
-        self._message_lock = threading.Lock()
+        self.last_reply_info = {"reply_content": "", "time": 0}
         self._stop_event = threading.Event()
         self._is_running = False
         self._paused = False
-        self._pause_cond = threading.Condition(threading.Lock())
+        self._pause_cond = threading.Condition()
         self.start_time: Optional[float] = None
         
         # 处理状态管理属性
-        self._processing_message: Optional[str] = None  # 正在处理的消息内容
-        self._processing_start_time: float = 0  # 开始处理的时间
-        self._processing_lock = threading.Lock()  # 处理状态锁
-        self._latest_message: Optional[str] = None  # 最新的消息内容
-        self._latest_message_time: float = 0  # 最新消息的时间
-    
-    def get_message_lock(self) -> threading.Lock:
-        return self._message_lock
+        self._processing_message: Optional[str] = None
+        self._processing_start_time: float = 0
+        self._latest_message: Optional[str] = None
+        self._latest_message_time: float = 0
     
     def get_stop_event(self) -> threading.Event:
         return self._stop_event
@@ -419,56 +357,36 @@ class WorkerState:
         self.start_time = start_time
     
     def set_processing_message(self, message_content: str) -> bool:
-        """设置正在处理的消息内容，返回是否设置成功"""
-        with self._processing_lock:
-            # 检查是否已有消息正在处理
-            if self._processing_message is not None:
-                return False  # 已有消息正在处理
-            
-            # 设置正在处理的消息内容和开始时间
-            self._processing_message = message_content
-            self._processing_start_time = time.time()
-            return True
+        if self._processing_message is not None:
+            return False
+        
+        self._processing_message = message_content
+        self._processing_start_time = time.time()
+        return True
     
     def clear_processing_message(self) -> None:
-        """清除正在处理的消息状态"""
-        with self._processing_lock:
-            # 清除正在处理的消息内容和开始时间
-            self._processing_message = None
-            self._processing_start_time = 0
+        self._processing_message = None
+        self._processing_start_time = 0
     
     def get_processing_message(self) -> Optional[str]:
-        """获取当前正在处理的消息内容"""
-        with self._processing_lock:
-            return self._processing_message
+        return self._processing_message
     
     def is_processing(self) -> bool:
-        """检查是否有消息正在处理"""
-        with self._processing_lock:
-            return self._processing_message is not None
+        return self._processing_message is not None
     
     def set_latest_message(self, message_content: str) -> None:
-        """设置最新消息"""
-        with self._processing_lock:
-            # 设置最新消息内容和时间戳
-            self._latest_message = message_content
-            self._latest_message_time = time.time()
+        self._latest_message = message_content
+        self._latest_message_time = time.time()
     
     def get_latest_message(self) -> Optional[str]:
-        """获取最新消息"""
-        with self._processing_lock:
-            return self._latest_message
+        return self._latest_message
     
     def clear_latest_message(self) -> None:
-        """清除最新消息"""
-        with self._processing_lock:
-            # 清除最新消息内容和时间戳
-            self._latest_message = None
-            self._latest_message_time = 0
+        self._latest_message = None
+        self._latest_message_time = 0
 
 
 class AiWorkerThread:
-    
     def __init__(self, config: WorkerConfig):
         if not config.wx_instance:
             raise ValueError("wx_instance参数不能为空")
@@ -484,8 +402,6 @@ class AiWorkerThread:
         rules_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), DATA_DIR, RULES_FILE)
         self.rules_manager = RulesManager(rules_file_path)
         self.reply_handler = ReplyHandler(self.config.wx_instance)
-        
-        self.timers = []
 
         logger.info(
             "AI worker thread initialized: receiver=%s, model=%s, role=%s, only_at=%s, group_at_reply=%s, delay=%ss, min_interval=%ss, max_msg_age=%ss",
@@ -515,16 +431,8 @@ class AiWorkerThread:
                 self.config.wx_instance.AddListenChat(who=target)
                 self.state.listen_list.append(target)
                 logger.info("Added listener: %s", target)
-            except (ValueError, TypeError, AttributeError, KeyError) as e:
+            except Exception as e:
                 logger.error("Failed to add listener: %s, error: %s", target, str(e))
-                self._cleanup()
-                return False
-            except OSError as e:
-                logger.error("OS error adding listener: %s, error: %s", target, str(e))
-                self._cleanup()
-                return False
-            except RuntimeError as e:
-                logger.error("Runtime error adding listener: %s, error: %s", target, str(e))
                 self._cleanup()
                 return False
         return True
@@ -535,69 +443,25 @@ class AiWorkerThread:
         return self.config.wx_instance.GetChatName(who)
 
     def _is_target_message(self, message: Any) -> bool:
-        """检查消息是否来自目标用户或群组"""
         try:
             msg_info = MessageInfo(message)
             sender = msg_info.get_sender()
-            # 检查发送者是否在接收列表中
-            if sender in self.receiver_list:
-                return True
-            # 消息不是来自目标用户或群组
-            return False
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            return sender in self.receiver_list
+        except Exception as e:
             logger.error("Error checking target message: %s", e)
             return False
-        except OSError as e:
-            logger.error("OS error checking target message: %s", e)
-            return False
-        except Exception as e:
-            logger.error("Unexpected error checking target message: %s", e)
-            return False
 
-    def _generate_ai_reply(self, message_content: str) -> None:
+    def _generate_ai_reply(self, message_content: str) -> str:
         try:
             reply = self._query_ai_model(message_content)
             if reply:
-                if hasattr(self, '_current_message_context'):
-                    context = self._current_message_context
-                    is_group = context.get("is_group", False)
-                    sender = context.get("sender", "")
-                    group_name = context.get("group_name", "")
-                    receive_time = context.get("receive_time", time.time())
-                else:
-                    is_group = False
-                    sender = ""
-                    group_name = ""
-                    receive_time = time.time()
-                
-                reply_sent = False
-                if is_group:
-                    at_user = sender if self.config.group_at_reply else ""
-                    reply_sent = self.reply_handler.send_reply(group_name, reply, at_user=at_user)
-                else:
-                    reply_sent = self.reply_handler.send_reply(sender, reply)
-                
-                if reply_sent:
-                    self.state.last_reply_info = {"content": message_content, "time": time.time()}
-                    history = MessageHistory(
-                        sender, 
-                        message_content, 
-                        reply, 
-                        "replied", 
-                        round(time.time() - receive_time, 2)
-                    )
-                    self._record_history(history)
-                else:
-                    history = MessageHistory(
-                        sender, 
-                        message_content, 
-                        reply, 
-                        "not_replied", 
-                        0
-                    )
-                    self._record_history(history)
+                return reply
+            else:
+                logger.warning("AI模型未生成有效回复")
+                return ""
         except Exception as e:
             logger.error("生成AI回复失败: %s", e)
+            return ""
     
     def _query_ai_model(self, message: str) -> str:
         model = self.config.model
@@ -624,14 +488,8 @@ class AiWorkerThread:
                 )
                 response.raise_for_status()
                 return response.json()
-        except httpx.RequestError as e:
-            logger.error("请求错误: %s", e)
-            return None
-        except httpx.HTTPStatusError as e:
-            logger.error("HTTP状态错误: %s", e)
-            return None
         except Exception as e:
-            logger.error("未知错误: %s", e)
+            logger.error("API请求错误: %s", e)
             return None
     
     def _query_wenxin(self, message: str) -> str:
@@ -691,14 +549,8 @@ class AiWorkerThread:
 
     def _cleanup(self) -> None:
         try:
-            if hasattr(self, 'timers') and self.timers:
-                for timer in self.timers:
-                    timer.cancel()
-                self.timers.clear()
-
-            if hasattr(self, 'message_listener') and self.message_listener:
-                self.message_listener.cleanup()
-                
+            # 清理资源
+            pass
         except Exception as e:
             logger.error(f"清理资源时出错: {e}")
 
@@ -752,14 +604,8 @@ class AiWorkerThread:
                 return True
 
             return False
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("Error checking ignored message: %s", e)
-            return True
-        except OSError as e:
-            logger.error("OS error checking ignored message: %s", e)
-            return True
         except Exception as e:
-            logger.error("Unexpected error checking ignored message: %s", e)
+            logger.error("Error checking ignored message: %s", e)
             return True
 
     def _should_stop(self) -> bool:
@@ -779,12 +625,6 @@ class AiWorkerThread:
             msg_info = MessageInfo(msg)
             message_content = msg_info.get_content()
             sender = msg_info.get_sender()
-            
-            if msg_info.is_outdated(max_age_seconds=self.config.max_message_age):
-                logger.debug("[AI接管] 消息在处理前已过时，忽略处理: %s", message_content)
-                history = MessageHistory(sender, message_content, "", "outdated", 0)
-                self._record_history(history)
-                return
 
             if self.config.only_at and is_group:
                 if self.at_me not in message_content:
@@ -792,34 +632,20 @@ class AiWorkerThread:
                     return
                 message_content = message_content.replace(self.at_me, "").strip()
 
-            if self.state.is_processing():
-                self.state.set_latest_message(message_content)
-                logger.info("[AI接管] 有消息正在处理中，忽略新消息: %s", message_content)
-                history = MessageHistory(sender, message_content, "", "blocked_processing", 0)
-                self._record_history(history)
-                return
-
-            if self._should_ignore_due_to_interval(message_content):
-                logger.info("[AI接管] 相同内容未达到最小回复间隔，忽略消息: %s", message_content)
-                history = MessageHistory(sender, message_content, "", "blocked", 0)
-                self._record_history(history)
-                return
-
-            if not self.state.set_processing_message(message_content):
-                logger.info("[AI接管] 已有消息正在处理，忽略新消息: %s", message_content)
-                history = MessageHistory(sender, message_content, "", "blocked_processing", 0)
-                self._record_history(history)
-                return
-
             try:
-                if self.config.reply_delay > 0:
-                    logger.debug("[AI接管] 进入延迟等待阶段，在等待%s秒后发送回复", self.config.reply_delay)
-                    time.sleep(self.config.reply_delay)
-
                 custom_reply = self.rules_manager.apply_custom_rules(message_content)
                 if custom_reply:
-                    logger.debug("[AI接管] 发送自定义回复: %s", custom_reply)
-                    reply_sent = False
+                    logger.debug("[AI接管] 根据回复生成规则: %s", custom_reply)
+
+                    # 检查发送的最小回复间隔，未达到直接跳过，达到则进入等待发送阶段。
+                    if self._should_ignore_due_to_interval(custom_reply):
+                        logger.info("[AI接管] 发送的内容未达到最小回复间隔，不回复: %s", message_content)
+                        history = MessageHistory(sender, message_content, "", "skipped_interval", 0)
+                        self._record_history(history)
+                        return
+
+                    self.reply_delay()
+
                     if is_group:
                         at_user = sender if self.config.group_at_reply else ""
                         reply_sent = self.reply_handler.send_reply(group_name, custom_reply, at_user=at_user)
@@ -827,7 +653,7 @@ class AiWorkerThread:
                         reply_sent = self.reply_handler.send_reply(sender, custom_reply)
                     
                     if reply_sent:
-                        self.state.last_reply_info = {"content": message_content, "time": time.time()}
+                        self.state.last_reply_info = {"reply_content": custom_reply, "time": time.time()}
                         actual_response_time = round(time.time() - receive_time, 2)
                         history = MessageHistory(sender, message_content, custom_reply, "replied", actual_response_time)
                         self._record_history(history)
@@ -837,17 +663,45 @@ class AiWorkerThread:
                     return
 
                 if self.config.model != "disabled":
-                    self._current_message_context = {
-                        "sender": sender,
-                        "message_content": message_content,
-                        "receive_time": receive_time,
-                        "is_group": is_group,
-                        "group_name": group_name if is_group else ""
-                    }
-                    self._generate_ai_reply(message_content)
-                    logger.debug("[AI接管] 使用AI模型回复消息: %s", message_content)
+                    # 生成AI回复
+                    ai_reply = self._generate_ai_reply(message_content)
+                    if ai_reply:
+                        logger.debug("[AI接管] 生成AI回复: %s", ai_reply)
+                        
+                        # 检查发送的最小回复间隔，未达到直接跳过，达到则进入等待发送阶段。
+                        if self._should_ignore_due_to_interval(ai_reply):
+                            logger.info("[AI接管] 发送的内容未达到最小回复间隔，不回复: %s", message_content)
+                            print(f"[AI接管] 发送的内容未达到最小回复间隔，不回复：{message_content}")
+                            history = MessageHistory(sender, message_content, "", "skipped_interval", 0)
+                            self._record_history(history)
+                            return
+                        
+                        self.reply_delay()
+                        
+                        # 发送AI回复
+                        reply_sent = False
+                        if is_group:
+                            at_user = sender if self.config.group_at_reply else ""
+                            reply_sent = self.reply_handler.send_reply(group_name, ai_reply, at_user=at_user)
+                        else:
+                            reply_sent = self.reply_handler.send_reply(sender, ai_reply)
+                        
+                        if reply_sent:
+                            self.state.last_reply_info = {"reply_content": ai_reply, "time": time.time()}
+                            actual_response_time = round(time.time() - receive_time, 2)
+                            history = MessageHistory(sender, message_content, ai_reply, "replied", actual_response_time)
+                            self._record_history(history)
+                        else:
+                            history = MessageHistory(sender, message_content, ai_reply, "not_replied", 0)
+                            self._record_history(history)
+                    else:
+                        logger.debug("[AI接管] AI模型未生成回复: %s", message_content)
+                        history = MessageHistory(sender, message_content, "", "no_reply", 0)
+                        self._record_history(history)
                 else:
                     logger.debug("[AI接管] AI模型已禁用，不回复消息: %s", message_content)
+                    history = MessageHistory(sender, message_content, "", "disabled", 0)
+                    self._record_history(history)
                 
             except Exception as e:
                 logger.error("处理消息时发生异常: %s", e)
@@ -855,24 +709,17 @@ class AiWorkerThread:
                 self.state.clear_processing_message()
                 self.state.clear_latest_message()
 
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+        except Exception as e:
             logger.error("处理消息时发生错误: %s", e)
             if msg is not None:
                 msg_info = MessageInfo(msg)
                 history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
                 self._record_history(history)
-        except OSError as e:
-            logger.error("OS error processing message: %s", e)
-            if msg is not None:
-                msg_info = MessageInfo(msg)
-                history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
-                self._record_history(history)
-        except RuntimeError as e:
-            logger.error("Runtime error processing message: %s", e)
-            if msg is not None:
-                msg_info = MessageInfo(msg)
-                history = MessageHistory(msg_info.get_sender(), msg_info.get_content(), "", "failed", 0)
-                self._record_history(history)
+
+    def reply_delay(self) -> None:
+        if self.config.reply_delay > 0:
+            logger.debug("[AI接管] 进入延迟等待阶段，在等待%s秒后发送回复", self.config.reply_delay)
+            time.sleep(self.config.reply_delay)
     
     def _get_chat_info(self, chat: Any) -> Dict[str, str]:
         try:
@@ -882,27 +729,35 @@ class AiWorkerThread:
                     "type": info.get("chat_type", ""),
                     "name": info.get("chat_name", "")
                 }
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
-            logger.error("获取聊天信息失败: %s", e)
-        except OSError as e:
-            logger.error("OS error getting chat info: %s", e)
         except Exception as e:
-            logger.error("Unexpected error getting chat info: %s", e)
+            logger.error("获取聊天信息失败: %s", e)
         
         return {"type": "", "name": ""}
     
-    def _should_ignore_due_to_interval(self, message_content: str) -> bool:
+    def _should_ignore_due_to_interval(self, reply_content: str) -> bool:
         if self.config.min_reply_interval <= 0:
             return False
             
         current_time = time.time()
-        last_content = self.state.last_reply_info["content"]
-        last_time = self.state.last_reply_info["time"]
+        last_time = self.state.last_reply_info.get("time", 0)
+        last_reply_content = self.state.last_reply_info.get("reply_content", "")
         
-        is_same_content = message_content == last_content
+        # 检查是否是相同的回复内容
+        is_same_reply = reply_content == last_reply_content
+        
+        # 如果是不同的回复内容，不需要检查间隔
+        if not is_same_reply:
+            return False
+        
+        # 检查时间间隔
         is_within_interval = (current_time - last_time) < self.config.min_reply_interval
         
-        return is_same_content and is_within_interval
+        # 如果在最小间隔时间内，直接跳过，不等待也不发送回复
+        if is_within_interval:
+            logger.info("[AI接管] 相同回复内容未达到最小回复间隔，跳过回复: %s", reply_content)
+            return True
+        
+        return False
     
     def _record_history(self, history: MessageHistory) -> None:
         add_ai_history(history.to_dict())
@@ -918,18 +773,8 @@ class AiWorkerThread:
                 self.state.set_running(False)
                 logger.error("AI worker thread initialization failed")
                 return
-        except (ValueError, TypeError, AttributeError, KeyError) as e:
+        except Exception as e:
             logger.error("Initialization failed: %s", str(e))
-            self._cleanup()
-            self.state.set_running(False)
-            return
-        except OSError as e:
-            logger.error("OS error during initialization: %s", str(e))
-            self._cleanup()
-            self.state.set_running(False)
-            return
-        except RuntimeError as e:
-            logger.error("Runtime error during initialization: %s", str(e))
             self._cleanup()
             self.state.set_running(False)
             return
@@ -944,65 +789,23 @@ class AiWorkerThread:
                     self.update_rules()
 
                 messages_dict = self.config.wx_instance.GetListenMessage()
-                if not messages_dict:
-                    time.sleep(0.1)
-                    continue
-
-                should_skip_batch = self.state.is_processing() and (
-                    self.config.reply_delay > 0 or self.config.min_reply_interval > 0
-                )
-                if should_skip_batch:
-                    logger.debug("[AI接管] 有消息正在处理中，跳过当前消息批次")
-                    time.sleep(0.1)
-                    continue
 
                 for chat, messages in messages_dict.items():
                     if self._should_stop():
                         break
-                    
-                    if self.config.reply_delay == 0 and self.config.min_reply_interval == 0:
-                        try:
-                            sorted_messages = sorted(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
-                        except (ValueError, TypeError, AttributeError, KeyError):
-                            sorted_messages = messages
-                        
-                        for message in sorted_messages:
+                    try:
+                        for message in messages:
                             if self._should_stop():
                                 break
-
-                            with self.state.get_message_lock():
-                                if self._is_ignored_message(message):
-                                    continue
-                                self._process_message(message, chat)
-                    else:
-                        try:
-                            latest_message = max(messages, key=lambda msg: MessageInfo(msg).get_timestamp())
-                        except (ValueError, TypeError, AttributeError, KeyError):
-                            latest_message = messages[0] if messages else None
-                        
-                        if latest_message is None:
-                            continue
-                            
-                        if self._should_stop():
-                            break
-
-                        with self.state.get_message_lock():
-                            if self._is_ignored_message(latest_message):
+                            if self._is_ignored_message(message):
                                 continue
-                            self._process_message(latest_message, chat)
+                            self._process_message(message, chat)
+                    except Exception as e:
+                        logger.error("处理消息时发生错误: %s", e)
+                        continue
 
-            except (ValueError, TypeError, AttributeError, KeyError) as e:
+            except Exception as e:
                 logger.error("Error in main loop: %s", e)
-                if self._should_stop():
-                    break
-                time.sleep(1)
-            except OSError as e:
-                logger.error("OS error in main loop: %s", e)
-                if self._should_stop():
-                    break
-                time.sleep(1)
-            except RuntimeError as e:
-                logger.error("Runtime error in main loop: %s", e)
                 if self._should_stop():
                     break
                 time.sleep(1)
@@ -1013,106 +816,88 @@ class AiWorkerThread:
 
 
 class AiWorkerManager:
-    
     _instance: Optional['AiWorkerManager'] = None
     workers: Dict[str, AiWorkerThread] = {}
-    lock: threading.Lock = threading.Lock()
 
     def __new__(cls) -> 'AiWorkerManager':
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.workers = {}
-            cls._instance.lock = threading.Lock()
         return cls._instance
 
     def start_worker(self, config: WorkerConfig) -> bool:
-        with self.lock:
-            worker_key = f"{config.receiver}_{config.model}"
-            if worker_key in self.workers:
+        worker_key = f"{config.receiver}_{config.model}"
+        if worker_key in self.workers:
+            return False
+
+        worker = AiWorkerThread(config)
+        self.workers[worker_key] = worker
+
+        try:
+            thread = threading.Thread(target=worker.run, daemon=True)
+            thread.start()
+
+            time.sleep(0.1)
+            if not worker.is_running():
+                del self.workers[worker_key]
                 return False
 
-            worker = AiWorkerThread(config)
-            self.workers[worker_key] = worker
-
-            try:
-                thread = threading.Thread(target=worker.run, daemon=True)
-                thread.start()
-
-                time.sleep(0.1)
+            max_wait_time = 5
+            wait_interval = 0.1
+            total_wait_time = 0
+            
+            while total_wait_time < max_wait_time:
                 if not worker.is_running():
                     del self.workers[worker_key]
                     return False
-
-                max_wait_time = 5
-                wait_interval = 0.1
-                total_wait_time = 0
                 
-                while total_wait_time < max_wait_time:
-                    if not worker.is_running():
-                        del self.workers[worker_key]
-                        return False
-                    
-                    if hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
-                        return True
-                    
-                    time.sleep(wait_interval)
-                    total_wait_time += wait_interval
-                
-                if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
+                if hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
                     return True
-                else:
-                    worker.stop()
-                    del self.workers[worker_key]
-                    return False
-
-            except (ValueError, TypeError, AttributeError, KeyError) as e:
-                if worker_key in self.workers:
-                    del self.workers[worker_key]
-                logger.error("Failed to start worker: %s", e)
-                return False
-            except OSError as e:
-                if worker_key in self.workers:
-                    del self.workers[worker_key]
-                logger.error("OS error starting worker: %s", e)
-                return False
-            except RuntimeError as e:
-                if worker_key in self.workers:
-                    del self.workers[worker_key]
-                logger.error("Runtime error starting worker: %s", e)
-                return False
-
-    def stop_worker(self, receiver: str, model: str = DEFAULT_MODEL) -> bool:
-        with self.lock:
-            worker_key = f"{receiver}_{model}"
-            if worker_key in self.workers:
-                worker = self.workers[worker_key]
+                
+                time.sleep(wait_interval)
+                total_wait_time += wait_interval
+            
+            if worker.is_running() and hasattr(worker.state, 'listen_list') and len(worker.state.listen_list) > 0:
+                return True
+            else:
                 worker.stop()
                 del self.workers[worker_key]
-                return True
+                return False
+
+        except Exception as e:
+            if worker_key in self.workers:
+                del self.workers[worker_key]
+            logger.error("Failed to start worker: %s", e)
             return False
 
+    def stop_worker(self, receiver: str, model: str = DEFAULT_MODEL) -> bool:
+        worker_key = f"{receiver}_{model}"
+        if worker_key in self.workers:
+            worker = self.workers[worker_key]
+            worker.stop()
+            del self.workers[worker_key]
+            return True
+        return False
+
     def get_worker_status(self, receiver: str, model: str = DEFAULT_MODEL) -> Optional[Dict[str, Any]]:
-        with self.lock:
-            worker_key = f"{receiver}_{model}"
-            if worker_key in self.workers:
-                worker = self.workers[worker_key]
-                return {
-                    "running": worker.is_running(),
-                    "uptime": worker.get_uptime(),
-                    "paused": worker.is_paused(),
-                }
-            return None
+        worker_key = f"{receiver}_{model}"
+        if worker_key in self.workers:
+            worker = self.workers[worker_key]
+            return {
+                "running": worker.is_running(),
+                "uptime": worker.get_uptime(),
+                "paused": worker.is_paused(),
+            }
+        return None
 
     def get_all_workers(self) -> List[str]:
-        with self.lock:
-            return list(self.workers.keys())
+        return list(self.workers.keys())
 
     def stop_all_workers(self) -> None:
         logger.info("正在停止所有AI工作线程")
-        with self.lock:
-            for worker in self.workers.values():
-                worker.stop()
-            self.workers.clear()
+        for worker in self.workers.values():
+            worker.stop()
+        self.workers.clear()
 
     def update_all_workers_rules(self) -> bool:
         updated_count = 0
@@ -1124,5 +909,4 @@ class AiWorkerManager:
             logger.info("[AI接管] 已通知 %s 个AI工作线程更新规则", updated_count)
         else:
             logger.debug("[AI接管] 没有工作线程需要更新规则")
-
         return updated_count > 0

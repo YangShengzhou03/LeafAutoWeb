@@ -1,8 +1,378 @@
 {
-  "total_replies": 0,
-  "successful_replies": 0,
-  "failed_replies": 0,
-  "average_response_time": 0,
+  "total_replies": 37,
+  "successful_replies": 12,
+  "failed_replies": 25,
+  "average_response_time": 26.64,
   "history": [
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 47.25,
+      "timestamp": "2025-09-30T20:21:59.960590",
+      "id": "3c3db739-bd9a-4a88-8f37-e070f3742f90",
+      "time": "2025-09-30 20:21:59"
+    },
+    {
+      "sender": "小妖",
+      "message": "嗯嗯，还好",
+      "reply": "",
+      "status": "blocked",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:22:26.149455",
+      "id": "4f0542f2-edf0-4df0-99cf-310e2dfb841f",
+      "time": "2025-09-30 20:22:26"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 19.06,
+      "timestamp": "2025-09-30T20:47:48.174540",
+      "id": "3dc47880-d94a-4e54-a782-52f0e1d0af40",
+      "time": "2025-09-30 20:47:48"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "blocked_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:48:17.567282",
+      "id": "78b9cf80-ead7-4360-8ef0-604c4cf79931",
+      "time": "2025-09-30 20:48:17"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "blocked_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:48:32.593578",
+      "id": "54363732-b0a7-45f2-8cf4-2149145b41d5",
+      "time": "2025-09-30 20:48:32"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 17.64,
+      "timestamp": "2025-09-30T20:49:46.247682",
+      "id": "ce49c3fe-f007-4261-86f9-8a5423f5cdb1",
+      "time": "2025-09-30 20:49:46"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "blocked_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:50:01.282252",
+      "id": "ecf30103-39d1-4387-80d6-c19d8831484c",
+      "time": "2025-09-30 20:50:01"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 17.69,
+      "timestamp": "2025-09-30T20:53:24.536515",
+      "id": "1fb88dc6-5b91-4682-97af-3f3611fd18c5",
+      "time": "2025-09-30 20:53:24"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "blocked_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:53:39.566841",
+      "id": "54bb78a4-cb47-481f-9832-962b754b1b3f",
+      "time": "2025-09-30 20:53:39"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "blocked_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:53:54.577818",
+      "id": "10102aca-4596-439e-be05-3a2d0bb3fea7",
+      "time": "2025-09-30 20:53:54"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "blocked_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T20:54:09.592384",
+      "id": "5fcbf6cd-dbab-49dd-b6b5-a0fb8aab3c41",
+      "time": "2025-09-30 20:54:09"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 17.78,
+      "timestamp": "2025-09-30T20:54:27.460315",
+      "id": "6bb82288-fa55-4d64-8196-f27fd5045d46",
+      "time": "2025-09-30 20:54:27"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 22.64,
+      "timestamp": "2025-09-30T21:07:53.243589",
+      "id": "3b3bf3ca-55d1-40bd-8ad3-9185102eb5b3",
+      "time": "2025-09-30 21:07:53"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 61.9,
+      "timestamp": "2025-09-30T21:08:55.157722",
+      "id": "21f2dd19-0829-47da-a75b-b3ec472e0043",
+      "time": "2025-09-30 21:08:55"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 22.69,
+      "timestamp": "2025-09-30T21:16:33.635956",
+      "id": "9db13474-a1ad-4019-9ff9-b009d17c9a08",
+      "time": "2025-09-30 21:16:33"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:16:33.657953",
+      "id": "35e15610-4479-47c0-9623-ccfb524844f2",
+      "time": "2025-09-30 21:16:33"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例9",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 22.62,
+      "timestamp": "2025-09-30T21:18:38.922433",
+      "id": "4b0569be-d872-414a-babb-9a538a04f1a7",
+      "time": "2025-09-30 21:18:38"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 22.72,
+      "timestamp": "2025-09-30T21:46:13.300720",
+      "id": "057da2b6-9aa4-49a0-8182-1961e09322b1",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例2",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.322828",
+      "id": "b49ce962-fe9e-44ed-9829-32f4e6e0fcb7",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例3",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.329828",
+      "id": "974bdc57-ea81-4855-a678-7aa41760f7b6",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例4",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.337828",
+      "id": "fece69a2-ba29-43ac-95d0-ea6f8d5f5094",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例5",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.344828",
+      "id": "7572d05c-7150-463a-b773-b4c814dfca9d",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例7",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.351828",
+      "id": "d39ee20b-fc23-471a-ade0-25a4e42ef7fc",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例8",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.358829",
+      "id": "635635e2-1598-4a34-90d8-5bca4908a27f",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例9",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:46:13.366829",
+      "id": "23de5e6d-e638-4445-858f-f7ac91471409",
+      "time": "2025-09-30 21:46:13"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例1",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 23.97,
+      "timestamp": "2025-09-30T21:48:14.149514",
+      "id": "c64cd4a4-2ee3-48ca-9e26-dd24d390213e",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例3",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.203871",
+      "id": "e8f9bd7c-c67e-47e7-b72b-2991da8b135f",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例2",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.281869",
+      "id": "ee9f6462-52f5-4073-88f9-e7da4e94b634",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例4",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.360420",
+      "id": "756a5648-5b5a-4e48-9c75-cf47ab8554a2",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例7",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.444998",
+      "id": "de70b833-8771-4606-a17e-8139c61db36e",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例8",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.526556",
+      "id": "545a29b7-961f-4d50-9686-04ab027f6a5a",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例5",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.616556",
+      "id": "1ac475b9-97b4-4df5-bf33-993808a9443a",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "精选案例9",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:48:14.724556",
+      "id": "f184ad09-f84e-4bce-82cf-1b51a1ce3f5b",
+      "time": "2025-09-30 21:48:14"
+    },
+    {
+      "sender": "小羊",
+      "message": "早签到",
+      "reply": "SendEmotion:1",
+      "status": "replied",
+      "responseTime": 23.78,
+      "timestamp": "2025-09-30T21:51:53.865855",
+      "id": "06788d24-f1d1-4852-956d-9487cd6902d8",
+      "time": "2025-09-30 21:51:53"
+    },
+    {
+      "sender": "小羊",
+      "message": "早点睡",
+      "reply": "",
+      "status": "disabled",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:51:53.886854",
+      "id": "84f3bd28-642e-4d6f-a22a-04dfa2dd3d7b",
+      "time": "2025-09-30 21:51:53"
+    },
+    {
+      "sender": "小羊",
+      "message": "早签到",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:51:53.897854",
+      "id": "2d9a62a2-5aec-4e08-9b37-8be7b7effd53",
+      "time": "2025-09-30 21:51:53"
+    },
+    {
+      "sender": "小羊",
+      "message": "早签到",
+      "reply": "",
+      "status": "skipped_interval",
+      "responseTime": 0,
+      "timestamp": "2025-09-30T21:51:53.969853",
+      "id": "a56c0454-8321-4f52-8d44-b274dee9cde4",
+      "time": "2025-09-30 21:51:53"
+    }
   ]
 }
